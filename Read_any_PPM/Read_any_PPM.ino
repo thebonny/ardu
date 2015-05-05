@@ -13,7 +13,7 @@ int pos = 0;
 
 void setup()
 {
- // Serial1.begin(9600);
+//  Serial1.begin(9600);
 
  
   pinMode(DEBUG_PIN1, OUTPUT);
@@ -21,9 +21,9 @@ void setup()
   pinMode(PPM_Pin, INPUT);
   attachInterrupt(0, read_ppm, CHANGE);
   
-  TCCR1A = 0x00;	   //  COM1A1=0, COM1A0=0 => Disconnect Pin OC1 from Timer/Counter 1 -- PWM11=0,PWM10=0 => PWM Operation disabled
-  TCCR1B = B00000010;     //0x02;	   // 16MHz clock with prescaler means TCNT1 increments every .5 uS (cs11 bit set
-  TIMSK1 = _BV(ICIE1);   // enable input capture interrupt for timer 1
+  TCCR3A = 0x00;	   //  COM1A1=0, COM1A0=0 => Disconnect Pin OC1 from Timer/Counter 1 -- PWM11=0,PWM10=0 => PWM Operation disabled
+  TCCR3B = B00000010;     //0x02;	   // 16MHz clock with prescaler means TCNT1 increments every .5 uS (cs11 bit set
+  TIMSK3 = _BV(ICIE3);   // enable input capture interrupt for timer 1
 }
 
 void read_ppm(){
@@ -33,8 +33,8 @@ void read_ppm(){
   
    digitalWrite(DEBUG_PIN1, digitalRead(PPM_Pin)); 
 
-  counter = TCNT1;
-  TCNT1 = 0;
+  counter = TCNT3;
+  TCNT3 = 0;
 
   if(counter < 1000){  //must be a pulse
     pulse = counter;
