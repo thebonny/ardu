@@ -1,9 +1,3 @@
-
-/*This program puts the servo values into an array,
- reagrdless of channel number, polarity, ppm frame length, etc...
- You can even change these while scanning!*/
- 
-
 #define PPM_Pin 3
 
 #define DEBUG_PIN1 8
@@ -11,13 +5,21 @@
 int ppm[6];  //array for storing up to 16 servo signals
 int pos = 0; 
 
+int servo1 = 6;
+int servo2 = 7;
+
+int pwm;
+
 void setup()
 {
 //  Serial1.begin(9600);
 
- 
+  pinMode(servo1, OUTPUT);
+  pinMode(servo2, OUTPUT);
+  
   pinMode(DEBUG_PIN1, OUTPUT);
-   pinMode(DEBUG_PIN2, OUTPUT);
+  pinMode(DEBUG_PIN2, OUTPUT);
+  
   pinMode(PPM_Pin, INPUT);
   attachInterrupt(0, read_ppm, CHANGE);
   
@@ -31,7 +33,7 @@ void read_ppm(){
   static unsigned long counter;
   static byte channel;
   
-   digitalWrite(DEBUG_PIN1, digitalRead(PPM_Pin)); 
+  digitalWrite(DEBUG_PIN1, digitalRead(PPM_Pin)); 
 
   counter = TCNT3;
   TCNT3 = 0;
@@ -51,10 +53,20 @@ void read_ppm(){
   }
 }
 
-void loop()
+void loop ()
 {
- 
-   // myservo.write(random(45, 135));              // tell servo to go to position in variable 'pos' 
-   
-   delay (100);
+   servoPulse(servo1, ppm[1]);  
+   delay(10);
+   servoPulse(servo2, ppm[2]);
+   delay(10);
+}
+
+
+
+void servoPulse (int servo, int pwm)
+{
+ digitalWrite(servo, HIGH);
+ delayMicroseconds(pwm);
+ digitalWrite(servo, LOW);
+                 
 }
