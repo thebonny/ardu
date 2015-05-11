@@ -25,6 +25,7 @@
 #define ABSMAX_PULSE  	(CENTER_PULSE + CENTER_DSM2)
 #define CONV_PPM2DSM	(tppm - ABSMIN_PULSE)
 #define DEBUG_PIN1 9
+#define DEBUG_PIN2 10
 
 
 // ############################## don't change below this line ###############################################
@@ -34,7 +35,7 @@ typedef enum {
     NULL_ST = -1, NOT_SYNCHED, ACQUIRING, READY, FAILSAFE
 } State_t;
 
-#define TICKS_PER_uS     (F_CPU/1000000L)    // number of timer ticks per 1 microsecond without prescaler
+#define TICKS_PER_uS     (F_CPU /1000000L)    // number of timer ticks per 1 microsecond without prescaler
 #define DE_JITTER        ((TICKS_PER_uS/2)+1)
 #define MAX_CHANNELS      9                 // maximum number of channels we can store
 #define MIN_IN_PULSE  ( 750 * TICKS_PER_uS) // valid pulse must be at least   750us
@@ -61,11 +62,14 @@ static volatile uint8_t	cntCompaOvf;	// CompA Overflow counter
 
 static volatile byte compa_faster = 0;
 static volatile byte icp_faster = 0;
+
+int servo1 = 6;
+int servo2 = 7;
 	
 
 // ---- PPM 65ms timeout check -----
 ISR(TIMER1_COMPA_vect) {	
-  // digitalWrite(DEBUG_PIN1, LOW);
+   
   	// on Frame-Start cntCompaOvf=0 and OCR1A=ICR1
 	if (cntCompaOvf > TICKS_PER_uS){				
 	  if(State == READY) {
@@ -111,7 +115,14 @@ static void processSync() {                 // sync pulse was detected so reset 
 // der Timer1 läuft immer durch, für genauere Messungen mit 125ns/62.5ns Auflösung
 ISR(TIMER1_CAPT_vect) {  
 
-        //  digitalWrite(DEBUG_PIN1, HIGH);
+
+                      
+
+     
+
+
+
+          digitalWrite(DEBUG_PIN1, HIGH);
          
 
 	static uint16_t	ppm_ltime;				// last capture time
@@ -169,6 +180,8 @@ ISR(TIMER1_CAPT_vect) {
 	cntCompaOvf = 0;				// reset Overflow counter
 	OCR1A = ppm_atime;				// update Compare Register	
 	TIFR1 = (1<<OCF1A);				// clear CompA isr flag
+
+        digitalWrite(DEBUG_PIN1, LOW);
 }
 
 
@@ -205,6 +218,10 @@ ISR(TIMER1_CAPT_vect) {
 void setup() {
   delay(100);
   pinMode(DEBUG_PIN1, OUTPUT);
+   pinMode(DEBUG_PIN2, OUTPUT);
+   
+    pinMode(servo1, OUTPUT);
+  pinMode(servo2, OUTPUT);
   
 
 // ---------------------------- Init Data ------------------------------
@@ -224,7 +241,7 @@ void setup() {
     TCCR1A	= 0;				   // Normal port operation, OC1A/OC1B disconnected
     TCCR1B	= (1<<ICNC1)|(1<<CS10)|EDGE_MODE;  // icp noise filter,falling edge, clk/1 = 8tics/us
     
-    TIMSK1  = (1<<ICIE1)|(1<<OCIE1A)|(1<<OCIE1B);  // enable input capture and output compareA+B
+    TIMSK1  = (1<<ICIE1)|(1<<OCIE1A);  // enable input capture and output compareA+B
   
 
  
@@ -233,10 +250,32 @@ void setup() {
   
 }
 
+void servoPulse (int servo, int pwm)
+{
+ digitalWrite(servo, HIGH);
+ digitalWrite(DEBUG_PIN2, HIGH);
+ delayMicroseconds(pwm);
+ digitalWrite(servo, LOW);
+  digitalWrite(DEBUG_PIN2, LOW);
+                 
+}
+
 
 void loop() {
- 
-digitalWrite(DEBUG_PIN1, HIGH);
+
+  servoPulse(servo1, getChannelData(0));
+  delay(3);
+   servoPulse(servo1, getChannelData(1));
+   delay(3);
+   servoPulse(servo1, getChannelData(2));
+   delay(3);
+   servoPulse(servo1, getChannelData(3));
+   delay(3);
+   servoPulse(servo1, getChannelData(4));
+   delay(3);
+   servoPulse(servo1, getChannelData(5));
+   delay(3);
+
  
 }// loop()
 
