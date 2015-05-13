@@ -8,13 +8,8 @@
 // -------------------------------------------------------------------------------------------------
 // --- Achtung diese Zeilen NICHT ändern! ---
 #define CENTER_DSM2    511		        // DSM2 HF-Modul Wert für Servo-Mitte
-#ifdef USE_COMPERATOR_INPUT                     // because of inverted Comperator
-#define FALLING_EDGE   (1<<ICES1)               // Edge select must be inverted
-#define RISING_EDGE    (0<<ICES1)
-#else
-#define FALLING_EDGE   (0<<ICES1)
-#define RISING_EDGE    (1<<ICES1)
-#endif
+#define FALLING_EDGE   (0<<ICES3)
+#define RISING_EDGE    (1<<ICES3)
 // ============================= Anlagen spezifisch =========================================
 
 // ----------------- allgemeines Timing für Futaba und andere Anlagen ------------------
@@ -68,7 +63,7 @@ int servo2 = 7;
 	
 
 // ---- PPM 65ms timeout check -----
-ISR(TIMER1_COMPA_vect) {	
+ISR(TIMER3_COMPA_vect) {	
    
   	// on Frame-Start cntCompaOvf=0 and OCR1A=ICR1
 	if (cntCompaOvf > TICKS_PER_uS){				
@@ -113,7 +108,7 @@ static void processSync() {                 // sync pulse was detected so reset 
 
                                             
 // der Timer1 läuft immer durch, für genauere Messungen mit 125ns/62.5ns Auflösung
-ISR(TIMER1_CAPT_vect) {  
+ISR(TIMER3_CAPT_vect) {  
 
 
                       
@@ -178,8 +173,8 @@ ISR(TIMER1_CAPT_vect) {
 	ppm_ltime = ppm_atime;
 	// reset Synchronisierung Überwachung
 	cntCompaOvf = 0;				// reset Overflow counter
-	OCR1A = ppm_atime;				// update Compare Register	
-	TIFR1 = (1<<OCF1A);				// clear CompA isr flag
+	OCR3A = ppm_atime;				// update Compare Register	
+	TIFR3 = (1<<OCF3A);				// clear CompA isr flag
 
         digitalWrite(DEBUG_PIN1, LOW);
 }
@@ -234,14 +229,14 @@ void setup() {
     	Failsafe[ch] = Pulses[ch] = CENTER_DSM2;     
     }
 
-    // -------------------------- Init Timer1 with ICP --------------------  
-    pinMode(4, INPUT);                      // Timer1 interrupt handler uses pin 8 as input, do not change it
-    digitalWrite(4, HIGH);                  // !!!!! turn on internal pullup resistor on PPM pin
+    // -------------------------- Init Timer3 with ICP --------------------  
+    pinMode(13, INPUT);                      // Timer1 interrupt handler uses pin 8 as input, do not change it
+    digitalWrite(13, HIGH);                  // !!!!! turn on internal pullup resistor on PPM pin
     // 16bit Timer1 runs with F_CPU tics/us!!!
-    TCCR1A	= 0;				   // Normal port operation, OC1A/OC1B disconnected
-    TCCR1B	= (1<<ICNC1)|(1<<CS10)|EDGE_MODE;  // icp noise filter,falling edge, clk/1 = 8tics/us
+    TCCR3A	= 0;				   // Normal port operation, OC1A/OC1B disconnected
+    TCCR3B	= (1<<ICNC3)|(1<<CS30)|EDGE_MODE;  // icp noise filter,falling edge, clk/1 = 8tics/us
     
-    TIMSK1  = (1<<ICIE1)|(1<<OCIE1A);  // enable input capture and output compareA+B
+    TIMSK3  = (1<<ICIE3)|(1<<OCIE3A);  // enable input capture and output compareA+B
   
 
  
@@ -263,18 +258,8 @@ void servoPulse (int servo, int pwm)
 
 void loop() {
 
-  servoPulse(servo1, getChannelData(0));
-  delay(3);
-   servoPulse(servo1, getChannelData(1));
-   delay(3);
-   servoPulse(servo1, getChannelData(2));
-   delay(3);
-   servoPulse(servo1, getChannelData(3));
-   delay(3);
-   servoPulse(servo1, getChannelData(4));
-   delay(3);
-   servoPulse(servo1, getChannelData(5));
-   delay(3);
+ servoPulse(servo1, getChannelData(0));
+ delay(20);
 
  
 }// loop()
