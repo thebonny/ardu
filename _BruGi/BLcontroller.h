@@ -84,66 +84,23 @@ OCRxB                                                                      Outpu
 
 */
 
-// IN_W = D8 = PB0
-#define IN_W_DDR		(DDRB)
-#define IN_W_PORT		(PORTB)
-#define IN_W			(1<<0)
-// INH_W = D7 = PD7
-#define INH_W_DDR		(DDRD)
-#define INH_W_PORT		(PORTD)
-#define INH_W			(1<<7)
-// IN_V = D4 = PD4
-#define IN_V_DDR		(DDRD)
-#define IN_V_PORT		(PORTD)
-#define IN_V			(1<<4)
-// INH_V = D5 = PD5
-#define INH_V_DDR		(DDRD)
-#define INH_V_PORT		(PORTD)
-#define INH_V			(1<<5)
-// IN_U = D2 = PD2
-#define IN_U_DDR		(DDRD)
-#define IN_U_PORT		(PORTD)
-#define IN_U			(1<<2)
-// INH_U = D3 = PD3
-#define INH_U_DDR		(DDRD)
-#define INH_U_PORT		(PORTD)
-#define INH_U			(1<<3)
-
-/* MACROS */
-#define ENABLE_U() do { INH_U_PORT |= INH_U; } while (0)
-#define ENABLE_V() do { INH_V_PORT |= INH_V; } while (0)
-#define ENABLE_W() do { INH_W_PORT |= INH_W; } while (0)
-#define SET_U_HIGH() do { IN_U_PORT |= IN_U; } while (0)
-#define SET_V_HIGH() do { IN_V_PORT |= IN_V; } while (0)
-#define SET_W_HIGH() do { IN_W_PORT |= IN_W; } while (0)
-#define SET_U_LOW() do { IN_U_PORT &= ~IN_U; } while (0)
-#define SET_V_LOW() do { IN_V_PORT &= ~IN_V; } while (0)
-#define SET_W_LOW() do { IN_W_PORT &= ~IN_W; } while (0)
 
 void initBlController() 
 {
-  // set all IN_x ports to 0
-	  IN_U_PORT &= ~IN_U;
-	  IN_V_PORT &= ~IN_V;
-	  IN_W_PORT &= ~IN_W;
-	  // set all IN_x ports to outputs
-	  IN_U_DDR |= IN_U;
-	  IN_V_DDR |= IN_V;
-	  IN_W_DDR |= IN_W;
-	  // set all INH_X ports to 0
-	  INH_U_PORT &= ~INH_U;
-	  INH_V_PORT &= ~INH_V;
-	  INH_W_PORT &= ~INH_W;
-	  // set all INH_x ports to outputs
-	  INH_U_DDR |= INH_U;
-	  INH_V_DDR |= INH_V;
-	  INH_W_DDR |= INH_W;
+
+	
   pinMode(3, OUTPUT);
   pinMode(5, OUTPUT);
   pinMode(6, OUTPUT);
-  pinMode(9, OUTPUT);
-  pinMode(10, OUTPUT);
-  pinMode(11, OUTPUT);
+  
+  pinMode(2, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(7, OUTPUT);
+  
+  digitalWrite(2, HIGH);
+ digitalWrite(4, HIGH);
+  digitalWrite(7, HIGH);
+  
 
 #ifdef PWM_8KHZ_FAST
   TCCR0A = _BV(COM0A1) | _BV(COM0B1) | _BV(WGM01)| _BV(WGM10); 
@@ -157,8 +114,7 @@ void initBlController()
 #ifdef PWM_32KHZ_PHASE
   TCCR0A = _BV(COM0A1) | _BV(COM0B1) | _BV(WGM00); 
   TCCR0B = _BV(CS00);
-  TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM10);
-  TCCR1B = _BV(CS10);
+
   TCCR2A = _BV(COM2A1) | _BV(COM2B1) | _BV(WGM20);
   TCCR2B = _BV(CS20);
 #endif
@@ -191,6 +147,8 @@ void initBlController()
   #define PWM_B_MOTOR0 OCR0B
   #define PWM_C_MOTOR0 OCR2B
   */
+  
+   
 }
 
  

@@ -17,6 +17,7 @@
 #include "BLcontroller.h"         // Motor Movement Functions and Timer Config
 
 int i = 0;
+int power = 0;
 
 /**********************************************/
 /* Initialization                             */
@@ -55,12 +56,18 @@ void loop()
 { 
 
   i++;
-    CH2_ON
+  power++;
+  if (power >= 255) {
+    power = 0;
+  }
+    
 
       // set pitch motor pwm
-      MoveMotorPosSpeed(i, 1000); 
+      MoveMotorPosSpeed(i, power); 
+      
+     
 
-    CH2_OFF
+   
 
 }
 
