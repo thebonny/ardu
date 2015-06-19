@@ -5,7 +5,7 @@
 
 struct config_t
 {
-  uint8_t versEEPROM;
+  
   int32_t gyroPitchKp; 
   int32_t gyroPitchKi;   
   int32_t gyroPitchKd;
@@ -89,7 +89,7 @@ struct config_t
 
 void setDefaultParameters()
 {
-  config.versEEPROM = VERSION_EEPROM;
+ 
   config.gyroPitchKp = 20000;
   config.gyroPitchKi = 10000;
   config.gyroPitchKd = 40000;
