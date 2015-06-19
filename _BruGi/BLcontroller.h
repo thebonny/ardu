@@ -137,7 +137,7 @@ void initBlController()
 }
 
  
-void MoveMotorPosSpeed(uint8_t motorNumber, int MotorPos, uint16_t maxPWM)
+void MoveMotorPosSpeed(int MotorPos, uint16_t maxPWM)
 {
   uint16_t posStep;
   uint16_t pwm_a;
@@ -162,21 +162,12 @@ void MoveMotorPosSpeed(uint8_t motorNumber, int MotorPos, uint16_t maxPWM)
   pwm_c = maxPWM * pwm_c;
   pwm_c = pwm_c >> 8;
   pwm_c += 128;
+
+  pwm_a_motor0 = (uint8_t)pwm_a;
+  pwm_b_motor0 = (uint8_t)pwm_b;
+  pwm_c_motor0 = (uint8_t)pwm_c;
   
-  // set motor pwm variables
-  if (motorNumber == 0)
-  {
-    pwm_a_motor0 = (uint8_t)pwm_a;
-    pwm_b_motor0 = (uint8_t)pwm_b;
-    pwm_c_motor0 = (uint8_t)pwm_c;
-  }
- 
-  if (motorNumber == 1)
-  {
-    pwm_a_motor1 = (uint8_t)pwm_a;
-    pwm_b_motor1 = (uint8_t)pwm_b;
-    pwm_c_motor1 = (uint8_t)pwm_c;
-  }
+
 }
 
 
@@ -211,10 +202,7 @@ ISR( TIMER1_OVF_vect )
     PWM_B_MOTOR0 = pwm_b_motor0;
     PWM_C_MOTOR0 = pwm_c_motor0;
 
-    PWM_A_MOTOR1 = pwm_a_motor1;
-    PWM_B_MOTOR1 = pwm_b_motor1;
-    PWM_C_MOTOR1 = pwm_c_motor1;  
-    
+   
     // update event
     motorUpdate = true;
   }
@@ -230,7 +218,6 @@ ISR( TIMER1_OVF_vect )
 
 // switch off motor power
 void motorPowerOff() {
-  MoveMotorPosSpeed(config.motorNumberPitch, 0, 0); 
-  MoveMotorPosSpeed(config.motorNumberRoll, 0, 0);
+  MoveMotorPosSpeed(0, 0); 
 }
 

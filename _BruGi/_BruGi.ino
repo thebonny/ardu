@@ -16,7 +16,7 @@
 #include "variables.h"
 #include "BLcontroller.h"         // Motor Movement Functions and Timer Config
 
-
+int i = 0;
 
 /**********************************************/
 /* Initialization                             */
@@ -54,10 +54,11 @@ void setup()
 void loop() 
 { 
 
+  i++;
     CH2_ON
 
       // set pitch motor pwm
-      MoveMotorPosSpeed(1, 1000, 1000); 
+      MoveMotorPosSpeed(i, 1000); 
 
     CH2_OFF
 

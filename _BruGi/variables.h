@@ -90,72 +90,20 @@ struct config_t
 void setDefaultParameters()
 {
  
-  config.gyroPitchKp = 20000;
-  config.gyroPitchKi = 10000;
-  config.gyroPitchKd = 40000;
-  config.gyroRollKp = 20000;
-  config.gyroRollKi = 8000;
-  config.gyroRollKd = 30000;
-  config.accTimeConstant = 7;
-  config.angleOffsetPitch = 0;
-  config.angleOffsetRoll = 0;
+ 
   config.dirMotorPitch = 1;
   config.dirMotorRoll = -1;
-  config.motorNumberPitch = 0;
-  config.motorNumberRoll = 1;
+ 
+
   config.maxPWMmotorPitch = 80;
   config.maxPWMmotorRoll = 80;
   config.refVoltageBat = 800;
   config.cutoffVoltage = 600;
   config.motorPowerScale = 0;
-  config.rcAbsolutePitch = true;
-  config.rcAbsoluteRoll = true;
-  config.maxRCPitch = 30;
-  config.minRCPitch = -30;
-  config.maxRCRoll = 30;
-  config.minRCRoll = -30;
-  config.rcGainPitch = 5;
-  config.rcGainRoll = 5;
-  config.rcLPFPitch = 20;             // 2 sec
-  config.rcLPFRoll = 20;              // 2 sec
-  config.rcModePPMPitch = false;
-  config.rcModePPMRoll = false;
-  config.rcModePPMAux = false;
-  config.rcModePPMFpvPitch = false;
-  config.rcModePPMFpvRoll = false;
-  config.rcChannelPitch = 1;
-  config.rcChannelRoll = 0;
-  config.rcChannelAux = -1;
-  config.rcChannelFpvPitch = -1;
-  config.rcChannelFpvRoll = -1;
-  config.fpvGainPitch = 0;
-  config.fpvGainRoll = 0;
-  config.rcPinModeCH0 = 1;      // 1 = use digital control
-  config.rcPinModeCH1 = 1;
-  config.rcPinModeCH2 = 1;
-  config.rcLPFPitchFpv = 10;  // 1 sec
-  config.rcLPFRollFpv = 10;  // 1 sec
-  config.rcMid = MID_RC;
  
-  config.enableGyro=true;
-  config.enableACC=true;
-  config.axisReverseZ=true;
-  config.axisSwapXY=false;
-  config.fpvFreezePitch=false;
-  config.fpvFreezeRoll=false;
   config.maxPWMfpvPitch=80;
   config.maxPWMfpvRoll=80;
-  config.fpvSwPitch=0;
-  config.fpvSwRoll=0;
-  config.altSwAccTime=0;
-  config.accTimeConstant2 = 2;
-  config.gyroCal = true;
-  config.gyrOffsetX = 0;       // gyyro calibration offset
-  config.gyrOffsetY = 0;
-  config.gyrOffsetZ = 0;
-  config.accOffsetX = 0;       // acc calibration offset
-  config.accOffsetY = 0;
-  config.accOffsetZ = 0;
+
   config.crc8 = 0;  
 }
 
@@ -166,27 +114,9 @@ typedef struct PIDdata {
 
 PIDdata_t pitchPIDpar,rollPIDpar;
 
-void initPIDs(void)
-{
-  rollPIDpar.Kp = config.gyroRollKp/10;
-  rollPIDpar.Ki = config.gyroRollKi/1000;
-  rollPIDpar.Kd = config.gyroRollKd/10/250;  // divide by 250 to keep compatibility to previous version 
-
-  pitchPIDpar.Kp = config.gyroPitchKp/10;
-  pitchPIDpar.Ki = config.gyroPitchKi/1000;
-  pitchPIDpar.Kd = config.gyroPitchKd/10/250;  // divide by 250 to keep compatibility to previous version
-  
-}
-
-static int32_t pitchErrorSum = 0;
-static int32_t rollErrorSum = 0;
-static int32_t pitchErrorOld = 0;
-static int32_t rollErrorOld = 0;
 
 
-// CRC definitions
-#define POLYNOMIAL 0xD8  /* 11011 followed by 0's */
-typedef uint8_t crc;
+
 
 
 
@@ -219,9 +149,7 @@ uint8_t pwm_a_motor0 = 128;
 uint8_t pwm_b_motor0 = 128;
 uint8_t pwm_c_motor0 = 128;
 
-uint8_t pwm_a_motor1 = 128;
-uint8_t pwm_b_motor1 = 128;
-uint8_t pwm_c_motor1 = 128;
+
 
 // battery voltage
 float voltageBat = 0;
@@ -268,7 +196,7 @@ struct rcData_t
  bool     rcAuxSwitch2;
 };
 
-rcData_t rcData[RC_DATA_SIZE];
+
 
 float rcLPFPitch_tc = 1.0;
 float rcLPFRoll_tc = 1.0;
