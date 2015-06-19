@@ -1,4 +1,3 @@
-
 #include "definitions.h"
 
 /*
@@ -220,57 +219,13 @@ ISR( TIMER1_OVF_vect )
     motorUpdate = true;
   }
  
-  
-  // care for standard timers every 1 ms
-  if ((freqCounter & 0x01f) == 0) {
-    TIMER0_isr_emulation();
-  }
+
 
 
 }
 
 
-/**********************************************************/
-/* voltage compensation                                   */
-/*   measure power supply voltage and compensate          */
-/*   motor power accordingly                              */
-/**********************************************************/
-void voltageCompensation () {
-  int uBatValue;
-  float pwmMotorScale;
-  
-  // measure uBat, 190 us
-  uBatValue = analogRead(ADC_VCC_PIN); // 118 us
-  uBatValue_f = (float)uBatValue * UBAT_ADC_SCALE * UBAT_SCALE;   
-  utilLP_float(&voltageBat, uBatValue_f, LOWPASS_K_FLOAT(0.1)); // tau = 1 sec
-   
-  if (config.motorPowerScale) {
-    // calculate scale factor for motor power (70us)
-    if (voltageBat*100 > config.cutoffVoltage) {  // switch off if battery voltage below cutoff
-      pwmMotorScale = (config.refVoltageBat * 0.01)/voltageBat;
-    } else {
-      pwmMotorScale = 0;
-    }
-  } else {
-    pwmMotorScale = 1.0;
-  }
-  
-  // 44us
-  if (fpvModeFreezePitch==true) {
-    maxPWMmotorPitchScaled = config.maxPWMfpvPitch * pwmMotorScale;  // fpv freeze mode
-  } else {
-    maxPWMmotorPitchScaled = config.maxPWMmotorPitch * pwmMotorScale;
-  }
-  maxPWMmotorPitchScaled = constrain(maxPWMmotorPitchScaled, 0, 255);
 
-  if (fpvModeFreezeRoll==true) {
-    maxPWMmotorRollScaled = config.maxPWMfpvRoll * pwmMotorScale; // fpv freeze mode
-  } else {
-    maxPWMmotorRollScaled = config.maxPWMmotorRoll * pwmMotorScale;
-  }
-  maxPWMmotorRollScaled = constrain(maxPWMmotorRollScaled, 0, 255);
-  
-}
 
 
 // switch off motor power
@@ -279,16 +234,3 @@ void motorPowerOff() {
   MoveMotorPosSpeed(config.motorNumberRoll, 0, 0);
 }
 
-
-
-
-
-void setup() {
-  // put your setup code here, to run once:
-
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-
-}

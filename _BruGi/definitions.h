@@ -1,6 +1,10 @@
 /*************************/
 /* Definitions           */
 /*************************/
+// MPU Address Settings
+#define MPU6050_ADDRESS_AD0_LOW     0x68 // default for InvenSense evaluation board
+#define MPU6050_ADDRESS_AD0_HIGH    0x69 // Drotek MPU breakout board
+#define MPU6050_DEFAULT_ADDRESS     MPU6050_ADDRESS_AD0_HIGH
 
 
 // Define Brushless PWM Mode, uncomment ONE setting
@@ -23,13 +27,64 @@
 // LP filter coefficient
 #define LOWPASS_K_FLOAT(TAU) (DT_FLOAT/(TAU+DT_FLOAT))
 
+// Do not change for now
+#define MPU6050_GYRO_FS MPU6050_GYRO_FS_250  // +-250,500,1000,2000 deg/s
+#define MPU6050_DLPF_BW MPU6050_DLPF_BW_256  // 5,10,20,42,98,188,256 Hz
+
 // Number of sinus values for full 360 deg.
 // NOW FIXED TO 256 !!!
 // Reason: Fast Motor Routine using uint8_t overflow for stepping
 #define N_SIN 256
 
+#define SCALE_ACC 10000.0
+#define SCALE_PID_PARAMS 1000.0f
+
+// specifie input for VCC/Ubat measurement
+#define ADC_VCC_PIN A3 
+
+#define UBAT_ADC_SCALE (5.0 / 1023.0)
+// voltage divider 
+#define UBAT_R1 10000.0
+#define UBAT_R2 2200.0
+#define UBAT_SCALE ( (UBAT_R1 + UBAT_R2) / UBAT_R2 )
 
 
+// RC data size and channel assigment
+#define RC_DATA_SIZE  5
+#define RC_DATA_PITCH 0
+#define RC_DATA_ROLL  1
+#define RC_DATA_AUX   2
+#define RC_DATA_FPV_PITCH 3
+#define RC_DATA_FPV_ROLL 4
+
+// RC PPM pin A0, A1 or A2
+#define RC_PIN_PPM_A2
+//#define RC_PIN_PPM_A1
+//#define RC_PIN_PPM_A0
+
+#define RC_PIN_CH0 A2 
+#define RC_PIN_CH1 A1 
+#define RC_PIN_CH2 A0 
+
+#define MIN_RC 1000
+#define MID_RC 1500
+#define MAX_RC 2000
+#define MIN_RC_VALID 900
+#define MAX_RC_VALID 2100
+#define RC_DEADBAND 50
+#define RC_TIMEOUT 100000
+
+// rc switch on/off threshold (as offset from MID_RC)
+#define RC_SW_THRESH 150
+
+// PPM Decoder
+#define RC_PPM_GUARD_TIME 4000
+#define RC_PPM_RX_MAX_CHANNELS 32
+
+// I2C Frequency
+//#define I2C_SPEED 100000L     //100kHz normal mode
+//#define I2C_SPEED 400000L   //400kHz fast mode
+#define I2C_SPEED 800000L   //800kHz ultra fast mode
 
 // Hardware Abstraction for Motor connectors,
 // DO NOT CHANGE UNLES YOU KNOW WHAT YOU ARE DOING !!!

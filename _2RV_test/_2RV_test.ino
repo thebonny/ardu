@@ -281,25 +281,13 @@ ISR(TIMER2_COMPA_vect) {
 void loop() 
   {
     
-    if (( millis() - c_time ) > 50) {
-      i=i+1;
-      c_time = millis();
-      if (i >= 30) {
-        i = 1;
-      }
-    }
+  
      
     SET_U_HIGH();
     SET_V_LOW();
     SET_W_LOW();
    
-    delayMicroseconds(i);
-  
-    SET_U_HIGH();
-    SET_V_LOW();
-    SET_W_HIGH();
     
-    delayMicroseconds(30-i);
     
 
   }
