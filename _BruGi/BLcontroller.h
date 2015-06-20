@@ -229,10 +229,3 @@ ISR( TIMER1_OVF_vect )
 
 
 
-
-
-// switch off motor power
-void motorPowerOff() {
-  MoveMotorPosSpeed(0, 0); 
-}
-
