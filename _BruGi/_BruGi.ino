@@ -1,3 +1,5 @@
+#include <LiquidCrystal_I2C.h>
+
 
 
 
@@ -54,13 +56,14 @@ void setup()
 /**********************************************/
 void loop() 
 { 
-
+i++;
     int sensorValue = analogRead(A0);
   // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
-  int pwm = map(sensorValue,0,1023,0,255);
+  int pwm = map(sensorValue,0,1023,0,2048);
   // print out the value you read:
 
-MoveMotorPosSpeed(pwm, 80);
+MoveMotorPosSpeed(i, 30);
+delay(100);
 
 
 
