@@ -3,6 +3,20 @@ volatile uint32_t risingEdge[6]; // time of last rising edge for each channel
 volatile uint32_t uSec[6]; // the latest measured pulse width for each channel
 unsigned int long time;
 unsigned int long start;
+unsigned long counter;
+unsigned short IR_ACTIVE = 0;
+
+
+char * TimeToString(unsigned long t) {
+  static char str[12];
+  long h = t / 3600;
+  t = t % 3600;
+  int m = t / 60;
+  int s = t % 60;
+  sprintf(str, "%04ld:%02d:%02d", h,m,s);
+  return str;
+  
+  }
 
 ISR(PCINT2_vect) { // one or more of pins 2~7 have changed state
   uint32_t now = micros();
@@ -21,29 +35,50 @@ ISR(PCINT2_vect) { // one or more of pins 2~7 have changed state
     channel++;
   }
   prev = curr;
+  IR_ACTIVE = 1;
 }
 
 void setup() {
-  start = millis();
+  counter = 1;
+ 
   Serial.begin(9600);
+    pinMode(2, INPUT);
+    pinMode(5, INPUT);
+    pinMode(6, INPUT);
+    pinMode(7, INPUT);
+  
 
-  for (int pin = 2; pin <= 7; pin++) { // enable pins 2 to 7 as our 6 input bits
-    pinMode(pin, INPUT);
-  }
-
-  PCMSK2 |= 0xFC; // set the mask to allow those 6 pins to generate interrupts
+  PCMSK2 |= 0xE4; // set the mask to allow those 6 pins to generate interrupts
   PCICR |= 0x04;  // enable interupt for port D
+
+  start = millis();
 }
 
 void loop() {
-  Serial.flush();
-  time = millis() - start;
-    Serial.print(time);
-    Serial.print("\t");
-  for (int channel = 0; channel < 6; channel++) {
   
-    Serial.print(uSec[channel]);
-    Serial.print("\t");
+  
+  
+  time = millis() - start;
+  if (IR_ACTIVE) {
+    if ( ((time % 40) == 0) | (time == 0) ) {
+      Serial.flush();  
+      Serial.print(counter);
+      Serial.print("\t");
+      Serial.print(time);
+      Serial.print("\t");
+      Serial.print(uSec[0]);
+      Serial.print("\t");
+       Serial.print(uSec[3]);
+      Serial.print("\t");
+       Serial.print(uSec[4]);
+      Serial.print("\t");
+       Serial.print(uSec[5]);
+  
+      Serial.println();
+      counter++;
+    }
   }
-  Serial.println();
+ 
+  
+ 
 }
