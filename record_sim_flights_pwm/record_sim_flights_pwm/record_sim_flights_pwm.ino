@@ -43,16 +43,22 @@ void setup() {
  
   Serial.begin(9600);
     pinMode(2, INPUT);
+    pinMode(3, INPUT);
+      pinMode(4, INPUT);
     pinMode(5, INPUT);
     pinMode(6, INPUT);
     pinMode(7, INPUT);
   
 
-  PCMSK2 |= 0xE4; // set the mask to allow those 6 pins to generate interrupts
+  PCMSK2 |= 0xFC; // set the mask to allow those 6 pins to generate interrupts
   PCICR |= 0x04;  // enable interupt for port D
 
   start = millis();
 }
+
+uint32_t mapTo100(uint32_t raw) {
+  return map(raw, 1000, 2000, 0, 100);
+  }
 
 void loop() {
   
@@ -64,15 +70,16 @@ void loop() {
       Serial.flush();  
       Serial.print(counter);
       Serial.print("\t");
-      Serial.print(time);
+      Serial.print(mapTo100(uSec[0]));
       Serial.print("\t");
-      Serial.print(uSec[0]);
+        Serial.print(mapTo100(uSec[1]));
       Serial.print("\t");
-       Serial.print(uSec[3]);
+      Serial.print(mapTo100(uSec[2]));
       Serial.print("\t");
-       Serial.print(uSec[4]);
+       Serial.print(mapTo100(uSec[3]));
       Serial.print("\t");
-       Serial.print(uSec[5]);
+       Serial.print(mapTo100(uSec[4]));
+    
   
       Serial.println();
       counter++;
