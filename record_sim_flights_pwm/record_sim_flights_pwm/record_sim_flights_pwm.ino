@@ -10,7 +10,9 @@ volatile uint32_t uSec[6]; // the latest measured pulse width for each channel
 unsigned int long time;
 unsigned int long start;
 unsigned long counter;
+unsigned int fileCounter = 1;
 unsigned short IR_ACTIVE = 0;
+String filename = "stik_1.txt";
 
 
 char * TimeToString(unsigned long t) {
@@ -73,6 +75,13 @@ void setup() {
   }
   Serial.println("initialization done.");
 
+  while (SD.exists( (char*) filename.c_str() )){
+    fileCounter++;
+    filename = "stik_";
+    filename += fileCounter;
+    filename += ".txt";
+  }
+        
   start = millis();
 }
 
@@ -100,8 +109,7 @@ void loop() {
       stickmoves += mapTo100(uSec[4]);    
       stickmoves += "\t";
       stickmoves += mapTo100(uSec[5]);    
-        
-      File dataFile = SD.open("datalog.txt", FILE_WRITE);
+     File dataFile = SD.open( filename.c_str(), FILE_WRITE);
   
       // if the file is available, write to it:
       if (dataFile) {
