@@ -77,8 +77,8 @@ void setup() {
 }
 
 uint32_t mapTo100(uint32_t raw) {
- // return map(raw, 1000, 2000, 0, 100);
-return raw;  
+  return map(raw, 1000, 2000, 0, 100);
+  
 }
 
 void loop() {
