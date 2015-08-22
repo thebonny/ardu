@@ -56,7 +56,7 @@ void setup() {
     pinMode(7, INPUT);
   
 
-  PCMSK2 |= 0xE4; // set the mask to allow those 6 pins to generate interrupts
+  PCMSK2 |= 0xFC; // set the mask to allow those 6 pins to generate interrupts
   PCICR |= 0x04;  // enable interupt for port D
   
   Serial.print("\nInitializing SD card...");
@@ -77,8 +77,9 @@ void setup() {
 }
 
 uint32_t mapTo100(uint32_t raw) {
-  return map(raw, 1000, 2000, 0, 100);
-  }
+ // return map(raw, 1000, 2000, 0, 100);
+return raw;  
+}
 
 void loop() {
   
@@ -94,13 +95,13 @@ void loop() {
       stickmoves += "\t";
       stickmoves += mapTo100(uSec[1]);       
       stickmoves += "\t";
-      stickmoves += mapTo100(uSec[2]);    
-      stickmoves += "\t";
       stickmoves += mapTo100(uSec[3]);    
       stickmoves += "\t";
       stickmoves += mapTo100(uSec[4]);    
+      stickmoves += "\t";
+      stickmoves += mapTo100(uSec[5]);    
         
-      File dataFile = SD.open("stickmoves.txt", FILE_WRITE);
+      File dataFile = SD.open("datalog.txt", FILE_WRITE);
   
       // if the file is available, write to it:
       if (dataFile) {
