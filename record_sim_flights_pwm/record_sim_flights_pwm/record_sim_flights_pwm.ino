@@ -13,7 +13,7 @@ unsigned long counter;
 unsigned int fileCounter = 1;
 unsigned short IR_ACTIVE = 0;
 String filename = "stik_1.txt";
-const double HALF_SWING_ANGLE = 0.196349540849362;
+const double HALF_SWING_ANGLE = 0.392699081698724;
 const double MITTENIMPULS = 1500.0;
 const double AUSSCHLAG = 500.0;
 

@@ -9,15 +9,15 @@ Servo roll_servo;
 
 unsigned int up = 1;
 
-unsigned long useconds = 1000;
+unsigned long useconds = 1000;                                        
 
 File myFile;
 
 
 unsigned int SERVO_PITCH_PIN = 8;
 unsigned int SERVO_RUDDER_PIN = 9;
-unsigned int SERVO_NICK_PIN = 11;
-unsigned int SERVO_ROLL_PIN = 12;
+unsigned int SERVO_NICK_PIN = 12;
+unsigned int SERVO_ROLL_PIN = 13;
 
 
 void setup() {
@@ -51,10 +51,13 @@ void loop() {
     
    
       pitch_servo.writeMicroseconds(useconds);
+      delay (10);
       rudder_servo.writeMicroseconds(useconds);
+      delay (10);
       nick_servo.writeMicroseconds(useconds);
+            delay (10);
       roll_servo.writeMicroseconds(useconds);
-      delay(19);
+      delay (10);
       
       if (up) {
       useconds += 5;
@@ -67,6 +70,7 @@ void loop() {
       } else if (useconds == 1000) {
         up = 1;
       }
+      Serial.println(useconds);
   
 }
 
