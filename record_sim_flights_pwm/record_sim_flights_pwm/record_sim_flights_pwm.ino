@@ -6,13 +6,17 @@ const int chipSelect = 4;
 
 volatile uint8_t prev; // remembers state of input bits from previous interrupt
 volatile uint32_t risingEdge[6]; // time of last rising edge for each channel
-volatile uint32_t uSec[6]; // the latest measured pulse width for each channel
+volatile double uSec[6]; // the latest measured pulse width for each channel
 unsigned int long time;
 unsigned int long start;
 unsigned long counter;
 unsigned int fileCounter = 1;
 unsigned short IR_ACTIVE = 0;
 String filename = "stik_1.txt";
+const double HALF_SWING_ANGLE = 0.196349540849362;
+const double MITTENIMPULS = 1500.0;
+const double AUSSCHLAG = 500.0;
+
 
 
 char * TimeToString(unsigned long t) {
@@ -77,18 +81,124 @@ void setup() {
 
   while (SD.exists( (char*) filename.c_str() )){
     fileCounter++;
-    filename = "stik_";
+    filename = "2308_";
     filename += fileCounter;
     filename += ".txt";
   }
+  
+  // TODO write header in datei
+  
+     String header = "";
+      header += "Bild";
+      header += "\t";
+      header += "Nick";
+      header += "\t";
+      header += "Roll";       
+      header += "\t";
+      header += "Gas";    
+      header += "\t";
+      header += "Ruder";    
+      header += "\t";
+      header += "Pitch";   
+      header += "\t";
+      header += "Nick R";
+      header += "\t";
+      header += "Roll R";       
+      header += "\t";
+      header += "Gas R";    
+      header += "\t";
+      header += "Ruder R";    
+      header += "\t";
+      header += "Pitch R";   
+ 
+      File dataFile = SD.open( filename.c_str(), FILE_WRITE);
+  
+      // if the file is available, write to it:
+      if (dataFile) {
+        dataFile.println(header);
+        dataFile.close();
+      } else {
+        Serial.println("error opening datalog.txt");
+      }
+        Serial.println(header);
         
-  start = millis();
+      start = millis();
 }
 
 uint32_t mapTo100(uint32_t raw) {
   return map(raw, 1000, 2000, 0, 100);
-  
+//  return raw;
 }
+
+double mapToRadiens(uint32_t raw) {
+ return ((raw-MITTENIMPULS)/AUSSCHLAG)*HALF_SWING_ANGLE;
+}
+
+String printFloat(double value, int places) {
+  // this is used to cast digits 
+  int digit;
+  float tens = 0.1;
+  int tenscount = 0;
+  int i;
+  float tempfloat = value;
+  String printed = "";
+
+    // make sure we round properly. this could use pow from <math.h>, but doesn't seem worth the import
+  // if this rounding step isn't here, the value  54.321 prints as 54.3209
+
+  // calculate rounding term d:   0.5/pow(10,places)  
+  float d = 0.5;
+  if (value < 0)
+    d *= -1.0;
+  // divide by ten for each decimal place
+  for (i = 0; i < places; i++)
+    d/= 10.0;    
+  // this small addition, combined with truncation will round our values properly 
+  tempfloat +=  d;
+
+  // first get value tens to be the large power of ten less than value
+  // tenscount isn't necessary but it would be useful if you wanted to know after this how many chars the number will take
+
+  if (value < 0)
+    tempfloat *= -1.0;
+  while ((tens * 10.0) <= tempfloat) {
+    tens *= 10.0;
+    tenscount += 1;
+  }
+
+
+  // write out the negative if needed
+  if (value < 0)
+    printed += "-";
+
+  if (tenscount == 0)
+        printed += "0";
+
+  for (i=0; i< tenscount; i++) {
+    digit = (int) (tempfloat/tens);
+    printed += digit;
+    tempfloat = tempfloat - ((float)digit * tens);
+    tens /= 10.0;
+  }
+
+  // if no places after decimal, stop now and return
+  if (places <= 0)
+    return printed;
+
+  // otherwise, write the point and continue on
+  printed += ".";
+
+  // now write out each decimal place by shifting digits one by one into the ones place and writing the truncated value
+  for (i = 0; i < places; i++) {
+    tempfloat *= 10.0; 
+    digit = (int) tempfloat;
+      printed += digit;    
+    // once written, subtract off that digit
+    tempfloat = tempfloat - (float) digit; 
+  }
+  return printed;
+}
+
 
 void loop() {
   
@@ -108,7 +218,18 @@ void loop() {
       stickmoves += "\t";
       stickmoves += mapTo100(uSec[4]);    
       stickmoves += "\t";
-      stickmoves += mapTo100(uSec[5]);    
+      stickmoves += mapTo100(uSec[5]);   
+      stickmoves += "\t";
+      stickmoves +=    printFloat(mapToRadiens(uSec[0]), 8);   
+      stickmoves += "\t";
+      stickmoves +=    printFloat(mapToRadiens(uSec[1]), 8);   
+      stickmoves += "\t";
+      stickmoves +=    printFloat(mapToRadiens(uSec[3]), 8);   
+      stickmoves += "\t";
+      stickmoves +=    printFloat(mapToRadiens(uSec[4]), 8);   
+      stickmoves += "\t";
+      stickmoves +=    printFloat(mapToRadiens(uSec[5]), 8);   
+          
      File dataFile = SD.open( filename.c_str(), FILE_WRITE);
   
       // if the file is available, write to it:
