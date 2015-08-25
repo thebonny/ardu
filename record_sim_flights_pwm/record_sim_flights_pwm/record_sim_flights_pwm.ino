@@ -1,6 +1,14 @@
 #include <SPI.h>
 #include <SD.h>
 
+/**
+* patching comment: starts with PIN 2
+* Nick (Channel 4) - PIN2
+* Roll (Channel 5) - PIN 3
+* Thrittle (Channel 1) - PIN 5
+* Rudder (Channel 3) - PIN 6
+* Pitch (Channel 2) - PIN 7
+*/
 
 const int chipSelect = 4;
 
