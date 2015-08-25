@@ -25,7 +25,7 @@ const double HALF_SWING_ANGLE = 0.392699081698724;
 const double MITTENIMPULS = 1500.0;
 const double AUSSCHLAG = 500.0;
 
-
+const double timestep = 0.04; // 40 ms, capture frequency 
 
 char * TimeToString(unsigned long t) {
   static char str[12];
@@ -99,6 +99,8 @@ void setup() {
      String header = "";
       header += "Bild";
       header += "\t";
+      header += "Zeit";
+      header += "\t";
       header += "Nick";
       header += "\t";
       header += "Roll";       
@@ -108,16 +110,7 @@ void setup() {
       header += "Ruder";    
       header += "\t";
       header += "Pitch";   
-      header += "\t";
-      header += "Nick R";
-      header += "\t";
-      header += "Roll R";       
-      header += "\t";
-      header += "Gas R";    
-      header += "\t";
-      header += "Ruder R";    
-      header += "\t";
-      header += "Pitch R";   
+  
  
       File dataFile = SD.open( filename.c_str(), FILE_WRITE);
   
@@ -134,8 +127,8 @@ void setup() {
 }
 
 uint32_t mapTo100(uint32_t raw) {
-  return map(raw, 1000, 2000, 0, 100);
-//  return raw;
+ // return map(raw, 1000, 2000, 0, 100);
+ return raw;
 }
 
 double mapToRadiens(uint32_t raw) {
@@ -209,14 +202,16 @@ String printFloat(double value, int places) {
 
 
 void loop() {
-  
-  
-  
+   
   time = millis() - start;
+  
+  
   if (IR_ACTIVE) {
     if ( ((time % 40) == 0) | (time == 0) ) {
       String stickmoves = "";
       stickmoves += counter;
+      stickmoves += "\t";
+      stickmoves += counter * timestep;
       stickmoves += "\t";
       stickmoves += mapTo100(uSec[0]);
       stickmoves += "\t";
@@ -226,8 +221,9 @@ void loop() {
       stickmoves += "\t";
       stickmoves += mapTo100(uSec[4]);    
       stickmoves += "\t";
-      stickmoves += mapTo100(uSec[5]);   
-      stickmoves += "\t";
+      stickmoves += mapTo100(uSec[5]);
+  
+   /*   stickmoves += "\t";
       stickmoves +=    printFloat(mapToRadiens(uSec[0]), 8);   
       stickmoves += "\t";
       stickmoves +=    printFloat(mapToRadiens(uSec[1]), 8);   
@@ -237,9 +233,10 @@ void loop() {
       stickmoves +=    printFloat(mapToRadiens(uSec[4]), 8);   
       stickmoves += "\t";
       stickmoves +=    printFloat(mapToRadiens(uSec[5]), 8);   
-          
+    */      
      File dataFile = SD.open( filename.c_str(), FILE_WRITE);
   
+      Serial.println(millis());
       // if the file is available, write to it:
       if (dataFile) {
         dataFile.println(stickmoves);
@@ -247,8 +244,8 @@ void loop() {
       } else {
         Serial.println("error opening datalog.txt");
       }
-      Serial.flush();  
-      Serial.println(stickmoves);
+      Serial.println(millis());
+ 
       counter++;
     }
   }
