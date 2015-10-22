@@ -55,7 +55,7 @@ int main(void)
 	pmc_enable_periph_clk(ID_PIOA);
 	
 	pio_set_input(PIOA, PIO_PA16, PIO_PULLUP);
-	pio_set_debounce_filter(PIOA, PIO_PA16, 1);
+	pio_set_debounce_filter(PIOA, PIO_PA16, 10);
 	pio_handler_set(PIOA, ID_PIOA, PIO_PA16, 0 /* TODO genaues Flanken/Level-Attribut festlegen */, Encoder_Handler);
 	NVIC_EnableIRQ((IRQn_Type) ID_PIOA);
 	pio_handler_set_priority(PIOA,(IRQn_Type) ID_PIOA, 0 /* highest priority = 0 */);
