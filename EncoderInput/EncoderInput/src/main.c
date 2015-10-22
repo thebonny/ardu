@@ -38,10 +38,12 @@ static void configure_console(void)
 static void Encoder_Handler(uint32_t id, uint32_t mask)
 {
 	if (id == id && mask == mask) {
+		
 		counter++;
-		printf("counter=%i::", counter);
+		printf("id=%i::maskIN=%i::status=%i::mask=%i", id, mask, pio_get_interrupt_status(PIOA), pio_get_interrupt_mask(PIOA));
 	}
 }
+
 int main(void)
 {
 
@@ -56,7 +58,7 @@ int main(void)
 	
 	pio_set_input(PIOA, PIO_PA16, PIO_PULLUP);
 	pio_set_debounce_filter(PIOA, PIO_PA16, 10);
-	pio_handler_set(PIOA, ID_PIOA, PIO_PA16, 0 /* TODO genaues Flanken/Level-Attribut festlegen */, Encoder_Handler);
+	pio_handler_set(PIOA, ID_PIOA, PIO_PA16, PIO_IT_EDGE, Encoder_Handler);
 	NVIC_EnableIRQ((IRQn_Type) ID_PIOA);
 	pio_handler_set_priority(PIOA,(IRQn_Type) ID_PIOA, 0 /* highest priority = 0 */);
 	pio_enable_interrupt(PIOA, PIO_PA16);
