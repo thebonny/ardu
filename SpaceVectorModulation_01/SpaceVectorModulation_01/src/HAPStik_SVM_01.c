@@ -3,6 +3,7 @@
 #include "conf_board.h"
 #include "fastmath.h";
 #include "foc.h";
+#include "delay.h"
 
 #define PWM_FREQUENCY   20000   // um 10kHz (20 KHz / 2) bei Center Aligned Waveform zu erhalten, benötigen wir 20 khz Basisfrequenz
 #define PERIOD_VALUE       100 
@@ -157,7 +158,13 @@ int main(void)
 		/* Duty cycle initial setzen */
 		.ul_duty = INIT_DUTY_VALUE,
 		/* der channel soll synchron sein */
-		.b_sync_ch = true
+		.b_sync_ch = true,
+		 
+		 .b_deadtime_generator = true,
+		 
+		 .us_deadtime_pwmh = 1,
+		 
+		 .us_deadtime_pwml = 1 
 	};
 
 	/* als erstes dann den Channel 0 initialisieren, indem nur das Channel Attribut in der Struktur von oben neu gesetzt wird,
@@ -190,12 +197,47 @@ int main(void)
 	die ASF funktion channel_enable erlaubt leider nur die Übergabe eines Kanals, also müssen wir hier wohl mit direktem Zugriff auf das Register arbeiten */
 	pwm_channel_enable(PWM, PWM_CHANNEL_0);
   // ref channel funktioniert noch nicht, muss noch debugged werden  pwm_channel_enable(PWM, PWM_CHANNEL_3);
+  
+  pmc_enable_periph_clk(ID_PIOA);
+  pio_set_output(PIOA, PIO_PA23, LOW, DISABLE, ENABLE);
+  
+  int angle = 0;
+  int up = 1;
+  float sinus = 0;
+  float a;
+  
 	while (1) {
-		display_menu();
+		
+		pio_set(PIOA, PIO_PA23);
+		for (int i = 0; i < 1000; i++)
+		{
+			sinus = sin(0.343543);
+			a = sinus;
+		}
+		
+		pio_clear(PIOA, PIO_PA23);
+		delay_us(4);
+		
+		
+		/*display_menu();
 		uint32_t angle = get_num_value();
-
-		printf("The angle is %i degrees.", angle);
 		struct SV pwm = get_vector_for_angle(angle);
 		SVPWM(pwm.u, pwm.v, pwm.w);
+		printf("The angle is %i degrees.", angle);
+		
+		for (int i = 0; i <= 360; i++) {
+			struct SV pwm = get_vector_for_angle(i);
+			SVPWM(pwm.u, pwm.v, pwm.w);
+			printf("%i Grad\r\n", i);
+			delay_ms(40);
+			
+		}
+		for (int i = 360; i >= 0; i--) {
+			struct SV pwm = get_vector_for_angle(i);
+			SVPWM(pwm.u, pwm.v, pwm.w);
+			printf("%i Grad\r\n", i);
+			delay_ms(40);
+			
+		}*/
 	}
 }

@@ -300,16 +300,16 @@ typedef struct {
 #if (SAM3U || SAM3S || SAM3XA || SAM4S || SAM4E || SAMV70 || SAMV71 || SAME70 || SAMS70)
     /** Channel counter event */
 	pwm_counter_event_t counter_event;
-    /** Boolean of channel dead-time generator */
-	bool b_deadtime_generator;
-    /** Boolean of channel dead-time PWMH output inverted */
-	bool b_pwmh_output_inverted;
-    /** Boolean of channel dead-time PWML output inverted */
-	bool b_pwml_output_inverted;
-	/** Dead-time Value for PWMH Output */
-	uint16_t us_deadtime_pwmh;
-	/** Dead-time Value for PWML Output */
-	uint16_t us_deadtime_pwml;
+		/** Boolean of channel dead-time generator */
+		bool b_deadtime_generator;
+		/** Boolean of channel dead-time PWMH output inverted */
+		bool b_pwmh_output_inverted;
+		/** Boolean of channel dead-time PWML output inverted */
+		bool b_pwml_output_inverted;
+		/** Dead-time Value for PWMH Output */
+		uint16_t us_deadtime_pwmh;
+		/** Dead-time Value for PWML Output */
+		uint16_t us_deadtime_pwml;
 	/** Channel output */
 	pwm_output_t output_selection;
 	/** Boolean of Synchronous Channel */

@@ -52,12 +52,12 @@ struct SV sector_SVPWM(float uum, float uvm, float uwm) {
             // 120 - 180 degrees
             if (uwm >= 0) {
                 struct PWM_Times times = PWM_Times_vector_calc(uum, uwm);
-                struct SV space_vector = { times.c, times.a, times.b };
+                struct SV space_vector = { times.b, times.c, times.a };
                 return space_vector;
             } else {
                 // 60-120 degrees
                 struct PWM_Times times = PWM_Times_vector_calc(-uvm, -uwm);
-                struct SV space_vector = { times.b, times.a, times.c };
+                struct SV space_vector = { times.a, times.c, times.b };
                 return space_vector;
             }
         } 
@@ -66,12 +66,12 @@ struct SV sector_SVPWM(float uum, float uvm, float uwm) {
             // 240 - 300 degrees
             if (uwm >= 0) {
                 struct PWM_Times times = PWM_Times_vector_calc(uwm, uvm);
-                struct SV space_vector = { times.b, times.c, times.a };
+                struct SV space_vector = { times.c, times.a, times.b };
                 return space_vector;
             } else {
                 // 300-0 degrees
                 struct PWM_Times times = PWM_Times_vector_calc(-uwm, -uum);
-                struct SV space_vector = { times.a, times.c, times.b };
+                struct SV space_vector = { times.b, times.a, times.c };
                 return space_vector;
             }
         } else {
