@@ -4834,7 +4834,7 @@ LOAD c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin
                 0x00083d04                . = ALIGN (0x4)
                 0x00083d04                _etext = .
 
-.relocate       0x20070000      0x994 load address 0x00083d04
+.relocate       0x20070000      0x99c load address 0x00083d04
                 0x20070000                . = ALIGN (0x4)
                 0x20070000                _srelocate = .
  *(.ramfunc .ramfunc.*)
@@ -4845,78 +4845,80 @@ LOAD c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin
  .data.SystemCoreClock
                 0x2007012c        0x4 src/ASF/sam/utils/cmsis/sam3x/source/templates/system_sam3x.o
                 0x2007012c                SystemCoreClock
+ .data.counter  0x20070130        0x4 src/main.o
+                0x20070130                counter
+ *fill*         0x20070134        0x4 
  .data.impure_data
-                0x20070130      0x428 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-impure.o)
+                0x20070138      0x428 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-impure.o)
  .data._impure_ptr
-                0x20070558        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-impure.o)
-                0x20070558                _impure_ptr
+                0x20070560        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-impure.o)
+                0x20070560                _impure_ptr
  .data.lc_ctype_charset
-                0x2007055c       0x20 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-locale.o)
+                0x20070564       0x20 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-locale.o)
  .data.__mb_cur_max
-                0x2007057c        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-locale.o)
-                0x2007057c                __mb_cur_max
+                0x20070584        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-locale.o)
+                0x20070584                __mb_cur_max
  .data.__malloc_av_
-                0x20070580      0x408 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
-                0x20070580                __malloc_av_
+                0x20070588      0x408 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
+                0x20070588                __malloc_av_
  .data.__malloc_trim_threshold
-                0x20070988        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
-                0x20070988                __malloc_trim_threshold
+                0x20070990        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
+                0x20070990                __malloc_trim_threshold
  .data.__malloc_sbrk_base
-                0x2007098c        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
-                0x2007098c                __malloc_sbrk_base
+                0x20070994        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
+                0x20070994                __malloc_sbrk_base
  .data.__wctomb
-                0x20070990        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-wctomb_r.o)
-                0x20070990                __wctomb
-                0x20070994                . = ALIGN (0x4)
-                0x20070994                _erelocate = .
+                0x20070998        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-wctomb_r.o)
+                0x20070998                __wctomb
+                0x2007099c                . = ALIGN (0x4)
+                0x2007099c                _erelocate = .
 
-.bss            0x20070994       0xdc load address 0x00084698
-                0x20070994                . = ALIGN (0x4)
-                0x20070994                _sbss = .
-                0x20070994                _szero = .
+.bss            0x2007099c       0xd8 load address 0x000846a0
+                0x2007099c                . = ALIGN (0x4)
+                0x2007099c                _sbss = .
+                0x2007099c                _szero = .
  *(.bss .bss.*)
- .bss           0x20070994       0x1c c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/armv7-m/crtbegin.o
+ .bss           0x2007099c       0x1c c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/armv7-m/crtbegin.o
  .bss.gs_ul_nb_sources
-                0x200709b0        0x4 src/ASF/sam/drivers/pio/pio_handler.o
+                0x200709b8        0x4 src/ASF/sam/drivers/pio/pio_handler.o
  .bss.gs_interrupt_sources
-                0x200709b4       0x70 src/ASF/sam/drivers/pio/pio_handler.o
+                0x200709bc       0x70 src/ASF/sam/drivers/pio/pio_handler.o
  .bss.heap.5212
-                0x20070a24        0x4 src/ASF/sam/utils/syscalls/gcc/syscalls.o
- .bss.counter   0x20070a28        0x4 src/main.o
-                0x20070a28                counter
+                0x20070a2c        0x4 src/ASF/sam/utils/syscalls/gcc/syscalls.o
  .bss.__malloc_max_total_mem
-                0x20070a2c        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
-                0x20070a2c                __malloc_max_total_mem
- .bss.__malloc_max_sbrked_mem
                 0x20070a30        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
-                0x20070a30                __malloc_max_sbrked_mem
- .bss.__malloc_top_pad
+                0x20070a30                __malloc_max_total_mem
+ .bss.__malloc_max_sbrked_mem
                 0x20070a34        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
-                0x20070a34                __malloc_top_pad
+                0x20070a34                __malloc_max_sbrked_mem
+ .bss.__malloc_top_pad
+                0x20070a38        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
+                0x20070a38                __malloc_top_pad
  .bss.__malloc_current_mallinfo
-                0x20070a38       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
-                0x20070a38                __malloc_current_mallinfo
+                0x20070a3c       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-mallocr.o)
+                0x20070a3c                __malloc_current_mallinfo
  *(COMMON)
- COMMON         0x20070a60        0x4 src/ASF/common/utils/stdio/read.o
-                0x20070a60                ptr_get
- COMMON         0x20070a64        0x8 src/ASF/common/utils/stdio/write.o
-                0x20070a64                ptr_put
-                0x20070a68                stdio_base
- COMMON         0x20070a6c        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-reent.o)
-                0x20070a6c                errno
-                0x20070a70                . = ALIGN (0x4)
-                0x20070a70                _ebss = .
-                0x20070a70                _ezero = .
+ COMMON         0x20070a64        0x4 src/ASF/common/utils/stdio/read.o
+                0x20070a64                ptr_get
+ COMMON         0x20070a68        0x8 src/ASF/common/utils/stdio/write.o
+                0x20070a68                ptr_put
+                0x20070a6c                stdio_base
+ COMMON         0x20070a70        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/../lib/gcc/arm-none-eabi/4.9.3/../../../../arm-none-eabi/lib/armv7-m\libc.a(lib_a-reent.o)
+                0x20070a70                errno
+                0x20070a74                . = ALIGN (0x4)
+                0x20070a74                _ebss = .
+                0x20070a74                _ezero = .
 
-.stack          0x20070a70     0x2000 load address 0x00084774
-                0x20070a70                . = ALIGN (0x8)
-                0x20070a70                _sstack = .
-                0x20072a70                . = (. + __stack_size__)
- *fill*         0x20070a70     0x2000 
-                0x20072a70                . = ALIGN (0x8)
-                0x20072a70                _estack = .
-                0x20072a70                . = ALIGN (0x4)
-                0x20072a70                _end = .
+.stack          0x20070a74     0x2004 load address 0x00084778
+                0x20070a78                . = ALIGN (0x8)
+ *fill*         0x20070a74        0x4 
+                0x20070a78                _sstack = .
+                0x20072a78                . = (. + __stack_size__)
+ *fill*         0x20070a78     0x2000 
+                0x20072a78                . = ALIGN (0x8)
+                0x20072a78                _estack = .
+                0x20072a78                . = ALIGN (0x4)
+                0x20072a78                _end = .
 OUTPUT(EncoderInput.elf elf32-littlearm)
 
 .ARM.attributes
@@ -5316,7 +5318,7 @@ OUTPUT(EncoderInput.elf elf32-littlearm)
  .debug_line    0x00009720      0x399 src/ASF/sam/utils/syscalls/gcc/syscalls.o
  .debug_line    0x00009ab9      0xebd src/main.o
 
-.debug_str      0x00000000    0x62b47
+.debug_str      0x00000000    0x62b89
  .debug_str     0x00000000    0x5b1ed src/ASF/common/utils/stdio/read.o
                               0x5b4f7 (size before relaxing)
  .debug_str     0x0005b1ed      0xc86 src/ASF/sam/drivers/usart/usart.o
@@ -5343,8 +5345,8 @@ OUTPUT(EncoderInput.elf elf32-littlearm)
                               0x5b7f9 (size before relaxing)
  .debug_str     0x00061c66      0x852 src/ASF/sam/utils/syscalls/gcc/syscalls.o
                                0x60e0 (size before relaxing)
- .debug_str     0x000624b8      0x68f src/main.o
-                              0x6080e (size before relaxing)
+ .debug_str     0x000624b8      0x6d1 src/main.o
+                              0x6080f (size before relaxing)
 
 .debug_frame    0x00000000     0x1f60
  .debug_frame   0x00000000       0x38 src/ASF/common/utils/stdio/read.o

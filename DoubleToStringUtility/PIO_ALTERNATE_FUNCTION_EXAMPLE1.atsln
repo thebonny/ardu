@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Atmel Studio Solution File, Format Version 11.00
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "PWM_PWM_LED_EXAMPLE1", "PWM_PWM_LED_EXAMPLE1\PWM_PWM_LED_EXAMPLE1.cproj", "{D33168D7-7A71-43E8-848A-E5ADA0EAB34C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Release|ARM = Release|ARM
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D33168D7-7A71-43E8-848A-E5ADA0EAB34C}.Debug|ARM.ActiveCfg = Debug|ARM
+		{D33168D7-7A71-43E8-848A-E5ADA0EAB34C}.Debug|ARM.Build.0 = Debug|ARM
+		{D33168D7-7A71-43E8-848A-E5ADA0EAB34C}.Release|ARM.ActiveCfg = Release|ARM
+		{D33168D7-7A71-43E8-848A-E5ADA0EAB34C}.Release|ARM.Build.0 = Release|ARM
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -2,6 +2,7 @@
 #include <stdio_serial.h>
 #include <conf_board.h>
 #include <conf_clock.h>
+#include <PID_v1.h>
 
 
 #define STRING_EOL    "\r"
@@ -10,7 +11,7 @@
 		"-- Compiled: "__DATE__ " "__TIME__ " --"STRING_EOL
 
 
-volatile counter = 0;
+volatile counter = 1;
 
 
 
