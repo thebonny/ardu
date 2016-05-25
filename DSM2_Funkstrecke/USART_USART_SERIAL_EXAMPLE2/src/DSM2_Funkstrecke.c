@@ -46,6 +46,75 @@ static uint32_t gs_ul_read_buffer = 0;
 /** DSM2 frame frequency in Hz */
 #define TC_FREQ             50
 
+/** Read poti ADC stuff */
+#define TRACKING_TIME         1
+/* Transfer Period */
+#define TRANSFER_PERIOD       1
+
+#define ADC_CHANNEL_POTENTIOMETER  ADC_CHANNEL_1
+
+static volatile uint32_t adc_value = 0;
+
+/**
+ * \brief Start ADC sample.
+ * Initialize ADC, set clock and timing, and set ADC to given mode.
+ */
+static void start_adc(void)
+{
+	pmc_enable_periph_clk(ID_ADC);
+
+	/* Initialize ADC. */
+	/*
+	 * Formula: ADCClock = MCK / ( (PRESCAL+1) * 2 )
+	 * For example, MCK = 64MHZ, PRESCAL = 4, then:
+	 * ADCClock = 64 / ((4+1) * 2) = 6.4MHz;
+	 */
+	/* Formula:
+	 *     Startup  Time = startup value / ADCClock
+	 *     Startup time = 64 / 6.4MHz = 10 us
+	 */
+	adc_init(ADC, sysclk_get_cpu_hz(), 6400000, ADC_STARTUP_TIME_4);
+
+	/* Formula:
+	 *     Transfer Time = (TRANSFER * 2 + 3) / ADCClock
+	 *     Tracking Time = (TRACKTIM + 1) / ADCClock
+	 *     Settling Time = settling value / ADCClock
+	 *
+	 *     Transfer Time = (1 * 2 + 3) / 6.4MHz = 781 ns
+	 *     Tracking Time = (1 + 1) / 6.4MHz = 312 ns
+	 *     Settling Time = 3 / 6.4MHz = 469 ns
+	 */
+	adc_configure_timing(ADC, TRACKING_TIME, ADC_SETTLING_TIME_3, TRANSFER_PERIOD);
+	/* Enable channels. */
+	adc_enable_channel(ADC, ADC_CHANNEL_POTENTIOMETER);
+	/* Enable Data ready interrupt. */
+	adc_enable_interrupt(ADC, ADC_IER_DRDY);
+	/* Enable ADC interrupt. */
+	NVIC_EnableIRQ(ADC_IRQn);
+	adc_configure_trigger(ADC, ADC_TRIG_SW, 0);	/* Disable hardware trigger. */	
+	
+}
+
+
+void ADC_Handler(void)
+{
+	uint32_t i;
+	uint32_t ul_temp;
+	uint8_t uc_ch_num;
+
+	/* Without PDC transfer */
+	if ((adc_get_status(ADC) & ADC_ISR_DRDY) ==
+			ADC_ISR_DRDY) {
+		ul_temp = adc_get_latest_value(ADC);
+	//	printf("%04d mv.    ",(int)(ul_temp));
+				adc_value =
+						ul_temp &
+						ADC_LCDR_LDATA_Msk;
+		
+	}
+	
+}
+
 static void sendDSM2() {
 
 	
@@ -66,7 +135,7 @@ static void sendDSM2() {
 
 	// alle 6 Channel Werte holen
 	for (uint8_t i = 0; i < DSM2_CHANNELS; i++) {	// get receiver data
-		uint16_t temp = 511;
+		uint16_t temp = (adc_value * CENTER_DSM2 * 2) / 0xFFF;
 		DSM2_Data.Channel[i * 2]   = (uint8_t)(i << 2) | (temp >> 8);
 		DSM2_Data.Channel[i * 2 + 1] = temp;
 	}
@@ -75,7 +144,7 @@ static void sendDSM2() {
 
 	if (Mode == BINDING) {
 		// die 2 HeaderBytes und die Channel-Werte senden
-		//   Serial1.write(DX5eBindData, sizeof(DX5eBindData));
+		//  Serial1.write(DX5eBindData, sizeof(DX5eBindData));
 		} else {
 		// die 2 HeaderBytes und die Channel-Werte senden
 		usart_putchar(BOARD_USART, DSM2_Data.Header[0]);
@@ -187,7 +256,9 @@ int main(void)
 	configure_tc();
 	
 	tc_start(TC1, 0);
-	while (1) {
+	start_adc();
 	
+	while (1) {
+		adc_start(ADC);
 	}
 }
