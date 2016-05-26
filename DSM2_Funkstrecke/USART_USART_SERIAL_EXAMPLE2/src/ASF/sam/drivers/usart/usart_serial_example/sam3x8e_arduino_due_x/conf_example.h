@@ -54,7 +54,7 @@
 
 #define BOARD_USART                USART0
 
-#define BOARD_USART_BAUDRATE       115200
+#define BOARD_USART_BAUDRATE       125000
 
 #define USART_Handler              USART0_Handler
 

@@ -35,6 +35,8 @@ struct DSM2_Data {		            // TX data struct
 #ifdef sendDX5eBindData
 // DX5e Bind Data
 static uint8_t DX5eBindData[(DSM2_CHANNELS * 2) + 2] = {CODE_BINDING, 0x00, 0x00, 0x00, 0x05, 0xFF, 0x09, 0xFF, 0x0D, 0xFF, 0x10, 0xAA, 0x14, 0xAA};
+// 
+static uint8_t DX5eBindData[(DSM2_CHANNELS * 2) +2 ]={CODE_BINDING, 0x00, 0x00,0xaa, 0x05,0xff, 0x09,0xff, 0x0d,0xff, 0x13,0x54, 0x14,0xaa};
 #endif
 
 /** All interrupt mask. */
@@ -43,8 +45,8 @@ static uint8_t DX5eBindData[(DSM2_CHANNELS * 2) + 2] = {CODE_BINDING, 0x00, 0x00
 /** Byte mode read buffer. */
 static uint32_t gs_ul_read_buffer = 0;
 
-/** DSM2 frame frequency in Hz */
-#define TC_FREQ             50
+/** DSM2 frame frequency in Hz, is 22ms framerate */
+#define TC_FREQ             45.454545
 
 /** Read poti ADC stuff */
 #define TRACKING_TIME         1
@@ -122,41 +124,28 @@ static void sendDSM2() {
 		DSM2_Data.Header[0] = CODE_NORMAL_SENDING;
 	}
 	else if (Mode == BINDING) {
-		DSM2_Data.Header[0] = CODE_BINDING;
-		
+		DSM2_Data.Header[0] = CODE_BINDING;	
 	}
-	else {
-		DSM2_Data.Header[0] = CODE_LOW_POWER;
-		
-	}
-
 	DSM2_Data.Header[1] = 0x00;              		// second header byte
-	
-
 	// alle 6 Channel Werte holen
 	for (uint8_t i = 0; i < DSM2_CHANNELS; i++) {	// get receiver data
 		uint16_t temp = (adc_value * CENTER_DSM2 * 2) / 0xFFF;
 		DSM2_Data.Channel[i * 2]   = (uint8_t)(i << 2) | (temp >> 8);
 		DSM2_Data.Channel[i * 2 + 1] = temp;
 	}
-
-
-
+	
 	if (Mode == BINDING) {
-		// die 2 HeaderBytes und die Channel-Werte senden
-		//  Serial1.write(DX5eBindData, sizeof(DX5eBindData));
-		} else {
+		for (int i = 0; i < 14; i++) {
+			usart_putchar(BOARD_USART, DX5eBindData[i]);
+		}
+	} else {
 		// die 2 HeaderBytes und die Channel-Werte senden
 		usart_putchar(BOARD_USART, DSM2_Data.Header[0]);
 		usart_putchar(BOARD_USART, DSM2_Data.Header[1]);
-		for (int i = 0; i < 12; i++) {
+		for (int i = 0; i < (DSM2_CHANNELS*2); i++) {
 			usart_putchar(BOARD_USART, DSM2_Data.Channel[i]);
 		}
-		
-		
 	}
-
-
 }
 
 void TC3_Handler(void)
@@ -171,6 +160,8 @@ void TC3_Handler(void)
 	if ((ul_status & TC_SR_CPCS) == TC_SR_CPCS)  {
 		sendDSM2();
 	}
+	// after sending the DSM packet there is enough time to start AD Conversion
+	adc_start(ADC);
 }
 
 static void configure_usart(void)
@@ -210,10 +201,10 @@ static void configure_tc(void)
 	/* Configure PMC. */
 	pmc_enable_periph_clk(ID_TC3);
 
-	/* Configure TC for a 50Hz frequency and trigger on RC compare. */
+	/* Configure TC for a 22ms frequency and trigger on RC compare. */
 	tc_find_mck_divisor(TC_FREQ, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);
 	tc_init(TC1, 0, ul_tcclks | TC_CMR_CPCTRG);
-	tc_write_rc(TC1, 0, (ul_sysclk / ul_div) / TC_FREQ);
+	tc_write_rc(TC1, 0, 57750);
 
 	/* Configure and enable interrupt on RC compare. */
 	NVIC_EnableIRQ((IRQn_Type)ID_TC3);
@@ -230,6 +221,11 @@ static void configure_console(void)
 	/* Configure console UART. */
 	sysclk_enable_peripheral_clock(CONSOLE_UART_ID);
 	stdio_serial_init(CONF_UART, &uart_serial_options);
+}
+
+static void configure_binding_pin(void) {
+	pmc_enable_periph_clk(ID_PIOA);
+	pio_set_input(PIOA, PIO_PA16, PIO_PULLUP);
 }
 
 
@@ -255,10 +251,21 @@ int main(void)
 
 	configure_tc();
 	
+	configure_binding_pin();
+	
 	tc_start(TC1, 0);
 	start_adc();
 	
+	
+	
 	while (1) {
-		adc_start(ADC);
+		if (pio_get(PIOA, PIO_TYPE_PIO_INPUT, PIO_PA16)) {
+		// if binding pin high, then normal sending
+		Mode = SEND_DSM2;
+
+	} else {
+		// if low then binding
+		Mode = BINDING;
+	}
 	}
 }
