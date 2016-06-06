@@ -58,7 +58,7 @@ int val = 0;       // variable to store the value coming from the sensor
 void setup() {
   pinMode(ledPin, OUTPUT);  // declare the ledPin as an OUTPUT
   delay(100);
-  Serial1.begin(125000);                     // closest speed for DSM2 module, otherwise it won't work
+  Serial.begin(125000);                     // closest speed for DSM2 module, otherwise it won't work
   // ------------- Init Ports ----------------
   pinMode(BINDING_PIN, INPUT);              // set binding pin
   digitalWrite(BINDING_PIN, HIGH);          // turn on internal pullup resistor on binding switch
@@ -161,10 +161,10 @@ void sendDSM2() {
 
   if (Mode == BINDING)
     // die 2 HeaderBytes und die Channel-Werte senden
-    Serial1.write(DX5eBindData, sizeof(DX5eBindData));
+    Serial.write(DX5eBindData, sizeof(DX5eBindData));
   else
     // die 2 HeaderBytes und die Channel-Werte senden
-    Serial1.write(DSM2_Data.Header, sizeof(DSM2_Data));
+    Serial.write(DSM2_Data.Header, sizeof(DSM2_Data));
 
 
 

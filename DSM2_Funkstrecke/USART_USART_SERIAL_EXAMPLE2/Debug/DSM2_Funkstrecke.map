@@ -6167,7 +6167,7 @@ OUTPUT(DSM2_Funkstrecke.elf elf32-littlearm)
  .comment       0x00000000       0x5c src/ASF/sam/utils/syscalls/gcc/syscalls.o
  .comment       0x00000000       0x5c src/DSM2_Funkstrecke.o
 
-.debug_info     0x00000000     0xb60d
+.debug_info     0x00000000     0xb60c
  .debug_info    0x00000000      0x742 src/ASF/common/services/clock/sam3x/sysclk.o
  .debug_info    0x00000742      0x1be src/ASF/common/utils/stdio/read.o
  .debug_info    0x00000900      0x1c0 src/ASF/common/utils/stdio/write.o
@@ -6183,9 +6183,9 @@ OUTPUT(DSM2_Funkstrecke.elf elf32-littlearm)
  .debug_info    0x00008500      0x3bd src/ASF/sam/utils/cmsis/sam3x/source/templates/gcc/startup_sam3x.o
  .debug_info    0x000088bd      0x4c6 src/ASF/sam/utils/cmsis/sam3x/source/templates/system_sam3x.o
  .debug_info    0x00008d83      0x43f src/ASF/sam/utils/syscalls/gcc/syscalls.o
- .debug_info    0x000091c2     0x244b src/DSM2_Funkstrecke.o
+ .debug_info    0x000091c2     0x244a src/DSM2_Funkstrecke.o
 
-.debug_abbrev   0x00000000     0x1e36
+.debug_abbrev   0x00000000     0x1e25
  .debug_abbrev  0x00000000      0x227 src/ASF/common/services/clock/sam3x/sysclk.o
  .debug_abbrev  0x00000227      0x101 src/ASF/common/utils/stdio/read.o
  .debug_abbrev  0x00000328       0xf5 src/ASF/common/utils/stdio/write.o
@@ -6201,7 +6201,7 @@ OUTPUT(DSM2_Funkstrecke.elf elf32-littlearm)
  .debug_abbrev  0x0000168d      0x118 src/ASF/sam/utils/cmsis/sam3x/source/templates/gcc/startup_sam3x.o
  .debug_abbrev  0x000017a5      0x115 src/ASF/sam/utils/cmsis/sam3x/source/templates/system_sam3x.o
  .debug_abbrev  0x000018ba      0x14e src/ASF/sam/utils/syscalls/gcc/syscalls.o
- .debug_abbrev  0x00001a08      0x42e src/DSM2_Funkstrecke.o
+ .debug_abbrev  0x00001a08      0x41d src/DSM2_Funkstrecke.o
 
 .debug_loc      0x00000000     0x4a7b
  .debug_loc     0x00000000       0xed src/ASF/common/services/clock/sam3x/sysclk.o
