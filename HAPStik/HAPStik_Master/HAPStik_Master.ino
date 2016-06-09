@@ -5,7 +5,7 @@
 // See Library "Docs" folder for possible commands etc.
 #include <LiquidCrystal_I2C.h>
 
-String readString;
+
 
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
 
@@ -20,19 +20,13 @@ void setup(){
 }
 
 void loop(){
+ int sensorValue = analogRead(A0);
  
-  while (Serial1.available()) {                 // read the response from the BT module
 
-   delay(3);  //delay to allow buffer to fill 
-   if (Serial1.available() >0) {
-     char c = Serial1.read();     // gets one byte from serial buffer
-     readString += c;     // makes the string readString
-   } 
- }
- lcd.print(readString);
- readString = "";
- delay(1000);
- Serial1.print("Mirko ");
+ Serial1.print(sensorValue);
  lcd.clear();
+ lcd.print("Stick Position: ");
+ lcd.print(sensorValue);
+  delay(20);
 
 }

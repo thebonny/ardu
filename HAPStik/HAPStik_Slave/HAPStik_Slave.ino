@@ -16,7 +16,7 @@ void setup(){
  lcd.backlight();
  lcd.print("TEST");
 
- delay(3000);
+ delay(1000);
 }
 
 void loop(){
@@ -28,9 +28,10 @@ void loop(){
      readString += c;     // makes the string readString
    } 
  }
+ lcd.clear();
+ lcd.print("Stick Position: ");
  lcd.print(readString);
  readString = "";
- delay(1000);
- Serial.print("spinnt! ");
- lcd.clear();
+ delay(20);
+ 
 }
