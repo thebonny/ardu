@@ -31,7 +31,7 @@ void TC_Handler(void)
 		gs_ul_captured_rb = tc_read_rb(TC, TC_CHANNEL_CAPTURE);
 		micros = (gs_ul_captured_rb * 8) / 21; // clock is Master Clock with prescaler 32 at 84 MHz Master Clock
 		if (micros > 3000) {
-			// sync pulse
+			// PPM sync pulse, recount channels starting with 0
 			channel_id = 0;
 			return;
 		}
@@ -78,7 +78,7 @@ int main(void)
 	
 	tc_enable_interrupt(TC, TC_CHANNEL_CAPTURE, TC_IER_LDRBS);
 	tc_start(TC, TC_CHANNEL_CAPTURE);
-	
+	printf("TESTESTESTESTESTESTESTEST");
 	while(1) {
 		for (int i = 0; i < 8; i++) {
 			printf("%d::", CHANNEL[i]);

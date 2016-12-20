@@ -4,6 +4,8 @@
 
 src\ASF\common\services\clock\sam3x\sysclk.c
 
+src\ASF\common\services\delay\sam\cycle_counter.c
+
 src\ASF\common\services\serial\usart_serial.c
 
 src\ASF\common\utils\interrupt\interrupt_sam_nvic.c
@@ -36,5 +38,5 @@ src\ASF\sam\utils\cmsis\sam3x\source\templates\system_sam3x.c
 
 src\ASF\sam\utils\syscalls\gcc\syscalls.c
 
-src\tc_capture_waveform_example.c
+src\HAPStik_Aggregat.c
 
