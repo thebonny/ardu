@@ -19,7 +19,10 @@
 
 #define TICKS_PER_uS 42
 #define NUMBER_OF_RC_CHANNELS 8
+#define MIN_PWM_MICROS 600
+#define MAX_PWM_MICROS 1600
 #define MID_PWM_MICROS 1100
+#define THROW_PWM_MICROS 500
 #define PPM_PULSE_MICROS 400
 #define PPM_FRAME_LENGTH_TOTAL_MICROS 20000 // 20ms frame
 
@@ -104,22 +107,26 @@ int main(void)
 	ioport_disable_pin(PIN_TC_WAVEFORM);
 	tc_waveform_initialize();
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-		rc_channels[i] = MID_PWM_MICROS;
+		rc_channels[i] = MIN_PWM_MICROS;
 	}
 
 	while (1) {
 		printf("start!");
-		for (int i = 1; i < 500; i++) {
+		for (int i = 1; i < 1000; i++) {
 			rc_channels[2]++;
-			rc_channels[4]--;
-			//printf("channel=%d\r\n" , channel);
-			delay_ms(10);
-		}
-		for (int i = 1; i < 500; i++) {
-			rc_channels[2]--;
 			rc_channels[4]++;
+			rc_channels[1]++;
+			rc_channels[3]++;
 			//printf("channel=%d\r\n" , channel);
-			delay_ms(10);
+			delay_ms(2);
+		}
+		for (int i = 1; i < 1000; i++) {
+			rc_channels[2]--;
+		rc_channels[4]--;
+				rc_channels[1]--;
+			rc_channels[3]--;
+			//printf("channel=%d\r\n" , channel);
+			delay_ms(1);
 		}
 	}
 }
