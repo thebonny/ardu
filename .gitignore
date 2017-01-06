@@ -6,3 +6,6 @@
 *.map
 *.srec
 *.o
+*.mk
+*.d
+*.cproj
