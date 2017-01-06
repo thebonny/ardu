@@ -2,6 +2,7 @@
 #include <conf_clock.h>
 #include <conf_board.h>
 #include <delay.h>
+#include <ppm_capture.h>
 
 
 /** Use TC Peripheral 0 **/
@@ -29,6 +30,10 @@
 volatile static uint32_t rc_channels[NUMBER_OF_RC_CHANNELS];
 volatile static unsigned int current_channel = 0;
 volatile static uint32_t accumulated_frame_length = 0;
+
+
+
+
 
 
 
@@ -106,27 +111,19 @@ int main(void)
 	ioport_set_pin_mode(PIN_TC_WAVEFORM, PIN_TC_WAVEFORM_MUX);
 	ioport_disable_pin(PIN_TC_WAVEFORM);
 	tc_waveform_initialize();
+	//
+	ppm_capture_initialize();
+	//
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 		rc_channels[i] = MIN_PWM_MICROS;
 	}
 
 	while (1) {
-		printf("start!");
-		for (int i = 1; i < 1000; i++) {
-			rc_channels[2]++;
-			rc_channels[4]++;
-			rc_channels[1]++;
-			rc_channels[3]++;
-			//printf("channel=%d\r\n" , channel);
-			delay_ms(2);
+		for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
+			rc_channels[i] = get_channel_value_as_PPM(i);
+			
 		}
-		for (int i = 1; i < 1000; i++) {
-			rc_channels[2]--;
-		rc_channels[4]--;
-				rc_channels[1]--;
-			rc_channels[3]--;
-			//printf("channel=%d\r\n" , channel);
-			delay_ms(1);
-		}
+	
+		
 	}
 }
