@@ -19,12 +19,13 @@
 
 #define TICKS_PER_uS 42
 #define NUMBER_OF_RC_CHANNELS 8
-#define MID_PWM_MICROS 1500
-#define PPM_PULSE_MICROS 300
-#define SYNC_PULSE_MICROS 3000
+#define MID_PWM_MICROS 1100
+#define PPM_PULSE_MICROS 400
+#define PPM_FRAME_LENGTH_TOTAL_MICROS 20000 // 20ms frame
 
 volatile static uint32_t rc_channels[NUMBER_OF_RC_CHANNELS];
 volatile static unsigned int current_channel = 0;
+volatile static uint32_t accumulated_frame_length = 0;
 
 
 
@@ -32,14 +33,18 @@ void TC_Handler(void) {
 	uint32_t ra, rc;
 	if ((tc_get_status(TC, TC_CHANNEL_WAVEFORM) & TC_SR_CPCS) == TC_SR_CPCS) {
 		if (current_channel >= NUMBER_OF_RC_CHANNELS) {
-			// sync pulse pause
-			ra = SYNC_PULSE_MICROS * TICKS_PER_uS;
+			// calculate sync pulse pause
+			uint32_t sync_pulse_micros = PPM_FRAME_LENGTH_TOTAL_MICROS - accumulated_frame_length;
+			ra = sync_pulse_micros * TICKS_PER_uS;
+			accumulated_frame_length = 0;
 			current_channel = -1;
 		} else {
 			// pulse pause for single channel
-			ra = rc_channels[current_channel] * TICKS_PER_uS;	
+			ra = rc_channels[current_channel] * TICKS_PER_uS;
+			accumulated_frame_length = accumulated_frame_length + rc_channels[current_channel];	
 		}
 		rc = ra + PPM_PULSE_MICROS * TICKS_PER_uS; // 300us Pulse
+		accumulated_frame_length = accumulated_frame_length + PPM_PULSE_MICROS;
 		tc_write_ra(TC, TC_CHANNEL_WAVEFORM, ra);
 		tc_write_rc(TC, TC_CHANNEL_WAVEFORM, rc);
 		current_channel++;	
@@ -53,8 +58,8 @@ static void tc_waveform_initialize(void)
 	tc_init(TC, TC_CHANNEL_WAVEFORM,
 			TC_CMR_TCCLKS_TIMER_CLOCK1
 			| TC_CMR_WAVE /* Waveform mode is enabled */
-			| TC_CMR_ACPA_SET /* RA Compare Effect: set */
-			| TC_CMR_ACPC_CLEAR /* RC Compare Effect: clear */
+			| TC_CMR_ACPA_CLEAR /* RA Compare Effect: set */
+			| TC_CMR_ACPC_SET /* RC Compare Effect: clear */
 		    | TC_CMR_CPCTRG  /* UP mode with automatic trigger on RC Compare */
 	);
 
@@ -104,13 +109,13 @@ int main(void)
 
 	while (1) {
 		printf("start!");
-		for (int i = 1; i < 750; i++) {
+		for (int i = 1; i < 500; i++) {
 			rc_channels[2]++;
 			rc_channels[4]--;
 			//printf("channel=%d\r\n" , channel);
 			delay_ms(10);
 		}
-		for (int i = 1; i < 750; i++) {
+		for (int i = 1; i < 500; i++) {
 			rc_channels[2]--;
 			rc_channels[4]++;
 			//printf("channel=%d\r\n" , channel);
