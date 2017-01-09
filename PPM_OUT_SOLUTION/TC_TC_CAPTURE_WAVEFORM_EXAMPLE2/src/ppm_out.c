@@ -1,7 +1,5 @@
 #include <asf.h>
-#include <conf_clock.h>
-#include <conf_board.h>
-#include <delay.h>
+#include <ppm_out.h>
 #include <ppm_capture.h>
 
 
@@ -11,7 +9,7 @@
 /** Configure TC0 channel 1 as waveform output. **/
 #define TC_CHANNEL_WAVEFORM 1
 #define ID_TC_WAVEFORM      ID_TC1
-#define PIN_TC_WAVEFORM     PIN_TC0_TIOA1
+
 #define PIN_TC_WAVEFORM_MUX PIN_TC0_TIOA1_MUX
 
 /** Use TC1_Handler for TC waveform interrupt**/
@@ -19,7 +17,6 @@
 #define TC_IRQn     TC1_IRQn
 
 #define TICKS_PER_uS 42
-#define NUMBER_OF_RC_CHANNELS 8
 #define MIN_PWM_MICROS 600
 #define MAX_PWM_MICROS 1600
 #define MID_PWM_MICROS 1100
@@ -30,11 +27,6 @@
 volatile static uint32_t rc_channels[NUMBER_OF_RC_CHANNELS];
 volatile static unsigned int current_channel = 0;
 volatile static uint32_t accumulated_frame_length = 0;
-
-
-
-
-
 
 
 void TC_Handler(void) {
@@ -59,10 +51,22 @@ void TC_Handler(void) {
 	}
 }
 
-static void tc_waveform_initialize(void)
+void set_rc_channel_value(int idx, int value) {
+	rc_channels[idx] = value;
+}
+
+int get_rc_channel_value(int idx) {
+	return rc_channels[idx];
+}
+
+void ppm_out_initialize(void)
 {
-	uint32_t ra, rc;
+	uint32_t rc;
+	// enable clock for timer
 	sysclk_enable_peripheral_clock(ID_TC_WAVEFORM);
+	// configure PPM Out Pin
+	ioport_set_pin_mode(PIN_PPM_OUT, PIN_TC_WAVEFORM_MUX);
+	ioport_disable_pin(PIN_PPM_OUT);
 	tc_init(TC, TC_CHANNEL_WAVEFORM,
 			TC_CMR_TCCLKS_TIMER_CLOCK1
 			| TC_CMR_WAVE /* Waveform mode is enabled */
@@ -82,48 +86,15 @@ static void tc_waveform_initialize(void)
 	NVIC_EnableIRQ(TC_IRQn);
 	tc_enable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
 	
+	// initialize rc channels using PWM min value
+	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
+		rc_channels[i] = MIN_PWM_MICROS;
+	}
+	
 	tc_start(TC, TC_CHANNEL_WAVEFORM);
 }
 
 
-static void configure_console(void)
-{
-	const usart_serial_options_t uart_serial_options = {
-		.baudrate = CONF_UART_BAUDRATE,
-#ifdef CONF_UART_CHAR_LENGTH
-		.charlength = CONF_UART_CHAR_LENGTH,
-#endif
-		.paritytype = CONF_UART_PARITY,
-#ifdef CONF_UART_STOP_BITS
-		.stopbits = CONF_UART_STOP_BITS,
-#endif
-	};
 
-	/* Configure console UART. */
-	stdio_serial_init(CONF_UART, &uart_serial_options);
-}
 
-int main(void)
-{
-	sysclk_init();
-	board_init();
-	configure_console();
-	ioport_set_pin_mode(PIN_TC_WAVEFORM, PIN_TC_WAVEFORM_MUX);
-	ioport_disable_pin(PIN_TC_WAVEFORM);
-	tc_waveform_initialize();
-	//
-	ppm_capture_initialize();
-	//
-	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-		rc_channels[i] = MIN_PWM_MICROS;
-	}
 
-	while (1) {
-		for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-			rc_channels[i] = get_channel_value_as_PPM(i);
-			
-		}
-	
-		
-	}
-}

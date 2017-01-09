@@ -12,7 +12,7 @@
 #define TC_CHANNEL_CAPTURE 0
 #define ID_TC_CAPTURE      ID_TC6  //TC6 is channel 0 of TC2 module!!
 
-#define PIN_TC_CAPTURE_MUX IOPORT_MODE_MUX_B // peripheral B
+// #define PIN_TC_CAPTURE_MUX IOPORT_MODE_MUX_B // peripheral B // TODO warum ist das Anschalten des pins nicht erforderlich??
 
 /** Use TC2_Handler for TC capture interrupt**/
 #define TC_Handler  TC6_Handler
@@ -23,8 +23,6 @@
 static volatile int captured_channels[8];
 static uint32_t gs_ul_captured_rb;
 
-int current_flight_record = 0;
-int stopped = false;
 
 static int channel_id = 0;
 
@@ -37,18 +35,9 @@ void TC_Handler(void)
 		if (micros > 3000) {
 			// PPM sync pulse, recount channels starting with 0
 			channel_id = 0;
-			current_flight_record++;
-			if (current_flight_record > 900) {
-				stopped = true;
-				current_flight_record = 0;
-			}
-			// store flight record
 			return;
 		}
 		captured_channels[channel_id] = micros;
-		if (!stopped) {
-			flight[current_flight_record][channel_id] = get_channel_value_as_PPM(channel_id);
-		}
 		channel_id++;
 	}
 }
@@ -59,11 +48,7 @@ int get_channel_value_as_PWM(int channel_idx) {
 }
 
 int get_channel_value_as_PPM(int channel_idx) {
-	if (!stopped) {
 		return get_channel_value_as_PWM(channel_idx) - PPM_OFFSET;
-	} else {
-		return flight[current_flight_record][channel_idx];
-	}
 }
 
 void ppm_capture_initialize(void)

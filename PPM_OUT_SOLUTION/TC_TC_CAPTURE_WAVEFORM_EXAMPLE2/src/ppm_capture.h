@@ -16,6 +16,4 @@ void ppm_capture_initialize(void);
 int get_channel_value_as_PWM(int channel_idx);
 int get_channel_value_as_PPM(int channel_idx);
 
-static uint32_t flight[1000][8];
-
 #endif /* PPM_CAPTURE_H_ */ 
