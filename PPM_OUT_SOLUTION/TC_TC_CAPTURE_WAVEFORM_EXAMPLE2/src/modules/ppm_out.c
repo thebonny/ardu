@@ -1,6 +1,6 @@
 #include <asf.h>
-#include <ppm_out.h>
-#include <ppm_capture.h>
+#include <modules/ppm_out.h>
+
 
 
 /** Use TC Peripheral 0 **/
@@ -24,7 +24,7 @@
 #define PPM_PULSE_MICROS 400
 #define PPM_FRAME_LENGTH_TOTAL_MICROS 20000 // 20ms frame
 
-volatile static uint32_t rc_channels[NUMBER_OF_RC_CHANNELS];
+volatile static uint32_t ppm_out_channels[NUMBER_OF_RC_CHANNELS];
 volatile static unsigned int current_channel = 0;
 volatile static uint32_t accumulated_frame_length = 0;
 
@@ -40,8 +40,8 @@ void TC_Handler(void) {
 			current_channel = -1;
 		} else {
 			// pulse pause for single channel
-			ra = rc_channels[current_channel] * TICKS_PER_uS;
-			accumulated_frame_length = accumulated_frame_length + rc_channels[current_channel];	
+			ra = ppm_out_channels[current_channel] * TICKS_PER_uS;
+			accumulated_frame_length = accumulated_frame_length + ppm_out_channels[current_channel];	
 		}
 		rc = ra + PPM_PULSE_MICROS * TICKS_PER_uS; // 300us Pulse
 		accumulated_frame_length = accumulated_frame_length + PPM_PULSE_MICROS;
@@ -51,12 +51,8 @@ void TC_Handler(void) {
 	}
 }
 
-void set_rc_channel_value(int idx, int value) {
-	rc_channels[idx] = value;
-}
-
-int get_rc_channel_value(int idx) {
-	return rc_channels[idx];
+void set_ppm_out_channel_value(int idx, int value) {
+	ppm_out_channels[idx] = value;
 }
 
 void ppm_out_initialize(void)
@@ -88,7 +84,7 @@ void ppm_out_initialize(void)
 	
 	// initialize rc channels using PWM min value
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-		rc_channels[i] = MIN_PWM_MICROS;
+		ppm_out_channels[i] = MIN_PWM_MICROS;
 	}
 	
 	tc_start(TC, TC_CHANNEL_WAVEFORM);

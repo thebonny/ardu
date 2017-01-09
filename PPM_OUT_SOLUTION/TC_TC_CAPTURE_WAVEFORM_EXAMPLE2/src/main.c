@@ -7,8 +7,10 @@
 #include <asf.h>
 #include <conf_clock.h>
 #include <conf_board.h>
-#include <ppm_out.h>
-#include <ppm_capture.h>
+#include <modules/ppm_out.h>
+#include <modules/ppm_capture.h>
+#include <modules/record_playback.h>
+
 
 static void configure_console(void)
 {
@@ -35,12 +37,14 @@ int main(void)
 
 	ppm_out_initialize();
 	ppm_capture_initialize();
+	record_playback_initialize();
+	start_record();
+
 	
+	printf("Start!\r\n");
 
-
-	while (1) {
-		for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-			set_rc_channel_value(i, get_channel_value_as_PPM(i));
-		}
+    while (1) {
+		
+		
 	}
 }

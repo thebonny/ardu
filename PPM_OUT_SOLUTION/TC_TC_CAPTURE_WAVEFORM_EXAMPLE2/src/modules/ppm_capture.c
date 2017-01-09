@@ -2,7 +2,7 @@
 #include <asf.h>
 #include <conf_board.h>
 #include <conf_clock.h>
-#include <ppm_capture.h>
+#include <modules/ppm_capture.h>
 
 #define TC_CAPTURE_TIMER_SELECTION TC_CMR_TCCLKS_TIMER_CLOCK3
 /** Use TC Peripheral 2 **/
@@ -42,13 +42,9 @@ void TC_Handler(void)
 	}
 }
 
-int get_channel_value_as_PWM(int channel_idx) {
-	return captured_channels[channel_idx];
 
-}
-
-int get_channel_value_as_PPM(int channel_idx) {
-		return get_channel_value_as_PWM(channel_idx) - PPM_OFFSET;
+int get_captured_channel_value(int channel_idx) {
+		return captured_channels[channel_idx] - PPM_OFFSET;
 }
 
 void ppm_capture_initialize(void)
