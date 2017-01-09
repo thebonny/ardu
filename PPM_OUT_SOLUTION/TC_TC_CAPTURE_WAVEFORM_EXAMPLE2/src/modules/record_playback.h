@@ -16,5 +16,7 @@ void double_speed();
 void half_speed();
 void start_record();
 void stop_record();
+void start_playback();
+void loop_playback();
 
 #endif /* RECORD_PLAYBACK_H_ */
