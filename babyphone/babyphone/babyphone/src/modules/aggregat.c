@@ -412,13 +412,7 @@ HILFE:		- Äquivalente:
 	
 	static		int		TAE_1ms = 0;		// 1ms zählen	
 
-	volatile	int		MOTOR_DREHT_CNT = 0;							// Anzahl Aufrufe
-	volatile	int		M_STEP_Z	=0;
-	volatile	float	DWE1		= 0.0;
-	volatile	float	DWE_a1		= 0.0;									// alter DWE-Wert
 
-	volatile	float	DWE2		= 0.0;
-	volatile	float	DWE_a2		= 0.0;
 		
 //	für Schleifen -> Zählvariablen
 	volatile	int		a, b, c, d;
@@ -522,24 +516,6 @@ statischen Variable ist das nicht der Fall.
 //	für Poti am Analogeingng A0
 
 
-	volatile	float	CH1_WERT1_1			= 0.0;						// Empfänger-Wert
-	volatile	float	CH1_WERT1_1_alt		= 0.0;
-	volatile	float	CH1_WERT1_1_li		= 0.0;						// linear interpoliert	
-	volatile	float	CH1_WERT1_1_li_nor	= 0.0;						// linear interpoliert und normiert	
-	volatile	float	CH1_DELTA			= 0.0;						// Delta-Wert für 1ms
-		
-	volatile	float	CH1_WERT2_1 = 0.0;		
-	volatile	int		CH1_WERT3_1 = 0;
-
-
-	volatile	float	CH2_WERT1_1			= 0.0;						// Empfänger-Wert
-	volatile	float	CH2_WERT1_1_alt		= 0.0;
-	volatile	float	CH2_WERT1_1_li		= 0.0;						// linear interpoliert	
-	volatile	float	CH2_WERT1_1_li_nor	= 0.0;						// linear interpoliert und normiert	
-	volatile	float	CH2_DELTA			= 0.0;						// Delta-Wert für 1ms
-		
-	volatile	float	CH2_WERT2_1 = 0.0;		
-	volatile	int		CH2_WERT3_1 = 0;
 	
 	
 	
@@ -605,8 +581,8 @@ statischen Variable ist das nicht der Fall.
 	volatile	float	POT_U_hor_MIN2 = 0.0f;							// ADC-Spannungswert in der horizontalen Stickuntenposition
 
 		
-	volatile	float	WKL_OFF_1 =		5.5;							// Winkel_Offset für Poti_MOTOR1 Vertikal		(Nullposition)	-> "+" Stick wandert nach unten
-	volatile	float	WKL_OFF_2 =		-16.0;							// Winkel_Offset für Poti_MOTOR2 Horizontal		(Nullposition)	-> "+" Stick wandert nach rechts
+	// volatile	float	WKL_OFF_1 =		5.5;							// Winkel_Offset für Poti_MOTOR1 Vertikal		(Nullposition)	-> "+" Stick wandert nach unten
+	// volatile	float	WKL_OFF_2 =		-16.0;							// Winkel_Offset für Poti_MOTOR2 Horizontal		(Nullposition)	-> "+" Stick wandert nach rechts
 
 //	volatile	float	WKL_OFF_ver2 = -14.38;							// Winkel_Offset für POTI vertikal (Nullposition)
 //	volatile	float	WKL_OFF_hor2 = 0.0;								// Winkel_Offset für POTI horizontal (Nullposition)
@@ -629,10 +605,7 @@ statischen Variable ist das nicht der Fall.
 //	Array von Zeichen für Funktion: float_to_string(...)
 	char	Ergebnis[20];
 
-//	Leistungsfaktor	0 ... 1 Leistung | 0.5 -> 50% Leistung | 1.0 -> 100% Leistung
-	volatile	float	LF1	= 1.0;
-	volatile	float	LF2	= 1.0;
-	
+
 	
 //	Duty cycle buffer for PDC transfer
 //	uint16_t g_us_duty_buffer[3];
@@ -640,9 +613,7 @@ statischen Variable ist das nicht der Fall.
 //	PDC transfer packet
 //	pdc_packet_t g_pdc_tx_packet;
 
-//	für SVPWM()
-	float	X1, Y1, Z1;
-	float	X2, Y2, Z2;
+
 		
 //	für PI-REGLER()	
 	volatile	float	ST = 0.0005;									// 1ms -> SampleTime ADC
@@ -922,6 +893,7 @@ void SVPWM(float uum1, float uvm1, float uwm1, float uum2, float uvm2, float uwm
 //	ANFANG **********************************************     FUNKTIONEN     *************************************************
 void	INIT_PWM(void)
 {
+	
 /*A	
 	Instanzen (S.38)
 	- ID_PWM: 36 (Identifier für die Pulsweitenmodulation PWM)
@@ -1251,108 +1223,6 @@ void	INIT_TC2(void)
 
 
 
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init GPIO      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	Ports: PC24 und PC25 als Outputs definieren
-//	--------------------------------------------------------------------------------------------------------------------------
-
-void	INIT_GPIO(void)
-{
-
-/*
-1.	Pull-up Resistor Control (Pullup Widerstand am Pin zuschalten)
-		- PIO_PUER (Pull-up Enable Register) enable Pullup
-		- PIO_PUDR (Pull-up Disable Resistor) disable Pullup
-		- PIO_PUSR (Pull-up Status Register), hier steht das Ergebnis
-		- nach Reset -> all of the pull-ups are enabled, i.e. PIO_PUSR resets at the value 0x0.
-*/
-
-/*				
-2.	I/O Line or Peripheral Function Selection
-		- PIO_PER (PIO Enable Register, S.633)
-		- PIO_PDR (PIO Disable Register)
-		- PIO_PSR (PIO Status Register), hier steht das Ergebnis
-			- 0 -> pin is controlled by the corresponding on-chip peripheral selected in the PIO_ABSR (AB Select Register)
-			- 1 -> pin is controlled by the PIO controller
-		- nach Reset -> generally, the I/O lines are controlled by the PIO controller, i.e. PIO_PSR resets at 1.
-
-		- PC21, PC22, PC23, PC24, PC25 sind I/O Lines -> 0x03E00000u
-		-                   PC24, PC25 sind I/O Lines -> 0x03000000u -> die anderen werden für Ansteuerung Motor_2 benötigt
-*/
-//	REG_PIOC_PER	= REG_PIOC_PER		|		0x03000000u;
-
-
-
-	
-/*
-3.	Output Control (S.636)
-		- wenn die Outputs vom PIO-Controller definiert werden (zugehörenden Bits in PIO_PSR sind 1)
-		- PIO_OER (Output Enable Register) treibt den Pin
-		- PIO_ODR (Output Disable Register) Pin wird nicht getrieben
-		- PIO_OSR (Output Status Register), hier steht das Ergebnis
-			- 0 -> I/O line is used as an input
-			- 1 -> I/O line is driven by the PIO controller
-		- PIO_SODR (Set Output Data Register)
-		- PIO_CODR (Clear Output Data Register)
-		- PIO_ODSR (Output Data Status Register), , hier steht das Ergebnis
-			- 1 -> eine 1 am Ausgang
-			- 0 -> eine 0 am Ausgang
-
-		- Ports: PC21, PC22, PC23, PC24 und PC25 als Outputs definieren -> 0x03E00000u
-*/
-//	REG_PIOC_OER	 = REG_PIOC_OER		|		0x03E00000u;		
-
-//	REG_PIOC_OER	 = REG_PIOC_OER		|		0x03000000u;		// -> die anderen werden für Ansteuerung Motor_2 benötigt			
-
-
-
-
-/*			
-4.	Synchronous Data Output	(S.623)		
-		- nach Reset -> the synchronous data output is disabled on all the I/O lines as PIO_OWSR resets at 0x0.
-*/
-
-
-/*
-5.	Multi Drive Control (Open Drain)
-		- nach Reset -> the Multi Drive feature is disabled on all pins, i.e. PIO_MDSR resets at value 0x0.
-*/
-
-
-/*
-	Zum Debuggen -> 5 Pins ein- und ausschalten:
-	
-		- PIO Controller Set   Output Data Register (S.642)	
-		- PIO Controller Clear Output Data Register (S.643)
-
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x03E00000u; 		// Ausgänge C21, C22, C23, C24, C25 auf 1 setzen	
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x03E00000u; 		// Ausgänge C21, C22, C23, C24, C25 auf 0 setzen	
-
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x0200 0000u; 		// Ausgang C25 =1 (DUE_Pin 5)	
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x0200 0000u; 		// Ausgang C25 =0 (DUE_Pin 5)	
-	
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x0100 0000u; 		// Ausgang C24 =1 (DUE_Pin 6)
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x0100 0000u; 		// Ausgang C24 =0 (DUE_Pin 6)	
-
-
-->  diese hier sind nicht mehr verfübar -> werden für Ansteuerung Motor_2 benötigt	
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x0080 0000u; 		// Ausgang C23 =1 (DUE_Pin 7)
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x0080 0000u; 		// Ausgang C23 =0 (DUE_Pin 7)
-	
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x0040 0000u; 		// Ausgang C22 =1 (DUE_Pin 8)
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x0040 0000u; 		// Ausgang C22 =0 (DUE_Pin 8)
-	
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x0020 0000u; 		// Ausgang C21 =1 (DUE_Pin 9)
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x0020 0000u; 		// Ausgang C21 =0 (DUE_Pin 9)
-*/
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init GPIO      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
-
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init ADC       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 /*	
 	Analoge Eingänge: (S.1320)
@@ -1393,113 +1263,11 @@ void	INIT_ADC(void)
 //	Reset ADC (S.1332)	
 	REG_ADC_CR = 0x00000001;	
 
-/*	ADC Mode (S.1333)
-	- Register ADC_MR (Mode Register)
-		- Hardware_Trigger enable -> PWM Event Line 0
-			- ADC_TRIG4 (PWM Event Line 0)
-		- 12Bit
-		- Sleep aus (ADC zwischen den Wandlungen immer aktiv)
-		- Freerun aus -> Normal Mode
-		- elektrische Daten ADC auf S.1403
-			- max. fADC =22MHz -> 84MHz/4=21MHz -> PRESCAL=1
-			- StartUp Time 0, weil ADC immer aktiv -> STARTUP=0
-			- Settling Time min. 200ns -> 4,2 ADC-Clockperioden -> SETTLING = 1 (5 periods)
-		- kein Wechsel der analogen Einstellungen bei Kanalwechsel -> ANACH = 0
-		- TrackTime (wahrscheinlich Einschwingen S&H) zunächst auf 9 -> 9+1 = 10 ... 10 * Periode ADC (47,6ns) = 476ns, -> TRACTIM=9
-		- TransferTime (1*2+3)*Periode ADC (47,6ns) = 238ns
-			-	1.S&H -> 476ns
-				2.S&H -> 476ns  + 1190ns = 1666ns
-				3.S&H -> 1666ns + 1190ns = 2856ns und im weiteren immer jeweils nach: ConvTime + TransferTime = 952ns + 238 = 1190ns 	
-			-	Gemessen habe ich in Summe, vom Start bis Debug_Pin in ADC_Handler() =1 setzen -> 3660 ns
-				-> passt recht ordentlich!
-		- USEQ = 0, keine bestimmte Kanalsequenz, Normal Mode: The controller converts channels in a simple numeric order.	
-		
-		-> ADC_MR = 1E900209H
-					   
-*/
-
-
-/*				- Zusammenfassung der Parameter: (neu definiert 06.10.2016)
-				- 15kOhm	Quellwiderstand
-				- 14MHz		ADC clock
-				- 71,43ns	ADCClock period
-				- 1,071us	Tracktime
-				- 357,15ns	TRANSFER period
-				- 357,15ns	SETTLING period (Einschwingen beim Übergang zum nächsten ADC-Kanal, z.B. andere Verstärkung, etc.
-*/								
-//	REG_ADC_MR = REG_ADC_MR			| 0x19100100u;				// Software_Trigger
-//	REG_ADC_MR = REG_ADC_MR			| 0x19100109u;				// Hardware_Trigger -> PWM Event Line 0 
-//	REG_ADC_MR = REG_ADC_MR			| 0x1E900209u;				// neu definiert 06.10.2016
-	
-	
-	
-	
-	
-	
-	
-	
-//	TEST
-//	2k + 10k als Spannungsteiler direkt über die Referenz gelötet und den Abgriff auf A0 in der Leiste eingespeist
-//	Steckbrücke über A0 und A1 (beide sehen das selbe)
-//	PGA: x1
-	 
-//	REG_ADC_MR = REG_ADC_MR			| 0x1E900209u;				// AUSGANGSSITUATION -> neu definiert 06.10.2016
-
-//	REG_ADC_MR = REG_ADC_MR			| 0x1F900209u;				// TRACKTIM	(15 + 1) * 71,4 = 1142ns
-																// -> keine Änderung ADC-Hub: 4 
-//	REG_ADC_MR = REG_ADC_MR			| 0x10900209u;				// TRACKTIM	(0  + 1) * 71,4 = 71,4ns
-																// -> keine Änderung ADC-Hub: 4 
-//	REG_ADC_MR = REG_ADC_MR			| 0x3E900209u;				// TRANSFER von 1 auf 3 erhöht (max.) 
-																// -> keine Änderung ADC-Hub: 4 
-//	REG_ADC_MR = REG_ADC_MR			| 0x1EB00209u;				// SETTLING von 1 auf 3 erhöht (max.) 
-																// -> keine Änderung ADC-Hub: 4 
-//	REG_ADC_MR = REG_ADC_MR			| 0x1E9F0209u;				// STARTUP von 0 auf 15 erhöht (max.) 
-																// -> keine Änderung ADC-Hub: 4 
-
-//	REG_ADC_MR = REG_ADC_MR			| 0x1E90FF09u;				// PRESCAL von 2 auf 15 erhöht (max./2) 
-																// -> keine Änderung ADC-Hub: 4 
-
-//	REG_ADC_MR = REG_ADC_MR			| 0x3FBFFF09u;	
-
-
-
-//	Einspeisung konstanter Wert: 2k + 10k als Spannungsteiler direkt über die Referenz gelötet und den Abgriff auf A0
-//	in die DUE-Leiste eingespeist
-//	2,2uF Tantal-Kondensator über AVREF (MAX 6066 -> 2,5V)
-//	PRINT_VERT_cnt: > 2000
-
-
-//	10 Bit / x1  -> ADC-Werte: 2
-//	REG_ADC_MR = REG_ADC_MR			| 0x1E900219u;				// LOWRES von 0 auf 1 (12Bit -> 10Bit) 
-
-
-//	10 Bit / x2  -> ADC-Werte: 3
-//	REG_ADC_MR = REG_ADC_MR			| 0x1E900219u;				// LOWRES von 0 auf 1 (12Bit -> 10Bit) 
-
-
-//	10 Bit / x4  -> ADC-Werte: 6 (731 ... 736)
-//	REG_ADC_MR = REG_ADC_MR			| 0x1E900219u;				// LOWRES von 0 auf 1 (12Bit -> 10Bit) 
-
-
-//	-> DAS BEDEUTET, dass die Änderung des Signals schon vor dem PGA stattfinden muss
-//	   Vorausgesetzt natürlich, dass der PGA keinen zusätzlichen Fehler mit rein bringt!
-
-
-
-
-
-//	12 Bit / x1  -> ADC-Werte: 8 (723 ... 730)
-//	Verteilung VW_MW = 727;
-//	REG_ADC_MR = REG_ADC_MR			| 0x1E900209u;				// LOWRES von 1 auf 0 (10Bit -> 12Bit)	
-//	|	723		|	724		|	725		|	726		|	727		|	728		|	729		|	730		|	731		|	732		|
-//	|	2  		|	27 		|	557		|	1307	|	522		|	310		|	42 		|	1  		|	0  		|	0  		|
-
-
 
 //	12 Bit / x4  -> ADC-Werte: 21 (2926 ... 2946)
 //	Verteilung VW_MW = 2936;
 
-	REG_ADC_MR = REG_ADC_MR			| 0x1E900209u;				// LOWRES von 1 auf 0 (10Bit -> 12Bit)
+	REG_ADC_MR = REG_ADC_MR			| 0x1E900205u;				// LOWRES von 1 auf 0 (10Bit -> 12Bit)
 //	12 Bit / x4  -> ADC-Werte: 10 (2931 ... 2940) nach 1000 Messungen
 
 
@@ -1510,26 +1278,6 @@ void	INIT_ADC(void)
 //				-> ADC-Werte: 21 (2926 ... 2946)		
 //	|	2932	|	2933	|	2934	|	2935	|-	2936   -|	2937	|	2938	|	2939	|	2940	|	2941	|
 //	|	38 		|	226		|	749		|	1434	|	1398	|	826		|	336		|	80 		|	18 		|	3  		|
-
-
-//	-> DAS BEDEUTET auch hier:
-//		- dass die Änderung des Signals schon vor dem PGA stattfinden muss
-//		- UND, dass die Veränderung der ADC-Parameter, auf "allet max" (siehe oben) auch keine Verbesserung bringt
-//		-> damit ist z.B. die Tracktime nicht zu knapp bemessen, etc. ... !!! und 
-//		   REG_ADC_MR = REG_ADC_MR			| 0x1E900209u; vollkommen in Ordnung.	
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1570,14 +1318,6 @@ void	INIT_ADC(void)
 														// Gain = 4 für CH7 (A0)
 														// Gain = 1	für restliche Analogeingänge 													
 
-//	REG_ADC_CGR = REG_ADC_CGR		| 0xFFFFFFFFu;		// Gain = 4 für alle Kanäle
-//	REG_ADC_CGR = REG_ADC_CGR		| 0x22222222u;		// Gain = 2 für alle Kanäle
-//	REG_ADC_CGR = REG_ADC_CGR		| 0x00000000u;		// Gain = 1 für alle Kanäle
-
-
-
-
-
 
 //	Kanäle Offset -> nicht benutzt
 	
@@ -1617,31 +1357,7 @@ void	INIT_ADC(void)
 */
 
 
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Interrupt      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-/*
-	Wir wollen das End of Conversion des CH7 vom ADC (der 3. gewandelte Kanal für die Stromwerte) interruptfähig machen
-	und in einer Interrupt Service Routine (ISR) alle weiteren Berechnungen durchführen.
-		-  n	* 100us -> ISR
-		- (n+1)	* 100us -> ISR
-		- ...			
-	- Instance ADC:	37
-	- ADC Interrupt erlauben (S.1342)
-		- Register: ADC_IER (ADC Interrupt Enable Register)
-		- EOC7 erlauben (CH7), der letzte Kanal, der gewandelt wurde 
-*/
-	REG_ADC_IER = REG_ADC_IER | 0x00000080u;	
 
-
-
-//	Aus dem main-init-Code zur korrekten De-/Aktivierung von Interrupts.
-//	Hier aus dem Beispielprojekt "TC Capture Waveform" vom ASF Framework:
-
-	NVIC_DisableIRQ(ADC_IRQn);
-	NVIC_ClearPendingIRQ(ADC_IRQn);
-	NVIC_SetPriority(ADC_IRQn, 0);
-//	Enable ADC interrupt, schreibt das Register ISER im NVIC (Nested Vector Interrupt Controller)
-	NVIC_EnableIRQ(ADC_IRQn);
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Interrupt      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init ADC       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
@@ -1656,44 +1372,59 @@ void aggregat_init(void) {
 	//	------------------------------------------------------------------------------------------------ Poti auf Winkel einlernen
 	//	Analogwerte an 3 Stickpositionen messen und speichern
 
-	//	--------------------------------------------------------------------------------------------------- Stick in Position NULL
-	//	Leistungsfaktoren (0...1) MOTOR1, MOTOR2
-	LF1 = 0.4;
-	LF2 = 0.4;
 
-	TD1 = 10;											// Zeitverzögerung1
-	TD2 = 150;											// Zeitverzögerung2
-	
-	
-	
-	//	Zunächst einmal den Winkeloffset für senkrechte Nullstellung des Sticks ermitteln
-	//	z.B. 13° -> WKL_OFF_1 = -13
-	//	DWE1 = -13 * 7;
-	DWE1 = WKL_OFF_1 * 7;
-	DWE2 = WKL_OFF_2 * 7;
-	
-	
-	
-	//	Winkelanteile für Winkeloffset mit Berücksichtigung des Leistungsfaktors berechnen
-	X1 = LF1 * cos(DWE1*WK1);
-	Y1 = LF1 * cos(DWE1*WK1-WK2);
-	Z1 = LF1 * cos(DWE1*WK1-WK3);
-	
-	X2 = LF2 * cos(DWE2*WK1);
-	Y2 = LF2 * cos(DWE2*WK1-WK2);
-	Z2 = LF2 * cos(DWE2*WK1-WK3);
+//	mySetpoint1_1	= 800 + 0.6 * SS_ADC_A2_i;			// Führungsgröße MOTOR1 durch Poti "Masterstick" festlegen
+//	mySetpoint1_1	=  2418;							// Führungsgröße manuell festlegen: 2418 -> 0° (mech.)
+outMax1_1		=	1.0;							// Max Geschwindigkeit =  1,0 -> ca. 20°/s  oder 0,2 -> ca. 4°/s
+outMin1_1		=  -1.0;							// Min
+
+kp1_1			=   0.0015;							// ?
+//	ki1_1			=   0.0;
+kd1_1			=   0.0035;
+
+//	kp1_1			=   0.0015;							// SUPER gedämpft
+//	ki1_1			=   0.0;
+//	kd1_1			=   0.004;
 
 
+//  REGLER GESCHWINDIGKEIT PID2_1
+//	mySetpoint2_1	=  -0.2;							// Wenn nur der Geschwindigkeitsregler arbeitet
+// 1.0 -> ca. 20°/s
+// 0.2 -> ca. 4°/s
+outMax2_1		=  1.0;								// Max Drehmoment MOTOR1
+outMin2_1		= -1.0;
 
+//	kp2_1			= 0.0005;							// HAMMER
+//	ki2_1			= 0.00125;
+//	kd2_1			= 0.0;
 
 	
-	//	Raumvektorausgabe -> Stick steht in Nullstellung
-	SVPWM(X1, Y1, Z1, X2, Y2, Z2);
+//	REGLER POSITION PID1_2
+//	mySetpoint1_2	= 800 + 0.6 * SS_ADC_A2_i;			// Führungsgröße MOTOR1 durch Poti "Masterstick" festlegen
+//	mySetpoint1_2	=  2304;							// Führungsgröße manuell festlegen: 2304 -> 0° (mech.)
+outMax1_2		=	1.0;							// Max Geschwindigkeit =  1,0 -> ca. 20°/s  oder 0,2 -> ca. 4°/s
+outMin1_2		=  -1.0;							// Min
+
+kp1_2			=   0.0015;							// ?
+//	ki1_2			=   0.0;
+kd1_2			=   0.0035;
 
 
 
-	//	Raumvektorausgabe -> Stick steht in Nullstellung
-	SVPWM(0,0,0,0,0,0);
+
+//  REGLER GESCHWINDIGKEIT PID2_2
+//	mySetpoint2_2	=  -0.2;							// Wenn nur der Geschwindigkeitsregler arbeitet
+// 1.0 -> ca. 20°/s
+// 0.2 -> ca. 4°/s
+outMax2_2		=  1.0;								// Max Drehmoment MOTOR1
+outMin2_2		= -1.0;
+
+//	kp2_2			= 0.0005;							// HAMMER
+//	ki2_2			= 0.00125;
+//	kd2_2			= 0.0;
+	
+	
+
 
 }
 
@@ -1705,6 +1436,7 @@ void PID1_1(void)
 {
 	  input1_1 = myInput1_1;
       error1_1 = mySetpoint1_1 - input1_1;
+	  printf("Error %d\r\n", error1_1);
       ITerm1_1+= (ki1_1 * error1_1);
       if(ITerm1_1 > outMax1_1) ITerm1_1= outMax1_1;
       else if(ITerm1_1 < outMin1_1) ITerm1_1= outMin1_1;
@@ -1733,6 +1465,7 @@ void PID1_2(void)
 {
 	input1_2 = myInput1_2;
 	error1_2 = mySetpoint1_2 - input1_2;
+
 	ITerm1_2+= (ki1_2 * error1_2);
 	if(ITerm1_2 > outMax1_2) ITerm1_2= outMax1_2;
 	else if(ITerm1_2 < outMin1_2) ITerm1_2= outMin1_2;
@@ -1761,6 +1494,7 @@ void PID2_1(void)
 {
 	input2_1 = myInput2_1;
     error2_1 = mySetpoint2_1 - input2_1;
+		printf("Error: %d\r\n", error2_1);
     ITerm2_1+= (ki2_1 * error2_1);
     if(ITerm2_1 > outMax2_1) ITerm2_1= outMax2_1;
     else if(ITerm2_1 < outMin2_1) ITerm2_1= outMin2_1;
@@ -1914,288 +1648,15 @@ void ADC_Handler(void)
 	}
 	
 
-	//	1ms ----------------------------------------------------- CAPTURE WERT LESEN ----------------------------------------------
-
-//	PRINT
-//	Wert eines Empfängerkanals (DUE: C.28) lesen -> *** 5250 ... 10500 ... 15750 *** 
-// 	ACHTUNG: Beim Anschluss des Empfängerausgangs auf den Pegel achten. Der DUE verträgt nur 3,3V! -> Spannungsteiler!
-	 
-
-
-
-// Lineare Interpolation, um 1ms Werte vom Master zu bekommen, der nur alle 20ms einen aktuellen Wert versendet
-//	alle 20ms
-		if (cnt_1ms_poll % 20 == 0)																// 20ms
-		{
-//	CH1 (TIOA7)
-			CH1_WERT1_1_alt = CH1_WERT1_1;													// alten CH0-Wert retten
-			CH1_WERT1_1 = REG_TC2_RA1;														// alle 20ms neuen CH0-Wert übernehmen
-			CH1_DELTA = (CH1_WERT1_1 - CH1_WERT1_1_alt)/20;
-
-			CH1_WERT1_1_li = CH1_WERT1_1_li - CH1_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
-
-//	CH2 (TIOA8)
-
-			CH2_WERT1_1_alt = CH2_WERT1_1;													// alten CH0-Wert retten
-			CH2_WERT1_1 = REG_TC2_RA2;														// alle 20ms neuen CH0-Wert übernehmen
-			CH2_DELTA = (CH2_WERT1_1 - CH2_WERT1_1_alt)/20;
-
-			CH2_WERT1_1_li = CH2_WERT1_1_li - CH2_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
-		}
 	
-	
-	
-					
-//	jede ms																							
-//	CH1 (TIOA7)
-			CH1_WERT1_1_li = CH1_WERT1_1_li + CH1_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-
-																							
-			CH1_WERT1_1_li_nor = ((CH1_WERT1_1_li / 6.6336 - 2418) * 2.6) + 2700;			// Normierung auf Laufwege HS
-			mySetpoint1_1 = CH1_WERT1_1_li_nor;												//int wert Übergabe
-
-//	CH2 (TIOA8)
-			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-
-																							
-			CH2_WERT1_1_li_nor = ((CH2_WERT1_1_li / 6.6336 - 2418) * 2.6) + 2600;			// Normierung auf Laufwege HS
-			mySetpoint1_2 = CH2_WERT1_1_li_nor;												//int wert Übergabe
-
-
-
-
-
-
-//	1ms ----------------------------------------------------- REGLELUNG -------------------------------------------------------
-//	---------------------------------------------------------------------------------------------------------------------------
-
-	
-//	Geschwindigkweit MOTOR1 (in Steps/ms -> 1Step/ms = ca. 0,02°/ms -> 20°/s)
-	POT_CNT2_1	= POT_CNT1_1;
-	POT_CNT1_1	= AF_A0_i;
-	POT_V_1		= POT_CNT1_1 - POT_CNT2_1;					// 1ms Intervall
-
-//	Geschwindigkweit MOTOR2 (in Steps/ms -> 1Step/ms = ca. 0,02°/ms -> 20°/s)
-	POT_CNT2_2	= POT_CNT1_2;
-	POT_CNT1_2	= AF_A1_i;
-	POT_V_2		= POT_CNT1_2 - POT_CNT2_2;					// 1ms Intervall
-		
-	
-
-
-//	Reglerkaskade PID1 (Position) -> PID2 (Geschwindigkeit)
-
-//	MOTOR1 -------------------------------------------------------------------------------------------------------------------
-
-//	REGLER POSITION PID1_1
-//	mySetpoint1_1	= 800 + 0.6 * SS_ADC_A2_i;			// Führungsgröße MOTOR1 durch Poti "Masterstick" festlegen
-//	mySetpoint1_1	=  2418;							// Führungsgröße manuell festlegen: 2418 -> 0° (mech.)
-	outMax1_1		=	1.0;							// Max Geschwindigkeit =  1,0 -> ca. 20°/s  oder 0,2 -> ca. 4°/s
-	outMin1_1		=  -1.0;							// Min
-
-	kp1_1			=   0.0015;							// ?
-//	ki1_1			=   0.0;	
-	kd1_1			=   0.0035;
-
-//	kp1_1			=   0.0015;							// SUPER gedämpft
-//	ki1_1			=   0.0;	
-//	kd1_1			=   0.004;
-
-	
-//  REGLER GESCHWINDIGKEIT PID2_1
-//	mySetpoint2_1	=  -0.2;							// Wenn nur der Geschwindigkeitsregler arbeitet
-														// 1.0 -> ca. 20°/s
-														// 0.2 -> ca. 4°/s													
-	outMax2_1		=  1.0;								// Max Drehmoment MOTOR1
-	outMin2_1		= -1.0;
-
-//	kp2_1			= 0.0005;							// HAMMER
-//	ki2_1			= 0.00125;	
-//	kd2_1			= 0.0;
-
-
-
-//	REGLER rechnen
-
-//	REGLER POSITION
-	myInput1_1 = AF_A0_i;								// Input: Positionsdaten:
-	PID1_1();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
-//	mySetpoint2_1 = myOutput1_1;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
-	LF1 = myOutput1_1;									// Wenn nur POSITIONS-REGLER
-	
-//	REGLER GESCHWINDIGKEIT (REG_TC0_CV0)
-//	myInput2_1 = POT_V_1;
-//	PID2_1();
-//	LF1 = myOutput2_1;
-
-
-/*
-//	PRINT
-//	Poti lesen, erfolgt in der ADC-Interrupt Routine
-			if (TAE_1ms % 500 == 0)			// 500 x 1ms = 500ms
-			{
-				printf("|POT_V_1: %10s|LF1    : %10s|mSp2_1 : %10s|mI1_1  : %10s|mO1_1  : %10s|     \r\n",
-				doubleToString(s1, POT_V_1), doubleToString(s2, LF1), doubleToString(s3, mySetpoint2_1), doubleToString(s4, myInput1_1), doubleToString(s5, myOutput1_1)  );
-			}
-*/
-
-
-
-
-
-
-//	Ausgabe an MOTOR1
-//	Zum Verständnis:
-//	Wenn der Leistungsfaktor	-> positiv, dann +90° (elektrisch) Vektor raus geben
-//								-> negativ, dann -90° (elektrisch) Vektor raus geben
-			if (LF1 >= 0)
-			{	DWE1 = 7 * ((33 * (AF_A0_i - 2418) / 1677.0) + WKL_OFF_1) + 90;	
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X1 = LF1 * cos(DWE1*WK1);
-				Y1 = LF1 * cos(DWE1*WK1-WK2);
-				Z1 = LF1 * cos(DWE1*WK1-WK3);
-			}
-			if (LF1 < 0)
-			{
-				DWE1 = 7 * ((33 * (AF_A0_i - 2418) / 1677.0) + WKL_OFF_1) - 90;						
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X1 = -LF1 * cos(DWE1*WK1);
-				Y1 = -LF1 * cos(DWE1*WK1-WK2);
-				Z1 = -LF1 * cos(DWE1*WK1-WK3);
-			}
-
-
-
-
-
-
-
-
-
-
-
-
-//	MOTOR2 -------------------------------------------------------------------------------------------------------------------
-
-//	REGLER POSITION PID1_2
-//	mySetpoint1_2	= 800 + 0.6 * SS_ADC_A2_i;			// Führungsgröße MOTOR1 durch Poti "Masterstick" festlegen
-//	mySetpoint1_2	=  2304;							// Führungsgröße manuell festlegen: 2304 -> 0° (mech.)
-	outMax1_2		=	1.0;							// Max Geschwindigkeit =  1,0 -> ca. 20°/s  oder 0,2 -> ca. 4°/s
-	outMin1_2		=  -1.0;							// Min
-
-	kp1_2			=   0.0015;							// ?
-//	ki1_2			=   0.0;	
-	kd1_2			=   0.0035;
-
-
-
-	
-//  REGLER GESCHWINDIGKEIT PID2_2
-//	mySetpoint2_2	=  -0.2;							// Wenn nur der Geschwindigkeitsregler arbeitet
-														// 1.0 -> ca. 20°/s
-														// 0.2 -> ca. 4°/s													
-	outMax2_2		=  1.0;								// Max Drehmoment MOTOR1
-	outMin2_2		= -1.0;
-
-//	kp2_2			= 0.0005;							// HAMMER
-//	ki2_2			= 0.00125;	
-//	kd2_2			= 0.0;
-
-
-
-//	REGLER rechnen
-
-//	REGLER POSITION
-	myInput1_2 = AF_A1_i;								// Input: Positionsdaten:
-	PID1_2();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
-//	mySetpoint2_2 = myOutput1_2;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
-	LF2 = myOutput1_2;									// Wenn nur POSITIONS-REGLER
-	
-//	REGLER GESCHWINDIGKEIT
-//	myInput2_2 = POT_V_2;
-//	PID2_2();
-//	LF2 = myOutput2_2;
-
-
-/*
-//	PRINT
-//	Poti lesen, erfolgt in der ADC-Interrupt Routine
-			if (TAE_1ms % 500 == 0)			// 500 x 1ms = 500ms
-			{
-				printf("|POT_V_2: %10s|LF2    : %10s|mSp2_2 : %10s|mI1_2  : %10s|mO1_2  : %10s|     \r\n\n",
-				doubleToString(s1, POT_V_2), doubleToString(s2, LF2), doubleToString(s3, mySetpoint2_2), doubleToString(s4, myInput1_2), doubleToString(s5, myOutput1_2)  );						
-			}
-*/
-
-
-
-
-
-
-//	Ausgabe an MOTOR2
-//	Zum Verständnis:
-//	Wenn der Leistungsfaktor	-> positiv (Stick links),	dann -90° (elektrisch) Vektor raus geben
-//								-> negativ (Stick rechts),	dann +90° (elektrisch) Vektor raus geben
-			if (LF2 >= 0)
-			{
-				DWE2 = 7 * ((33 * (AF_A1_i - 2304) / 1641.0) + WKL_OFF_2) + 90;	
-
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X2 = LF2 * cos(DWE2*WK1);
-				Y2 = LF2 * cos(DWE2*WK1-WK2);
-				Z2 = LF2 * cos(DWE2*WK1-WK3);
-			}
-
-			if (LF2 < 0)
-			{
-				DWE2 = 7 * ((33 * (AF_A1_i - 2304) / 1641.0) + WKL_OFF_2) - 90;						
-
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X2 = -LF2 * cos(DWE2*WK1);
-				Y2 = -LF2 * cos(DWE2*WK1-WK2);
-				Z2 = -LF2 * cos(DWE2*WK1-WK3);
-			}
-	
-
-		
-//	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
-		SVPWM(X1, Y1, Z1, X2, Y2, Z2);
-
-			
-			
-	
-	
-	
-
-	
-
-//	Enable Interrupt (CH7 vom ADC)
-//	REG_ADC_IER = REG_ADC_IER | 0x00000080u;
-//	Enable ADC interrupt, schreibt das Register ISER im NVIC (Nested Vector Interrupt Controller)
-//	NVIC_EnableIRQ(ADC_IRQn);		
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       ADC_ISR        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
-void setSetpointVertical(int setpoint) {
-	mySetpoint2_2 = setpoint;
-	printf("Setpoint ist: %d\r\n", setpoint);
+void setSetpointVertical(float setpoint) {
+	mySetpoint1_1 = setpoint;
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
 
 
 

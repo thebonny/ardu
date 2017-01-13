@@ -40,7 +40,10 @@ void TC7_Handler(void) {
 		if (mode == MODE_BYPASS || mode == MODE_RECORD) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				set_ppm_out_channel_value(i, get_captured_channel_value(i));
-				setSetpointVertical(1024);
+				if (i == 2) {
+					setSetpointVertical( get_captured_channel_value(i));
+					// printf("Setpoint: %d\r\n", get_captured_channel_value(i));
+				}
 			}
 		}
 		if (mode == MODE_RECORD) {
