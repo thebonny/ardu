@@ -9,3 +9,8 @@
 *.mk
 *.d
 *.cproj
+*.atsln
+*.eep
+*.ld
+*.in
+babyphone/babyphone/babyphone/Debug/Makefile
