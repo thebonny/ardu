@@ -2,6 +2,8 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\modules\utils.c
+
 src\ASF\common\services\delay\sam\cycle_counter.c
 
 src\ASF\common\services\serial\usart_serial.c

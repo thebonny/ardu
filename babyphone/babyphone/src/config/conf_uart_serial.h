@@ -48,6 +48,7 @@
 #define CONF_USART_SERIAL_H
 
 /* A reference setting for UART */
+/** Enable Com Port. */
 /** UART Interface */
 #define CONF_UART            CONSOLE_UART
 /** Baudrate setting */

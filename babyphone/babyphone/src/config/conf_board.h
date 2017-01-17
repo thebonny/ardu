@@ -50,5 +50,12 @@
 /** Enable Com Port. */
 #define CONF_BOARD_UART_CONSOLE
 
+/** Pins description corresponding to Rxd,Txd, (UART pins) */
+#define CONSOLE_PINS        {PINS_UART}
+
+/** Usart Hw ID used by the console (UART0). */
+#define CONSOLE_UART_ID          ID_UART
+
+
 
 #endif /* CONF_BOARD_H_INCLUDED */
