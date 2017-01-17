@@ -1,4 +1,3 @@
-*.atsuo
 *.bin
 *.elf
 *.hex
@@ -6,11 +5,7 @@
 *.map
 *.srec
 *.o
-*.mk
 *.d
-*.cproj
-*.atsln
 *.eep
 *.ld
 *.in
-babyphone/babyphone/babyphone/Debug/Makefile
