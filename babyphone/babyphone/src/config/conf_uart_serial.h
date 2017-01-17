@@ -55,7 +55,6 @@
 /** Parity setting */
 #define CONF_UART_PARITY     UART_MR_PAR_NO
 
-
 /* A reference setting for USART */
 /** USART Interface */
 //#define CONF_UART              USART1
