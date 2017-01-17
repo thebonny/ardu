@@ -379,41 +379,7 @@ HILFE:		- Äquivalente:
 
 
 
-//	für RECORDER
-	static		int		iREC1[10000];		// moveDaten MOTOR1
-	static		int		iREC2[10000];		// moveDaten MOTOR2
-		
-	static		int		cnt_scan = 0;
 	
-	static		int		iPT = 1;			// ProgrammTeil
-
-
-//	für TÄNZCHEN
-	static		float	IST1 = 0.0;			// MOTOR1
-	static		float	IST2 = 0.0;			// MOTOR2	
-	
-	static		float	TW_1 = 0.0;			// MOTOR1 -> TänzchenWinkel		
-	static		float	TW_2 = 0.0;			// MOTOR2 -> TänzchenWinkel	
-
-	static		int		VZ_1 = 1;			// VorZeichen
-	static		int		VZ_2 = 1;
-
-	static		float	SP_1 = 0.36;		// MOTOR1 -> Speed
-	static		float	SP_2 = 0.0;	
-
-	static		float	AM_1 = 0.0;			// MOTOR1 -> Speed
-	static		float	AM_2 = 0.0;
-					
-	static		float	SA_1 = 0.0;			// MOTOR1 -> SoftAnlauf
-	static		float	SA_2 = 0.0;			// MOTOR2 -> SoftAnlauf
-
-	static		float	DW_1 = 0.0;			// MOTOR1 -> DeltaWinkel
-	static		float	DW_2 = 0.0;			// MOTOR2 -> DeltaWinkel
-	
-	static		int		TAE_1ms = 0;		// 1ms zählen	
-
-
-		
 //	für Schleifen -> Zählvariablen
 	volatile	int		a, b, c, d;
 

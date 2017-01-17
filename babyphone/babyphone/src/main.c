@@ -43,8 +43,7 @@
 	
 
 
-	static int MAX_NUMBER_STRING_SIZE = 32;
-	
+		
 		float myInput1_1;
 		int myInput2_1;
 			float myInput1_2;
@@ -76,7 +75,7 @@
 	
 	//	ANFANG **********************************************     defines        *************************************************
 	//	ADC, diese defines fehlen leider in der CMSIS
-	#define REG_ADC_CDR             (*(__I  uint32_t*)0x400C0050U) // ADC Channel Data Register
+
 	#define REG_ADC_CDR1			(*(__I  uint32_t*)0x400C0054U) // ADC Channel Data Register
 	#define REG_ADC_CDR2			(*(__I  uint32_t*)0x400C0058U) // ADC Channel Data Register
 	#define REG_ADC_CDR3			(*(__I  uint32_t*)0x400C005CU) // ADC Channel Data Register
@@ -258,7 +257,7 @@ static void configure_console(void)
  */
 static void display_menu(void)
 {
-	uint8_t i;
+
 	puts("\n\rMenu :\n\r"
 			"------\n\r"
 			"  HAPStik Prototype Options:\r");
@@ -284,7 +283,7 @@ int main(void)
 {
 
 
-uint8_t key;
+
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init SAM system     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
 	sysclk_init();
 	board_init();

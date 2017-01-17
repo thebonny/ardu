@@ -12,11 +12,11 @@
 
 void record_playback_initialize(void);
 void set_master_framerate(int milliseconds);
-void double_speed();
-void half_speed();
-void start_record();
-void stop_record();
-void start_playback();
-void loop_playback();
+void double_speed(void);
+void half_speed(void);
+void start_record(void);
+void stop_record(void);
+void start_playback(void);
+void loop_playback(void);
 
 #endif /* RECORD_PLAYBACK_H_ */
