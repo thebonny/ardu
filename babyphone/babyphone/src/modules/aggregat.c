@@ -21,24 +21,6 @@ Ziel:		2 Achsen mit einem DUE.
 
 
 ------------------------------------------------------------------------------------------------------------------------------
-			
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-------------------------------------------------------------------------------------------------------------------------------
-
 						
 STAND:
 ---			14.10.2015
@@ -288,51 +270,6 @@ STAND:
 
 
 // ---------------------------------------------------------------------------------------------------------------------------			
-FESTLEGUNGEN:
-			- so werden gemessene Zeiten dokumentiert: 
-				// TIME: 18,7us
-
-
-
-FRAGEN:
----			Wie ist eine formatierte, spaltenorientierte Ausgabe in mit printf möglich?
-			->	Mit der Angabe der Feldbreite z.B. %-20s bedeutet: 20 Zeichen breit, linksbündig
-
----			
-
-
-
-
-
-ERLEDIGEN:	- Microchip Strommessroutine ansehen, ob dort eine Normierung stattfindet
-			- Anzahl Aufrufe ADC-Interrupt: 
-				- Anzeige -> ADC_ISR_CNT
-				- evtl. einstellen  
-
-
-			02.01.2016
-			- nur d, q vorgegeben 
-				-> astreines Drehmoment
-			- jedoch dabei den Output von Clarke_Parke anzeigen lassen und dort ist ein wandern der d,q-Werte in Abhängigkeit
-			  des ENC_WKL festzustellen
-				-> ausgeben: ENC_WKL, ENC_WKL_MOT		 		
-				-> dabei festgestellt, dass ENC_WKL_MOT Werte über 360° anzeigt -> FEHLER -> behoben	
-
-			- d,q am Ausgang der ClarkePark müssen konstant sein?! Oder? Natürlich, ... vermute ich!
-
-
-
-
-
-HILFE:		- Äquivalente:
-				- PWM->PWM_CH_NUM[0].PWM_CMR = 0x1u << 8;
-				- PWM->PWM_CH_NUM[0].PWM_CMR = PWM_CMR_CALG;
-
-			- Bittest auf 80H:
-				if (REG_ADC_ISR & (1 << 7))
-				{
-					...
-				}
 */
 //	ANFANG **********************************************     Includes       *************************************************
 	#include "asf.h"
@@ -341,14 +278,10 @@ HILFE:		- Äquivalente:
 	#include "conf_clock.h"
 	#include "math.h"					//			z.B. cos(x)
 	#include "string.h"
-//	ENDE ************************************************     Includes       *************************************************
-
-
-
 
 //	ANFANG **********************************************     defines        *************************************************
 //	ADC, diese defines fehlen leider in der CMSIS
-	#define REG_ADC_CDR             (*(__I  uint32_t*)0x400C0050U) // ADC Channel Data Register
+	
 	#define REG_ADC_CDR1			(*(__I  uint32_t*)0x400C0054U) // ADC Channel Data Register
 	#define REG_ADC_CDR2			(*(__I  uint32_t*)0x400C0058U) // ADC Channel Data Register
 	#define REG_ADC_CDR3			(*(__I  uint32_t*)0x400C005CU) // ADC Channel Data Register
@@ -369,83 +302,12 @@ HILFE:		- Äquivalente:
 	#define	WK1		(PI/180)
 	#define	WK2		(PI*2/3)
 	#define	WK3		(PI*4/3)
-//	ENDE ************************************************     defines        *************************************************
-
-
-
-
-
-//	ANFANG ********************************************     Global Variables       *******************************************
-
-
-
-	
-//	für Schleifen -> Zählvariablen
-	volatile	int		a, b, c, d;
-
-
-//	Zeitverzögerungen (delay)
-	volatile	int		TD1;
-	volatile	int		TD2;
-	volatile	int		TD3;
-	volatile	int		TD4;
-	volatile	int		TD5;
-
 
 //	für Anzeige der Verteilung von Werten
 
 	volatile	int		PRINT_VERT_cnt_i = 0;			// Zählvariable für PRINT_WERT Ausgaben
 
-	volatile	int		VW_i   =  0;
-
-	volatile	int		VW_MW_i;						//  Mittelwert, der von Hand eingetragen werden muss
-														//  und etwa die Mitte von VW_MIN bis VW_MAX betragen sollte
-														
-														
-	volatile	int		VW_1 =  0;						//	Initialisierung der Vergleichswerte:
-	volatile	int		VW_2 =  0;
-	volatile	int		VW_3 =  0;
-	volatile	int		VW_4 =  0;
-	volatile	int		VW_5 =  0;
-	volatile	int		VW_6 =  0;
-	volatile	int		VW_7 =  0;
-	volatile	int		VW_8 =  0;
-	volatile	int		VW_9 =  0;
-
-	
-		
-								
-	volatile	int		VW_MIN_i =  1000000;			// Startwerte
-	volatile	int 	VW_MAX_i = -1000000;	
-
-	volatile	int		VW_cnt_1 =  0;					//	Zähler
-	volatile	int		VW_cnt_2 =  0;
-	volatile	int		VW_cnt_3 =  0;
-	volatile	int		VW_cnt_4 =  0;
-	volatile	int		VW_cnt_5 =  0;
-	volatile	int		VW_cnt_6 =  0;
-	volatile	int		VW_cnt_7 =  0;
-	volatile	int		VW_cnt_8 =  0;
-	volatile	int		VW_cnt_9 =  0;
-	volatile	int		VW_cnt_10 = 0;	
-
-	volatile	float	VW_SUM;							// Summe der VW_cnt_* - Werte
-	
-	
-		
-	volatile	float	P_ADC_A0_f;						// Snapshot von den ADC-Werten für Print
-	volatile	float	P_ADC_A1_f;
-	volatile	float	P_ADC_A2_f;
-
 // Mittelwertfilter
-
-
-/* nach oben
-Die Speicherklasse static legt innerhalb einer Funktion fest, daß dauerhaft für
-die Variable Speicherplatz reserviert wird. Normalerweise ist der Wert einer Variablen
-innerhalb einer Funktion bei jeden Aufruf anfänglich undefiniert. Bei einer
-statischen Variable ist das nicht der Fall.
-*/
 
 	static		int		af_count_i	= 0;						// Laufvariable im AF-Array
 	static		int		SUM_AF_i_1	= 0;						// Summe MOTOR1
@@ -480,16 +342,6 @@ statischen Variable ist das nicht der Fall.
 																		// -> für synchrone Vorgänge zu ADC_INT
 
 //	für Poti am Analogeingng A0
-
-
-	
-	
-	
-	
-	static		int		cnt_1ms_poll = 0;								// 1ms Counter, der in der Polling Main inkrementiert wird 
-
-
-
 	volatile	float	ADC_POTI = 0.0f;							//
 
 //	MOTOR1
@@ -503,7 +355,6 @@ statischen Variable ist das nicht der Fall.
 
 
 //	für Potis an den Analogeingängen A0, A1, A2
-	volatile	int		ADC_A0_i = 0;									// Integer, Poti vom Stick für Sollpositionsvorgabe
 	volatile	int		ADC_A1_i = 0;									// Integer, Poti HapStik vertikal
 	volatile	int		ADC_A2_i = 0;									// Integer, Poti HapStik horizontal	
 	
@@ -512,10 +363,6 @@ statischen Variable ist das nicht der Fall.
 	volatile	int		SS_ADC_A1_i;	
 	volatile	int		SS_ADC_A2_i;	
 	
-	
-	
-	
-	volatile	float	ADC_A0_f = 0.0f;								// Float, Poti vom Stick für Sollpositionsvorgabe
 	volatile	float	ADC_A1_f = 0.0f;								// Float, Poti HapStik vertikal
 	volatile	float	ADC_A2_f = 0.0f;								// Float, Poti HapStik horizontal
 
@@ -553,34 +400,9 @@ statischen Variable ist das nicht der Fall.
 //	volatile	float	WKL_OFF_ver2 = -14.38;							// Winkel_Offset für POTI vertikal (Nullposition)
 //	volatile	float	WKL_OFF_hor2 = 0.0;								// Winkel_Offset für POTI horizontal (Nullposition)
 		
-	
-//	für STROM()
-	volatile	int		STROM_CNT = 0;									// Anzahl Aufrufe	
-	
-	volatile	float	STROM_A0 = 0, STROM_A1 = 0, STROM_A2 = 0;
-	volatile	float	S_A0 = 0, S_A1 = 0, S_A2 = 0;
-		
-	volatile	float	WINKEL_STROM = 0, WINKEL_STROM_ALT = 0;
-	volatile	float	X_KOMP = 0, Y_KOMP = 0;
-	volatile	float	MV_LAENGE = 0, MV_LAENGE_REZ = 0;
-	volatile	float	ADC_PROP = 2.65;								// ADC-Proportionalitätsfaktor, so dass qpi-Werte zu
-																		// gleichen bzw. ähnlichen qcp-Werten führen
-
-
-	
 //	Array von Zeichen für Funktion: float_to_string(...)
 	char	Ergebnis[20];
 
-
-	
-//	Duty cycle buffer for PDC transfer
-//	uint16_t g_us_duty_buffer[3];
-
-//	PDC transfer packet
-//	pdc_packet_t g_pdc_tx_packet;
-
-
-		
 //	für PI-REGLER()	
 	volatile	float	ST = 0.0005;									// 1ms -> SampleTime ADC
 
@@ -620,18 +442,6 @@ statischen Variable ist das nicht der Fall.
 	volatile	float	Qpitemp = 0;									// Anteil P+I-Regler für q	
 	volatile	float	Qiyv = 0;										// Vorhergehender Wert von Qiy	
 
-
-//	für print float
-	#define STRING_EOL    "\r"
-	#define STRING_HEADER "Test double to ascii conversion"
-
-
-
-
-
-
-
-	
 
 //	1.Regler MOTOR1	
 //	PID1_1 Regler GESCHWINDIGKEIT
@@ -697,14 +507,6 @@ statischen Variable ist das nicht der Fall.
 
 	volatile	int		SPRUNG_CNT		= 0;							// Anzahl Aufrufe
 	volatile	int		FLAG_SWEEP 		= 0;							// Anzahl Aufrufe
-
-//	* Ende PID Regler Global Variablen
-	
-	
-	
-	
-	
-//	ENDE **********************************************     Global Variables       *******************************************
 
 
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       SVPWM     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -1016,21 +818,6 @@ void	INIT_PWM(void)
 //	Impuls auf der EventLine wird mit jedem 1. PWM-Referenzimpuls erzeugt (1  x 50us = 50us)
 	REG_PWM_CMPM0 = REG_PWM_CMPM0	|	0x00000001u;
 
-//	Impuls auf der EventLine wird mit jedem 2. PWM-Referenzimpuls erzeugt	
-//	REG_PWM_CMPM0 = REG_PWM_CMPM0	|	0x00000101u;
-
-//	Impuls auf der EventLine wird mit jedem 3. PWM-Referenzimpuls erzeugt	
-//	REG_PWM_CMPM0 = REG_PWM_CMPM0	|	0x00000201u;	
-
-//	Impuls auf der EventLine wird mit jedem 4. PWM-Referenzimpuls erzeugt
-//	REG_PWM_CMPM0 = REG_PWM_CMPM0	|	0x00000301u;
-
-//	Impuls auf der EventLine wird mit jedem 5. PWM-Referenzimpuls erzeugt
-//	REG_PWM_CMPM0 = REG_PWM_CMPM0	|	0x00000401u;	
-
-//	Impuls auf der EventLine wird mit jedem 10. PWM-Referenzimpuls erzeugt (10 x 100us = 1ms)
-//	REG_PWM_CMPM0 = REG_PWM_CMPM0	|	0x00000901u;
-
 /*	
 	PWM Comparison x Value Register (S.1040)
 		- Register: PWM_CMPVx
@@ -1073,19 +860,6 @@ void	INIT_PWM(void)
 //	REG_PIOC_ABSR = REG_PIOC_ABSR	|	0x000003FCu;		// -> Renesas
 	REG_PIOC_ABSR = REG_PIOC_ABSR	|	0x00E00154u;		// -> DS8313	
 
-/*A 
-	Dead Time festlegen: 1us (S:1051)
-	- Register: PWM_DT, die obere Registerhälfte enthält DTL und die untere Hälfte DTH
-	- Dead Time = DTH/84MHz x 42 = 500ns -> 0x002A002Au;
-	  oder:
-	- Dead Time = DTH/84MHz x 84 = 1us -> 0x00540054u;
-
-	REG_PWM_DT0 = 0x00540054u;
-	REG_PWM_DT1 = 0x00540054u;		
-	REG_PWM_DT2 = 0x00540054u;
-	-> keine Dead time für DS8313 nötig, da keine komplementären Ausgänge	
-*/
-
 	
 /*A 
 	Enable PWM channels (S.1007)
@@ -1097,96 +871,6 @@ void	INIT_PWM(void)
 
 
 }
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init PWM       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init TC2 CH1 und CH2 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	REG_TC2_IER1
-//	NVIC_DisableIRQ(TC2_IRQn);
-
-
-/*	Decodierung eines PPM-Signals
-	Blockbild S.864
-	Es gibt 3 Timer/Counter Module.
-	Jedes Modul hat 3 Channels, so dass:
-				 | TC0 CH0 | TC0 CH1 |TC0 CH2 |
-				 | TC1 CH0 | TC1 CH1 |TC1 CH2 |
-				 | TC2 CH0 | TC2 CH1 |TC2 CH2 |				 		
-	Wir benutzen: TC2 CH1, CH2
-	
-	Erste Variante:
-		- Ausgangssignal eines Empfängerkanals (1,5ms +/- 0,5ms) als Input
-		- Input an TIOA7, C.28 (TC2, CH1)
-		- steigende Flanke	-> Trigger (Reset des Counters)
-		- fallende Flanke	-> capture
-
-		- TIOA7 soll den Counter mit der steigenden Flanke triggern (Reset)
-			- ABETRG: TIOA or TIOB External Trigger Selection
-				0: TIOB is used as an external trigger.
-				1: TIOA is used as an external trigger		
-*/
-
-
-void	INIT_TC2(void)
-{
-
-/*	S.563
-	PCM (Power Management Controller) konfigurieren -> enable Timer-Counter-Clock
-	Register: PMC_PCER1 (Power Management Controller Peripheral Clock Enable Register 1)
-		- Clock enable für TC2 CH1 -> TC
-		- Instanz TC7: S.39
-			- ID_TC7: 34 (Identifier für TC2 CH1 -> TC7)
-			- ID_TC7: 35 (Identifier für TC2 CH2 -> TC8)			
-*/
-	REG_PMC_PCER1 = REG_PMC_PCER1	|	0x0000000Cu;
-
-
-/*	S.880
-	Channel Control Register
-	Clock für TC2, CH1 erlauben
-		- CLKEN = 1
-	Clock für TC2, CH2 erlauben
-		- CLKEN = 1		
-*/
-	REG_TC2_CCR1 = REG_TC2_CCR1		|	0x00000001u;
-	REG_TC2_CCR2 = REG_TC2_CCR2		|	0x00000001u;	
-	
-/*	S.881
-	Channel Mode
-		- _ _ _ 1   0 5 0 2
-		- TC_CMR (Timer / Counter Channel Mode Register)
-		- clock selection:	 TIMER_CLOCK3 = MCK/8
-		- clock nicht invertiert
-
-		- ABETRG = 1: -> 1: TIOA7 is used as an external trigger
-		- steigende Flanke	-> Trigger (Reset des Counters)
-		- ETRGEDG = 1H
-		- ETRGEDG = 2H (fallende Flanke)
-
-		- fallende Flanke für (RA Loading Edge Selection) -> zum Laden des Capture-Registers RA
-		- LDRA = 1H
-		- LDRA = 2H (fallende Flanke)
-		
-	Was bedeutet den Counter mit MCK/32 zu takten?
-		- 10500 Clocks je Milisekunde (84000/8)
-		- 5250 Clocks je 0,5ms (Vollauslenkung des Servos)
-		- also haben wir eine Winkelauflösung in der Abtastung von ca. 60°/5250 = 0,0114° -> geht in Ordnung, da der Regler
-		  einen Input mit einer Auflösung von 0,02° bekommt und der Impuls am Empfängerausgang nur eine Auflösung von 1/1024 hat! 
-		  Egal! Vielleicht wird sie ja mal besser! ;-)
-		- Damit sollte der Wertebereich des Capture-Registers RA sein:	*** 5250 ... 10500 ... 15750 ***  	
-		
-*/
-//	REG_TC2_CMR1 = REG_TC2_CMR1		|	0x00020503;			// MCK/128
-//	REG_TC2_CMR1 = REG_TC2_CMR1		|	0x00020500;			// MCK/2
-	REG_TC2_CMR1 = REG_TC2_CMR1		|	0x00020501;			// MCK/8
-
-	REG_TC2_CMR2 = REG_TC2_CMR2		|	0x00020501;			// MCK/8
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init TC        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
 
 
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init ADC       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -1334,16 +1018,13 @@ void aggregat_init(void) {
 	INIT_ADC();
 	//	--------------------------------------------------------------------------------------- Kalibrierung der Winkel zueinander
 	//	Stick muss sich leicht drehen lassen
-
 	//	------------------------------------------------------------------------------------------------ Poti auf Winkel einlernen
 	//	Analogwerte an 3 Stickpositionen messen und speichern
-
 
 //	mySetpoint1_1	= 800 + 0.6 * SS_ADC_A2_i;			// Führungsgröße MOTOR1 durch Poti "Masterstick" festlegen
 //	mySetpoint1_1	=  2418;							// Führungsgröße manuell festlegen: 2418 -> 0° (mech.)
 outMax1_1		=	1.0;							// Max Geschwindigkeit =  1,0 -> ca. 20°/s  oder 0,2 -> ca. 4°/s
 outMin1_1		=  -1.0;							// Min
-
 kp1_1			=   0.0015;							// ?
 //	ki1_1			=   0.0;
 kd1_1			=   0.0035;
@@ -1351,7 +1032,6 @@ kd1_1			=   0.0035;
 //	kp1_1			=   0.0015;							// SUPER gedämpft
 //	ki1_1			=   0.0;
 //	kd1_1			=   0.004;
-
 
 //  REGLER GESCHWINDIGKEIT PID2_1
 //	mySetpoint2_1	=  -0.2;							// Wenn nur der Geschwindigkeitsregler arbeitet
@@ -1364,7 +1044,6 @@ outMin2_1		= -1.0;
 //	ki2_1			= 0.00125;
 //	kd2_1			= 0.0;
 
-	
 //	REGLER POSITION PID1_2
 //	mySetpoint1_2	= 800 + 0.6 * SS_ADC_A2_i;			// Führungsgröße MOTOR1 durch Poti "Masterstick" festlegen
 //	mySetpoint1_2	=  2304;							// Führungsgröße manuell festlegen: 2304 -> 0° (mech.)
@@ -1374,10 +1053,6 @@ outMin1_2		=  -1.0;							// Min
 kp1_2			=   0.0015;							// ?
 //	ki1_2			=   0.0;
 kd1_2			=   0.0035;
-
-
-
-
 //  REGLER GESCHWINDIGKEIT PID2_2
 //	mySetpoint2_2	=  -0.2;							// Wenn nur der Geschwindigkeitsregler arbeitet
 // 1.0 -> ca. 20°/s
@@ -1388,12 +1063,7 @@ outMin2_2		= -1.0;
 //	kp2_2			= 0.0005;							// HAMMER
 //	ki2_2			= 0.00125;
 //	kd2_2			= 0.0;
-	
-	
-
-
 }
-
 
 
 //	MOTOR1
@@ -1402,7 +1072,7 @@ void PID1_1(void)
 {
 	  input1_1 = myInput1_1;
       error1_1 = mySetpoint1_1 - input1_1;
-	  printf("Error %d\r\n", error1_1);
+	  printf("Error %f\r\n", error1_1);
       ITerm1_1+= (ki1_1 * error1_1);
       if(ITerm1_1 > outMax1_1) ITerm1_1= outMax1_1;
       else if(ITerm1_1 < outMin1_1) ITerm1_1= outMin1_1;
@@ -1420,9 +1090,6 @@ void PID1_1(void)
       lastInput1_1 = input1_1;
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER1_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
 
 
 //	MOTOR2
@@ -1451,16 +1118,13 @@ void PID1_2(void)
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER1_2   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
-
-
-
 //	MOTOR1
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER2_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 void PID2_1(void)
 {
 	input2_1 = myInput2_1;
     error2_1 = mySetpoint2_1 - input2_1;
-		printf("Error: %d\r\n", error2_1);
+		printf("Error: %f\r\n", error2_1);
     ITerm2_1+= (ki2_1 * error2_1);
     if(ITerm2_1 > outMax2_1) ITerm2_1= outMax2_1;
     else if(ITerm2_1 < outMin2_1) ITerm2_1= outMin2_1;
@@ -1478,10 +1142,6 @@ void PID2_1(void)
 	lastInput2_1 = input2_1;
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER2_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
 
 
 //	MOTOR2

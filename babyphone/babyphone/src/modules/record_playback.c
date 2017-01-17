@@ -83,7 +83,7 @@ void set_master_framerate(int milliseconds) {
 void double_speed() {
 	uint32_t rc = tc_read_rc(TC, TC_CHANNEL_WAVEFORM);
 	
-	printf("Previous framerate was: %dms, framerate is now %dms\r\n", rc / RC_PER_MILLISECOND, (rc/(RC_PER_MILLISECOND * 2)));
+	printf("Previous framerate was: %fms, framerate is now %ldms\r\n", rc / RC_PER_MILLISECOND, (rc/(RC_PER_MILLISECOND * 2)));
 	tc_disable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
 	tc_stop(TC, TC_CHANNEL_WAVEFORM);
 	tc_write_rc(TC, TC_CHANNEL_WAVEFORM, rc / 2);
@@ -94,7 +94,7 @@ void double_speed() {
 
 void half_speed() {
 	uint32_t rc = tc_read_rc(TC, TC_CHANNEL_WAVEFORM);
-	printf("Previous framerate was: %dms, framerate is now %dms\r\n", rc / RC_PER_MILLISECOND, (rc/(RC_PER_MILLISECOND /2)));
+	printf("Previous framerate was: %fms, framerate is now %ldms\r\n", rc / RC_PER_MILLISECOND, (rc/(RC_PER_MILLISECOND /2)));
 	tc_disable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
 	tc_stop(TC, TC_CHANNEL_WAVEFORM);
 	tc_write_rc(TC, TC_CHANNEL_WAVEFORM, rc * 2);
