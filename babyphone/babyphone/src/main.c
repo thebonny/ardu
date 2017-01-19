@@ -50,11 +50,6 @@
 	float	X1, Y1, Z1;
 	float	X2, Y2, Z2;
 
-	char s1[32];
-	char s2[32];
-	char s3[32];
-	char s4[32];
-	char s5[32];
 	
 	
 
@@ -153,21 +148,6 @@ int main(void)
 //	myInput2_1 = POT_V_1;
 //	PID2_1();
 //	LF1 = myOutput2_1;
-
-
-/*
-//	PRINT
-//	Poti lesen, erfolgt in der ADC-Interrupt Routine
-			if (TAE_1ms % 500 == 0)			// 500 x 1ms = 500ms
-			{
-				printf("|POT_V_1: %10s|LF1    : %10s|mSp2_1 : %10s|mI1_1  : %10s|mO1_1  : %10s|     \r\n",
-				doubleToString(s1, POT_V_1), doubleToString(s2, LF1), doubleToString(s3, mySetpoint2_1), doubleToString(s4, myInput1_1), doubleToString(s5, myOutput1_1)  );
-			}
-*/
-
-
-
-
 
 
 //	Ausgabe an MOTOR1
