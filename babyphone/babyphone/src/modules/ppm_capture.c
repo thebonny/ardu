@@ -2,7 +2,7 @@
 #include <asf.h>
 #include <conf_board.h>
 #include <conf_clock.h>
-#include <modules/ppm_capture.h>
+#include <includes/ppm_capture.h>
 
 #define TC_CAPTURE_TIMER_SELECTION TC_CMR_TCCLKS_TIMER_CLOCK3
 /** Use TC Peripheral 2 **/

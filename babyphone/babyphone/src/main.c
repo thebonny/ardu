@@ -6,38 +6,24 @@
 	#include "math.h"					//			z.B. cos(x)
 
 	#include "delay.h"
-	#include "modules/aggregat.h"
-	#include <modules/ppm_out.h>
-	#include <modules/ppm_capture.h>
-	#include <modules/record_playback.h>
-	#include "modules/utils.h"
+	#include <includes/ppm_out.h>
+	#include <includes/ppm_capture.h>
+	#include <includes/record_playback.h>
+	#include <includes/utils.h>
+	#include <includes/PID.h>
+	#include <includes/PWM.h>
+	#include <includes/ADC.h>
 	
+	#define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
+
+	#define REG_ADC_CDR7			(*(__I  uint32_t*)0x400C006CU) // ADC Channel Data Register
+
 	#define	PI		3.141592654f
 	#define	WK1		(PI/180)
 	#define	WK2		(PI*2/3)
 	#define	WK3		(PI*4/3)
 		
-	//	ANFANG **********************************************     defines        *************************************************
-	//	ADC, diese defines fehlen leider in der CMSIS
 
-	#define REG_ADC_CDR1			(*(__I  uint32_t*)0x400C0054U) // ADC Channel Data Register
-	#define REG_ADC_CDR2			(*(__I  uint32_t*)0x400C0058U) // ADC Channel Data Register
-	#define REG_ADC_CDR3			(*(__I  uint32_t*)0x400C005CU) // ADC Channel Data Register
-	#define REG_ADC_CDR4			(*(__I  uint32_t*)0x400C0060U) // ADC Channel Data Register
-	#define REG_ADC_CDR5			(*(__I  uint32_t*)0x400C0064U) // ADC Channel Data Register
-	#define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
-	#define REG_ADC_CDR7			(*(__I  uint32_t*)0x400C006CU) // ADC Channel Data Register
-	#define REG_ADC_CDR8			(*(__I  uint32_t*)0x400C0070U) // ADC Channel Data Register
-	#define REG_ADC_CDR9			(*(__I  uint32_t*)0x400C0074U) // ADC Channel Data Register
-	#define REG_ADC_CDR10			(*(__I  uint32_t*)0x400C0078U) // ADC Channel Data Register
-	#define REG_ADC_CDR11			(*(__I  uint32_t*)0x400C007CU) // ADC Channel Data Register
-	#define REG_ADC_CDR12			(*(__I  uint32_t*)0x400C0080U) // ADC Channel Data Register
-	#define REG_ADC_CDR13			(*(__I  uint32_t*)0x400C0084U) // ADC Channel Data Register
-	#define REG_ADC_CDR14			(*(__I  uint32_t*)0x400C0088U) // ADC Channel Data Register
-	#define REG_ADC_CDR15			(*(__I  uint32_t*)0x400C008CU) // ADC Channel Data Register
-
-	
-	
 
 	float myInput1_1;
 	int myInput2_1;
@@ -128,8 +114,9 @@ int main(void)
 	ppm_capture_initialize();
 	record_playback_initialize();
 	
-	aggregat_init();
-
+	INIT_PWM();
+	INIT_ADC();
+	INIT_PID();
 
 	display_menu();
 

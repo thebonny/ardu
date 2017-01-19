@@ -1,8 +1,8 @@
 #include <asf.h>
-#include <modules/record_playback.h>
-#include <modules/ppm_capture.h>
-#include <modules/ppm_out.h>
-#include <modules/aggregat.h>
+#include <includes/record_playback.h>
+#include <includes/ppm_capture.h>
+#include <includes/ppm_out.h>
+#include <includes/PID.h>
 
 
 /** Use TC Peripheral 2 **/
