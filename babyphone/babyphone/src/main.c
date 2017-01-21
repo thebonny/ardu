@@ -170,23 +170,7 @@ int main(void)
 				Z1 = -LF1 * cos(DWE1*WK1-WK3);
 			}
 
-
-
-
-
-
-
-
-
-
-
-
 //	MOTOR2 -------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
 //	REGLER rechnen
 
 //	REGLER POSITION
@@ -199,21 +183,6 @@ int main(void)
 //	myInput2_2 = POT_V_2;
 //	PID2_2();
 //	LF2 = myOutput2_2;
-
-
-/*
-//	PRINT
-//	Poti lesen, erfolgt in der ADC-Interrupt Routine
-			if (TAE_1ms % 500 == 0)			// 500 x 1ms = 500ms
-			{
-				printf("|POT_V_2: %10s|LF2    : %10s|mSp2_2 : %10s|mI1_2  : %10s|mO1_2  : %10s|     \r\n\n",
-				doubleToString(s1, POT_V_2), doubleToString(s2, LF2), doubleToString(s3, mySetpoint2_2), doubleToString(s4, myInput1_2), doubleToString(s5, myOutput1_2)  );						
-			}
-*/
-
-
-
-
 
 
 //	Ausgabe an MOTOR2
@@ -244,33 +213,6 @@ int main(void)
 		
 //	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
 		SVPWM(X1, Y1, Z1, X2, Y2, Z2);
-			
-			
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //	}	// if (TAE_1ms % 1 == 0)
 
