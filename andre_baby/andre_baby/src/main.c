@@ -2212,7 +2212,7 @@ int main(void)
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init SAM system     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //	INIT_TC2();
 	INIT_PWM();
-//	INIT_GPIO();
+	INIT_GPIO();
 //	INIT_ADC();
 	
 //	ppm_capture_initialize();

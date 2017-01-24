@@ -10,9 +10,9 @@
 	#include "includes/PID.h"
 	#include "includes/PWM.h"
 	#include "includes/ADC.h"
-	#include "includes/ppm_capture.h"
-	#include "includes/ppm_out.h"
-	#include "includes/record_playback.h"
+//	#include "includes/ppm_capture.h"
+//	#include "includes/ppm_out.h"
+//	#include "includes/record_playback.h"
 
 	
 	#define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
@@ -104,13 +104,19 @@ int main(void)
 	configure_console();
 	
 	INIT_PWM();
+	
+	REG_PIOC_PER	= REG_PIOC_PER		|		0x03000000u;
+	REG_PIOC_OER	 = REG_PIOC_OER		|		0x01000000u;
+	
+	
 	INIT_ADC();
-
-
-
-	// ppm_out_initialize();
-	// ppm_capture_initialize();
-	// record_playback_initialize();
+	INIT_PID();
+		
+	
+	
+//	ppm_out_initialize();
+//	ppm_capture_initialize();
+//	record_playback_initialize();
 	
 
 	// display_menu();
@@ -118,8 +124,14 @@ int main(void)
 	
 	while (1)
 	{
+		
+		myInput1_1 = REG_ADC_CDR7;
+		myInput1_1 = REG_ADC_CDR6;
+		PID1_1();
+		SVPWM(0, 0, 0, 0, 0, 0);
+	
 
-	if (has_ADC_completed_20_conversions() == 1) {
+	if (/* has_ADC_completed_20_conversions() */ 1 == 1) {
 		
 			reset_ADC();
 			//	Flag zurück setzen
@@ -146,7 +158,7 @@ int main(void)
 			//	Wenn der Leistungsfaktor	-> positiv, dann +90° (elektrisch) Vektor raus geben
 			//								-> negativ, dann -90° (elektrisch) Vektor raus geben
 				if (LF1 >= 0)
-				{	DWE1 = 7 * ((33 * (REG_ADC_CDR7 - 2418) / 1677.0) + WKL_OFF_1) + 90;	
+				{	DWE1 = 7 * ((33 * (REG_ADC_CDR6 - 2418) / 1677.0) + WKL_OFF_1) + 90;	
 	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
 					X1 = LF1 * cos(DWE1*WK1);
 					Y1 = LF1 * cos(DWE1*WK1-WK2);
@@ -154,7 +166,7 @@ int main(void)
 				}
 				if (LF1 < 0)
 				{
-					DWE1 = 7 * ((33 * (REG_ADC_CDR7 - 2418) / 1677.0) + WKL_OFF_1) - 90;						
+					DWE1 = 7 * ((33 * (REG_ADC_CDR6 - 2418) / 1677.0) + WKL_OFF_1) - 90;						
 	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
 					X1 = -LF1 * cos(DWE1*WK1);
 					Y1 = -LF1 * cos(DWE1*WK1-WK2);
@@ -200,7 +212,7 @@ int main(void)
 					Z2 = -LF2 * cos(DWE2*WK1-WK3);
 				}
 	
-			if (cnt_1ms_poll % 200 == 0)			// 500 x 1ms = 500ms
+			if (cnt_1ms_poll % 20 == 0)			// 500 x 1ms = 500ms
 						{
 				printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
 					doubleToString(s1, X1), doubleToString(s2, Y1), doubleToString(s3, Z1));

@@ -168,7 +168,6 @@ void	INIT_ADC(void)
 
 void ADC_Handler(void)
 {		
-	printf("ADC!!!\r\n");
 //	Kommt alle 50us (20kHz)
 //	Wird von der PWM Event Line getriggert
 //	Impuls auf der EventLine wird mit jedem 10. PWM-Referenzimpuls erzeugt (1 x 100us = 100us) -> siehe Init_PWM
@@ -217,7 +216,7 @@ void ADC_Handler(void)
 		SUM_AF_i_2 = 0;
 				
 		svpwm_int = 1;
-																// -> zur Übergabe an Endlosschleife in MAIN
+																
 
 	}
 	

@@ -63,6 +63,7 @@ void ppm_out_initialize(void)
 	// configure PPM Out Pin
 	ioport_set_pin_mode(PIN_PPM_OUT, PIN_TC_WAVEFORM_MUX);
 	ioport_disable_pin(PIN_PPM_OUT);
+	
 	tc_init(TC, TC_CHANNEL_WAVEFORM,
 			TC_CMR_TCCLKS_TIMER_CLOCK1
 			| TC_CMR_WAVE /* Waveform mode is enabled */
