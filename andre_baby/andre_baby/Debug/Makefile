@@ -86,11 +86,16 @@ SUBDIRS :=  \
 ../src/ASF/thirdparty/CMSIS/Include/ \
 ../src/ASF/thirdparty/CMSIS/Lib/ \
 ../src/ASF/thirdparty/CMSIS/Lib/GCC/ \
-../src/config/
+../src/config/ \
+../src/includes/ \
+../src/modules/
 
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
+../src/modules/ppm_capture.c \
+../src/modules/ppm_out.c \
+../src/modules/record_playback.c \
 ../src/ASF/common/services/delay/sam/cycle_counter.c \
 ../src/ASF/common/utils/stdio/read.c \
 ../src/ASF/sam/drivers/usart/usart.c \
@@ -119,6 +124,9 @@ ASM_SRCS +=
 
 
 OBJS +=  \
+src/modules/ppm_capture.o \
+src/modules/ppm_out.o \
+src/modules/record_playback.o \
 src/ASF/common/services/delay/sam/cycle_counter.o \
 src/ASF/common/utils/stdio/read.o \
 src/ASF/sam/drivers/usart/usart.o \
@@ -140,6 +148,9 @@ src/ASF/sam/utils/syscalls/gcc/syscalls.o \
 src/main.o
 
 OBJS_AS_ARGS +=  \
+src/modules/ppm_capture.o \
+src/modules/ppm_out.o \
+src/modules/record_playback.o \
 src/ASF/common/services/delay/sam/cycle_counter.o \
 src/ASF/common/utils/stdio/read.o \
 src/ASF/sam/drivers/usart/usart.o \
@@ -161,6 +172,9 @@ src/ASF/sam/utils/syscalls/gcc/syscalls.o \
 src/main.o
 
 C_DEPS +=  \
+src/modules/ppm_capture.d \
+src/modules/ppm_out.d \
+src/modules/record_playback.d \
 src/ASF/common/services/delay/sam/cycle_counter.d \
 src/ASF/common/utils/stdio/read.d \
 src/ASF/sam/drivers/usart/usart.d \
@@ -182,6 +196,9 @@ src/ASF/sam/utils/syscalls/gcc/syscalls.d \
 src/main.d
 
 C_DEPS_AS_ARGS +=  \
+src/modules/ppm_capture.d \
+src/modules/ppm_out.d \
+src/modules/record_playback.d \
 src/ASF/common/services/delay/sam/cycle_counter.d \
 src/ASF/common/utils/stdio/read.d \
 src/ASF/sam/drivers/usart/usart.d \
@@ -255,6 +272,19 @@ LINKER_SCRIPT_DEP+=  \
 
 
 
+
+
+
+
+
+
+
+src/modules/%.o: ../src/modules/%.c
+	@echo Building file: $<
+	@echo Invoking: ARM/GNU C Compiler : 5.3.1
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\arm\arm-gnu-toolchain\bin\arm-none-eabi-gcc.exe$(QUOTE)  -x c -mthumb -D__SAM3X8E__ -DDEBUG -DBOARD=ARDUINO_DUE_X -Dscanf=iscanf -DARM_MATH_CM3=true -Dprintf=iprintf -D__SAM3X8E__  -I"../src/ASF/common/boards" -I"../src/ASF/sam/utils" -I"../src/ASF/sam/utils/header_files" -I"../src/ASF/sam/utils/preprocessor" -I"../src/ASF/thirdparty/CMSIS/Include" -I"../src/ASF/thirdparty/CMSIS/Lib/GCC" -I"../src/ASF/common/utils" -I"../src/ASF/sam/utils/cmsis/sam3x/source/templates" -I"../src/ASF/sam/utils/cmsis/sam3x/include" -I"../src/ASF/sam/boards" -I"../src/ASF/sam/boards/arduino_due_x" -I"../src/ASF/common/services/gpio" -I"../src/ASF/sam/drivers/pio" -I"../src/ASF/common/services/ioport" -I"../src/ASF/common/services/clock" -I"../src/ASF/sam/drivers/pmc" -I"../src" -I"../src/config" -I"../src/ASF/sam/drivers/tc" -I"../src/ASF/sam/drivers/uart" -I"../src/ASF/common/services/serial/sam_uart" -I"../src/ASF/common/services/serial" -I"../src/ASF/common/utils/stdio/stdio_serial" -I"../src/ASF/sam/drivers/usart" -I"../src/ASF/common/services/delay"  -O1 -fdata-sections -ffunction-sections -mlong-calls -g3 -Wall -mcpu=cortex-m3 -c -pipe -fno-strict-aliasing -Wall -Wstrict-prototypes -Wmissing-prototypes -Werror-implicit-function-declaration -Wpointer-arith -std=gnu99 -ffunction-sections -fdata-sections -Wchar-subscripts -Wcomment -Wformat=2 -Wimplicit-int -Wmain -Wparentheses -Wsequence-point -Wreturn-type -Wswitch -Wtrigraphs -Wunused -Wuninitialized -Wunknown-pragmas -Wfloat-equal -Wundef -Wshadow -Wbad-function-cast -Wwrite-strings -Wsign-compare -Waggregate-return  -Wmissing-declarations -Wformat -Wmissing-format-attribute -Wno-deprecated-declarations -Wpacked -Wredundant-decls -Wnested-externs -Wlong-long -Wunreachable-code -Wcast-align --param max-inline-insns-single=500 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
 
 src/ASF/common/services/delay/sam/%.o: ../src/ASF/common/services/delay/sam/%.c
 	@echo Building file: $<

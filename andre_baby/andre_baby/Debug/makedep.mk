@@ -2,6 +2,12 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\modules\ppm_capture.c
+
+src\modules\ppm_out.c
+
+src\modules\record_playback.c
+
 src\ASF\common\services\delay\sam\cycle_counter.c
 
 src\ASF\common\utils\stdio\read.c

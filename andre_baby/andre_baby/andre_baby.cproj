@@ -544,8 +544,19 @@
     <Folder Include="src\ASF\thirdparty\CMSIS\Lib\" />
     <Folder Include="src\ASF\thirdparty\CMSIS\Lib\GCC\" />
     <Folder Include="src\config\" />
+    <Folder Include="src\includes\" />
+    <Folder Include="src\modules\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\modules\ppm_capture.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\modules\ppm_out.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\modules\record_playback.c">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="src\ASF\common\services\delay\delay.h">
       <SubType>compile</SubType>
     </None>
@@ -1012,6 +1023,15 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ASF\sam\utils\syscalls\gcc\syscalls.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\includes\ppm_capture.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\includes\ppm_out.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\includes\record_playback.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\main.c">
