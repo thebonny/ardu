@@ -2734,7 +2734,7 @@ int main(void)
 		{
 //	CH1 (TIOA7)
 			CH1_WERT1_1_alt = CH1_WERT1_1;													// alten CH0-Wert retten
-			CH1_WERT1_1 = REG_TC2_RA1;														// alle 20ms neuen CH0-Wert übernehmen
+			CH1_WERT1_1 = get_captured_channel_value(1) * 2;														// alle 20ms neuen CH0-Wert übernehmen
 			CH1_DELTA = (CH1_WERT1_1 - CH1_WERT1_1_alt)/20;
 
 			CH1_WERT1_1_li = CH1_WERT1_1_li - CH1_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
@@ -2742,7 +2742,7 @@ int main(void)
 //	CH2 (TIOA8)
 
 			CH2_WERT1_1_alt = CH2_WERT1_1;													// alten CH0-Wert retten
-			CH2_WERT1_1 = REG_TC2_RA2;														// alle 20ms neuen CH0-Wert übernehmen
+			CH2_WERT1_1 = get_captured_channel_value(2) * 2;														// alle 20ms neuen CH0-Wert übernehmen
 			CH2_DELTA = (CH2_WERT1_1 - CH2_WERT1_1_alt)/20;
 
 			CH2_WERT1_1_li = CH2_WERT1_1_li - CH2_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
@@ -2756,14 +2756,14 @@ int main(void)
 			CH1_WERT1_1_li = CH1_WERT1_1_li + CH1_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
 
 																							
-			CH1_WERT1_1_li_nor = ((CH1_WERT1_1_li / 6.6336 - 2418) * 2.6) + 2700;			// Normierung auf Laufwege HS
+			CH1_WERT1_1_li_nor = CH1_WERT1_1_li;			// Normierung auf Laufwege HS
 			mySetpoint1_1 = CH1_WERT1_1_li_nor;												//int wert Übergabe
 
 //	CH2 (TIOA8)
 			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
 
 																							
-			CH2_WERT1_1_li_nor = ((CH2_WERT1_1_li / 6.6336 - 2418) * 2.6) + 2600;			// Normierung auf Laufwege HS
+			CH2_WERT1_1_li_nor = CH2_WERT1_1_li;			// Normierung auf Laufwege HS
 			mySetpoint1_2 = CH2_WERT1_1_li_nor;												//int wert Übergabe
 
 
@@ -2900,7 +2900,7 @@ int main(void)
 				Z1 = -LF1 * cos(DWE1*WK1-WK3);
 			}
 
-if (cnt_1ms_poll % 1000 == 0)			// 500 x 1ms = 500ms
+if (cnt_1ms_poll % 200 == 0)			// 500 x 1ms = 500ms
 			{
 	printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
 		doubleToString(s1, X1), doubleToString(s2, Y1), doubleToString(s3, Z1));
