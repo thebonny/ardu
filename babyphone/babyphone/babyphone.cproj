@@ -594,43 +594,19 @@
     <None Include="src\ASF\sam\drivers\tc\tc.h">
       <SubType>compile</SubType>
     </None>
-    <Compile Include="src\includes\ADC.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\includes\PID.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\ppm_capture.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\ppm_out.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\includes\PWM.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\includes\record_playback.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\includes\utils.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\ADC.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\modules\PID.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\modules\ppm_capture.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\ppm_out.c">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\modules\PWM.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\record_playback.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\modules\utils.c">

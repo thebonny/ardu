@@ -6,13 +6,10 @@
 	#include "math.h"					//			z.B. cos(x)
 
 	#include "delay.h"
-	#include <includes/ppm_out.h>
-	#include <includes/ppm_capture.h>
-	#include <includes/record_playback.h>
 	#include <includes/utils.h>
 	#include <includes/PID.h>
 	#include <includes/PWM.h>
-	#include <includes/ADC.h>
+
 	
 	#define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
 
@@ -56,6 +53,10 @@
 	char s2[32];
 	char s3[32];
 	
+
+
+
+
 
 static void configure_console(void)
 {
@@ -109,13 +110,28 @@ int main(void)
 	configure_console();
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init SAM system     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	
-	ppm_out_initialize();
-	ppm_capture_initialize();
-	record_playback_initialize();
-	
 	INIT_PWM();
-	INIT_ADC();
-	INIT_PID();
+//	INIT_ADC();
+
+
+	REG_ADC_IER = REG_ADC_IER | 0x00000080u;
+
+
+
+	//	Aus dem main-init-Code zur korrekten De-/Aktivierung von Interrupts.
+	//	Hier aus dem Beispielprojekt "TC Capture Waveform" vom ASF Framework:
+
+	NVIC_DisableIRQ(ADC_IRQn);
+	NVIC_ClearPendingIRQ(ADC_IRQn);
+	NVIC_SetPriority(ADC_IRQn, 0);
+	//	Enable ADC interrupt, schreibt das Register ISER im NVIC (Nested Vector Interrupt Controller)
+	NVIC_EnableIRQ(ADC_IRQn);
+	//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Interrupt      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+//	ppm_out_initialize();
+//	ppm_capture_initialize();
+//	record_playback_initialize();
+	
 
 	// display_menu();
 
@@ -129,7 +145,6 @@ int main(void)
 	//	---------------------------------------------------------------------------------------------------------------------------
 
 
-		delay_ms(1);
 
 
 	//	Reglerkaskade PID1 (Position) -> PID2 (Geschwindigkeit)
@@ -137,10 +152,10 @@ int main(void)
 	//	MOTOR1 -------------------------------------------------------------------------------------------------------------------
 
 
-	if (svpwm_int == 1) {
+	if (1 == 1) {
 		
 			//	Flag zurück setzen
-			svpwm_int = 0;
+			// svpwm_int = 0;
 
 			cnt_1ms_poll++;
 
