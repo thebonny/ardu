@@ -1,5 +1,24 @@
-#include "asf.h"
+/*
+ * PWM.c
+ *
+ * Created: 19.01.2017 22:39:08
+ *  Author: tmueller
+ */ 
+//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       SVPWM     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//	SpaceVektorPulsWeitenModulation
+//	Gemessene maximale Ausführungszeiten:
+//	1.:		20,89us		mit "void SVPWM(float uum, float uvm, float uwm)"
+//	2.:		23,69us		mit "void SVPWM(double uum, double uvm, double uwm)"
+//	Delta:	 2,80us
+//	TIME:	17us
 
+//	Input:
+//		- X, Y, Z				Spannungen aus Funktion INV_CLARKE_PARK
+//	Output:
+//		- PWMu1, PWMv1, PWMw1	"Center aligned PWM-Signale" die direkt auf die Halbbrücken ausgegeben werden
+//		- PWMu2, PWMv2, PWMw2
+
+#include "asf.h"
 
 //	für SV_PWM()
 volatile	float	PWMu1, PWMv1, PWMw1;
@@ -110,9 +129,6 @@ void SVPWM(float uum1, float uvm1, float uwm1, float uum2, float uvm2, float uwm
 		}
 	}
 	
-	
-	
-
 	//	Ausgabe an den PWM-VController
 
 	REG_PWM_CDTYUPD0 = (1 - PWMu1) * 2100;
@@ -122,10 +138,6 @@ void SVPWM(float uum1, float uvm1, float uwm1, float uum2, float uvm2, float uwm
 	REG_PWM_CDTYUPD3 = (1 - PWMu2) * 2100;
 	REG_PWM_CDTYUPD4 = (1 - PWMv2) * 2100;
 	REG_PWM_CDTYUPD5 = (1 - PWMw2) * 2100;
-
-
-
-
 	//	A Duty Cycle Update, Übernahme der Register Enable PWM channels (S.1016)
 	//	- Register: PWM_SCUC (Sync Channel Update)
 	//	- es gibt nur ein Bit in diesem Register:UPDULOCK (Unlock synchronous channels update)
@@ -135,6 +147,8 @@ void SVPWM(float uum1, float uvm1, float uwm1, float uum2, float uvm2, float uwm
 	REG_PWM_SCUC = 0x00000001u;
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx      SVPWM       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
 
 //	ANFANG **********************************************     FUNKTIONEN     *************************************************
 void	INIT_PWM(void)
@@ -347,5 +361,20 @@ void	INIT_PWM(void)
 */
 	REG_PWM_ENA = REG_PWM_ENA	|	0x00000041u; 
 
+	//	Ausgabe an den PWM-VController
 
+	REG_PWM_CDTYUPD0 = (1 - 0.5) * 2100;
+	REG_PWM_CDTYUPD1 = (1 - 0.5) * 2100;
+	REG_PWM_CDTYUPD2 = (1 - 0.5) * 2100;
+
+	REG_PWM_CDTYUPD3 = (1 - 0.5) * 2100;
+	REG_PWM_CDTYUPD4 = (1 - 0.5) * 2100;
+	REG_PWM_CDTYUPD5 = (1 - 0.5) * 2100;
+	//	A Duty Cycle Update, Übernahme der Register Enable PWM channels (S.1016)
+	//	- Register: PWM_SCUC (Sync Channel Update)
+	//	- es gibt nur ein Bit in diesem Register:UPDULOCK (Unlock synchronous channels update)
+	//	- wird es 1 gesetzt werden die Register für Duty Cycle ... übernommen
+
+	//	Ausgabe
+	REG_PWM_SCUC = 0x00000001u;
 }

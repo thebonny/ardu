@@ -121,7 +121,6 @@ void PID1_1(void)
 {
 	input1_1 = myInput1_1;
 	error1_1 = mySetpoint1_1 - input1_1;
-	printf("Error %f\r\n", error1_1);
 	ITerm1_1+= (ki1_1 * error1_1);
 	if(ITerm1_1 > outMax1_1) ITerm1_1= outMax1_1;
 	else if(ITerm1_1 < outMin1_1) ITerm1_1= outMin1_1;
@@ -173,7 +172,6 @@ void PID2_1(void)
 {
 	input2_1 = myInput2_1;
 	error2_1 = mySetpoint2_1 - input2_1;
-	printf("Error: %f\r\n", error2_1);
 	ITerm2_1+= (ki2_1 * error2_1);
 	if(ITerm2_1 > outMax2_1) ITerm2_1= outMax2_1;
 	else if(ITerm2_1 < outMin2_1) ITerm2_1= outMin2_1;

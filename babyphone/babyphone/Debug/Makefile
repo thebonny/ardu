@@ -99,8 +99,12 @@ C_SRCS +=  \
 ../src/ASF/common/services/delay/sam/cycle_counter.c \
 ../src/ASF/sam/drivers/tc/tc.c \
 ../src/ASF/sam/drivers/uart/uart.c \
+../src/modules/ADC.c \
 ../src/modules/PID.c \
+../src/modules/ppm_capture.c \
+../src/modules/ppm_out.c \
 ../src/modules/PWM.c \
+../src/modules/record_playback.c \
 ../src/modules/utils.c \
 ../src/ASF/common/services/clock/sam3x/sysclk.c \
 ../src/ASF/common/utils/interrupt/interrupt_sam_nvic.c \
@@ -130,8 +134,12 @@ src/ASF/common/services/serial/usart_serial.o \
 src/ASF/common/services/delay/sam/cycle_counter.o \
 src/ASF/sam/drivers/tc/tc.o \
 src/ASF/sam/drivers/uart/uart.o \
+src/modules/ADC.o \
 src/modules/PID.o \
+src/modules/ppm_capture.o \
+src/modules/ppm_out.o \
 src/modules/PWM.o \
+src/modules/record_playback.o \
 src/modules/utils.o \
 src/ASF/common/services/clock/sam3x/sysclk.o \
 src/ASF/common/utils/interrupt/interrupt_sam_nvic.o \
@@ -154,8 +162,12 @@ src/ASF/common/services/serial/usart_serial.o \
 src/ASF/common/services/delay/sam/cycle_counter.o \
 src/ASF/sam/drivers/tc/tc.o \
 src/ASF/sam/drivers/uart/uart.o \
+src/modules/ADC.o \
 src/modules/PID.o \
+src/modules/ppm_capture.o \
+src/modules/ppm_out.o \
 src/modules/PWM.o \
+src/modules/record_playback.o \
 src/modules/utils.o \
 src/ASF/common/services/clock/sam3x/sysclk.o \
 src/ASF/common/utils/interrupt/interrupt_sam_nvic.o \
@@ -178,8 +190,12 @@ src/ASF/common/services/serial/usart_serial.d \
 src/ASF/common/services/delay/sam/cycle_counter.d \
 src/ASF/sam/drivers/tc/tc.d \
 src/ASF/sam/drivers/uart/uart.d \
+src/modules/ADC.d \
 src/modules/PID.d \
+src/modules/ppm_capture.d \
+src/modules/ppm_out.d \
 src/modules/PWM.d \
+src/modules/record_playback.d \
 src/modules/utils.d \
 src/ASF/common/services/clock/sam3x/sysclk.d \
 src/ASF/common/utils/interrupt/interrupt_sam_nvic.d \
@@ -202,8 +218,12 @@ src/ASF/common/services/serial/usart_serial.d \
 src/ASF/common/services/delay/sam/cycle_counter.d \
 src/ASF/sam/drivers/tc/tc.d \
 src/ASF/sam/drivers/uart/uart.d \
+src/modules/ADC.d \
 src/modules/PID.d \
+src/modules/ppm_capture.d \
+src/modules/ppm_out.d \
 src/modules/PWM.d \
+src/modules/record_playback.d \
 src/modules/utils.d \
 src/ASF/common/services/clock/sam3x/sysclk.d \
 src/ASF/common/utils/interrupt/interrupt_sam_nvic.d \
@@ -233,6 +253,14 @@ LINKER_SCRIPT_DEP+=  \
 
 
 # AVR32/GNU C Compiler
+
+
+
+
+
+
+
+
 
 
 
