@@ -11,6 +11,6 @@
 
 
 void INIT_ADC(void);
-
+extern int svpwm_int;
 
 #endif /* ADC_H_ */

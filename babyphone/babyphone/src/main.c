@@ -50,7 +50,11 @@
 	float	X1, Y1, Z1;
 	float	X2, Y2, Z2;
 
+	static		int		cnt_1ms_poll = 0;	
 	
+	char s1[32];
+	char s2[32];
+	char s3[32];
 	
 
 static void configure_console(void)
@@ -113,114 +117,125 @@ int main(void)
 	INIT_ADC();
 	INIT_PID();
 
-	display_menu();
+	// display_menu();
 
-    while (1) {
-		
+	
 		
 		//	----------------------------------------------------------------------------------------------------------- Endlosschleife
 	while (1)
 	{
 
-//	1ms ----------------------------------------------------- REGLELUNG -------------------------------------------------------
-//	---------------------------------------------------------------------------------------------------------------------------
+	//	1ms ----------------------------------------------------- REGLELUNG -------------------------------------------------------
+	//	---------------------------------------------------------------------------------------------------------------------------
 
 
-	delay_ms(1);
+		delay_ms(1);
 
 
-//	Reglerkaskade PID1 (Position) -> PID2 (Geschwindigkeit)
+	//	Reglerkaskade PID1 (Position) -> PID2 (Geschwindigkeit)
 
-//	MOTOR1 -------------------------------------------------------------------------------------------------------------------
-
-
+	//	MOTOR1 -------------------------------------------------------------------------------------------------------------------
 
 
-//	REGLER rechnen
-
-//	REGLER POSITION
-	myInput1_1 = REG_ADC_CDR7;								// Input: Positionsdaten:
-	PID1_1();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
-//	mySetpoint2_1 = myOutput1_1;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
-	LF1 = myOutput1_1;									// Wenn nur POSITIONS-REGLER
-	
-//	REGLER GESCHWINDIGKEIT (REG_TC0_CV0)
-//	myInput2_1 = POT_V_1;
-//	PID2_1();
-//	LF1 = myOutput2_1;
-
-
-//	Ausgabe an MOTOR1
-//	Zum Verständnis:
-//	Wenn der Leistungsfaktor	-> positiv, dann +90° (elektrisch) Vektor raus geben
-//								-> negativ, dann -90° (elektrisch) Vektor raus geben
-			if (LF1 >= 0)
-			{	DWE1 = 7 * ((33 * (REG_ADC_CDR7 - 2418) / 1677.0) + WKL_OFF_1) + 90;	
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X1 = LF1 * cos(DWE1*WK1);
-				Y1 = LF1 * cos(DWE1*WK1-WK2);
-				Z1 = LF1 * cos(DWE1*WK1-WK3);
-			}
-			if (LF1 < 0)
-			{
-				DWE1 = 7 * ((33 * (REG_ADC_CDR7 - 2418) / 1677.0) + WKL_OFF_1) - 90;						
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X1 = -LF1 * cos(DWE1*WK1);
-				Y1 = -LF1 * cos(DWE1*WK1-WK2);
-				Z1 = -LF1 * cos(DWE1*WK1-WK3);
-			}
-
-//	MOTOR2 -------------------------------------------------------------------------------------------------------------------
-//	REGLER rechnen
-
-//	REGLER POSITION
-	myInput1_2 = REG_ADC_CDR6;								// Input: Positionsdaten:
-	PID1_2();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
-//	mySetpoint2_2 = myOutput1_2;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
-	LF2 = myOutput1_2;									// Wenn nur POSITIONS-REGLER
-	
-//	REGLER GESCHWINDIGKEIT
-//	myInput2_2 = POT_V_2;
-//	PID2_2();
-//	LF2 = myOutput2_2;
-
-
-//	Ausgabe an MOTOR2
-//	Zum Verständnis:
-//	Wenn der Leistungsfaktor	-> positiv (Stick links),	dann -90° (elektrisch) Vektor raus geben
-//								-> negativ (Stick rechts),	dann +90° (elektrisch) Vektor raus geben
-			if (LF2 >= 0)
-			{
-				DWE2 = 7 * ((33 * (REG_ADC_CDR6 - 2304) / 1641.0) + WKL_OFF_2) + 90;	
-
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X2 = LF2 * cos(DWE2*WK1);
-				Y2 = LF2 * cos(DWE2*WK1-WK2);
-				Z2 = LF2 * cos(DWE2*WK1-WK3);
-			}
-
-			if (LF2 < 0)
-			{
-				DWE2 = 7 * ((33 * (REG_ADC_CDR6 - 2304) / 1641.0) + WKL_OFF_2) - 90;						
-
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X2 = -LF2 * cos(DWE2*WK1);
-				Y2 = -LF2 * cos(DWE2*WK1-WK2);
-				Z2 = -LF2 * cos(DWE2*WK1-WK3);
-			}
-	
-
+	if (svpwm_int == 1) {
 		
-//	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
-		SVPWM(X1, Y1, Z1, X2, Y2, Z2);
+			//	Flag zurück setzen
+			svpwm_int = 0;
 
-//	}	// if (TAE_1ms % 1 == 0)
+			cnt_1ms_poll++;
 
-//	}	// if(iPT == 2)
+			//	REGLER rechnen
 
-	}	// if (svpwm_int == 1)
+			//	REGLER POSITION
+				myInput1_1 = REG_ADC_CDR7;								// Input: Positionsdaten:
+				PID1_1();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
+			//	mySetpoint2_1 = myOutput1_1;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
+				LF1 = myOutput1_1;									// Wenn nur POSITIONS-REGLER
+	
+			//	REGLER GESCHWINDIGKEIT (REG_TC0_CV0)
+			//	myInput2_1 = POT_V_1;
+			//	PID2_1();
+			//	LF1 = myOutput2_1;
+
+
+			//	Ausgabe an MOTOR1
+			//	Zum Verständnis:
+			//	Wenn der Leistungsfaktor	-> positiv, dann +90° (elektrisch) Vektor raus geben
+			//								-> negativ, dann -90° (elektrisch) Vektor raus geben
+				if (LF1 >= 0)
+				{	DWE1 = 7 * ((33 * (REG_ADC_CDR7 - 2418) / 1677.0) + WKL_OFF_1) + 90;	
+	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+					X1 = LF1 * cos(DWE1*WK1);
+					Y1 = LF1 * cos(DWE1*WK1-WK2);
+					Z1 = LF1 * cos(DWE1*WK1-WK3);
+				}
+				if (LF1 < 0)
+				{
+					DWE1 = 7 * ((33 * (REG_ADC_CDR7 - 2418) / 1677.0) + WKL_OFF_1) - 90;						
+	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+					X1 = -LF1 * cos(DWE1*WK1);
+					Y1 = -LF1 * cos(DWE1*WK1-WK2);
+					Z1 = -LF1 * cos(DWE1*WK1-WK3);
+				}
+
+			//	MOTOR2 -------------------------------------------------------------------------------------------------------------------
+			//	REGLER rechnen
+
+			//	REGLER POSITION
+				myInput1_2 = REG_ADC_CDR6;								// Input: Positionsdaten:
+				PID1_2();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
+			//	mySetpoint2_2 = myOutput1_2;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
+				LF2 = myOutput1_2;									// Wenn nur POSITIONS-REGLER
+	
+			//	REGLER GESCHWINDIGKEIT
+			//	myInput2_2 = POT_V_2;
+			//	PID2_2();
+			//	LF2 = myOutput2_2;
+
+
+			//	Ausgabe an MOTOR2
+			//	Zum Verständnis:
+			//	Wenn der Leistungsfaktor	-> positiv (Stick links),	dann -90° (elektrisch) Vektor raus geben
+			//								-> negativ (Stick rechts),	dann +90° (elektrisch) Vektor raus geben
+				if (LF2 >= 0)
+				{
+					DWE2 = 7 * ((33 * (REG_ADC_CDR6 - 2304) / 1641.0) + WKL_OFF_2) + 90;	
+
+	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+					X2 = LF2 * cos(DWE2*WK1);
+					Y2 = LF2 * cos(DWE2*WK1-WK2);
+					Z2 = LF2 * cos(DWE2*WK1-WK3);
+				}
+
+				if (LF2 < 0)
+				{
+					DWE2 = 7 * ((33 * (REG_ADC_CDR6 - 2304) / 1641.0) + WKL_OFF_2) - 90;						
+
+	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+					X2 = -LF2 * cos(DWE2*WK1);
+					Y2 = -LF2 * cos(DWE2*WK1-WK2);
+					Z2 = -LF2 * cos(DWE2*WK1-WK3);
+				}
+	
+			if (cnt_1ms_poll % 200 == 0)			// 500 x 1ms = 500ms
+						{
+				printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
+					doubleToString(s1, X1), doubleToString(s2, Y1), doubleToString(s3, Z1));
+		//		printf("| Sollwert      : %15s\r\n",doubleToString(s1, mySetpoint1_1));
+					printf("\r\n");
+				printf("| X2      : %15s| Y2      : %15s| Z2  : %15s\r\n",
+				doubleToString(s1, X2), doubleToString(s2, Y2), doubleToString(s3, Z2));
+		//		printf("| Sollwert      : %15s\r\n",	doubleToString(s1, mySetpoint1_2));	
+				printf("------------\r\n");
+						}
+		
+		//	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
+			SVPWM(X1, Y1, Z1, X2, Y2, Z2);
+
+		}	// if (svpwm_int == 1)
 
 	}	// while (1)
+}
 		
 		
 		
@@ -266,6 +281,3 @@ int main(void)
 		puts("Not recognized key pressed \r");
 		break;
 		}*/
-		
-	
-}

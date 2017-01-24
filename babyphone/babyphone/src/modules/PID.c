@@ -222,3 +222,8 @@ void setSetpointVertical(float setpoint) {
 	mySetpoint1_1 = setpoint;
 
 }
+
+void setSetpointHorizontal(float setpoint) {
+	mySetpoint1_2 = setpoint;
+
+}
