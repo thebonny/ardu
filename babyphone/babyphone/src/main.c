@@ -97,51 +97,27 @@ static void display_menu(void)
 }
 
 
-
-//	ENDE ************************************************     FUNKTIONEN     *************************************************
-
-//	**************************************************************************************************************************
-//	ANFANG *******************************************          MAIN           ***********************************************
-//	**************************************************************************************************************************
 int main(void)
 {
-
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init SAM system     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
 	sysclk_init();
 	board_init();
 	configure_console();
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init SAM system     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	
 	INIT_PWM();
 	INIT_ADC();
 
 
 
-//	ppm_out_initialize();
-//	ppm_capture_initialize();
-//	record_playback_initialize();
+	// ppm_out_initialize();
+	// ppm_capture_initialize();
+	// record_playback_initialize();
 	
 
 	// display_menu();
 
 	
-		
-		//	----------------------------------------------------------------------------------------------------------- Endlosschleife
 	while (1)
 	{
-
-	//	1ms ----------------------------------------------------- REGLELUNG -------------------------------------------------------
-	//	---------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-	//	Reglerkaskade PID1 (Position) -> PID2 (Geschwindigkeit)
-
-	//	MOTOR1 -------------------------------------------------------------------------------------------------------------------
-
 
 	if (has_ADC_completed_20_conversions() == 1) {
 		
