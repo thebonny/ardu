@@ -104,16 +104,9 @@ int main(void)
 	configure_console();
 	
 	INIT_PWM();
-	
-	REG_PIOC_PER	= REG_PIOC_PER		|		0x03000000u;
-	REG_PIOC_OER	 = REG_PIOC_OER		|		0x01000000u;
-	
-	
 	INIT_ADC();
 	INIT_PID();
 		
-	
-	
 	ppm_out_initialize();
 	ppm_capture_initialize();
 	record_playback_initialize();
@@ -125,13 +118,7 @@ int main(void)
 	while (1)
 	{
 		
-		myInput1_1 = REG_ADC_CDR7;
-		myInput1_1 = REG_ADC_CDR6;
-		PID1_1();
-		SVPWM(0, 0, 0, 0, 0, 0);
-	
-
-	if ( has_ADC_completed_20_conversions() == 1) {
+		if ( has_ADC_completed_20_conversions() == 1) {
 		
 			reset_ADC();
 			//	Flag zurück setzen
