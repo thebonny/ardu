@@ -10,7 +10,7 @@
 #define PPM_OUT_H_
 
 #define NUMBER_OF_RC_CHANNELS 6
-#define PIN_PPM_OUT     PIN_TC0_TIOA1  // PIN TIOA1 which is PIN PA2 resp. "A7" on Due
+#define PIN_PPM_OUT     PIN_TC0_TIOA0  // PIN TIOA1 which is PIN PA2 resp. "A7" on Due
 
 
 void ppm_out_initialize(void);

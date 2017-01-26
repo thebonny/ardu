@@ -10,9 +10,9 @@
 	#include "includes/PID.h"
 	#include "includes/PWM.h"
 	#include "includes/ADC.h"
-//	#include "includes/ppm_capture.h"
-//	#include "includes/ppm_out.h"
-//	#include "includes/record_playback.h"
+	#include "includes/ppm_capture.h"
+	#include "includes/ppm_out.h"
+	#include "includes/record_playback.h"
 
 	
 	#define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
@@ -114,9 +114,9 @@ int main(void)
 		
 	
 	
-//	ppm_out_initialize();
-//	ppm_capture_initialize();
-//	record_playback_initialize();
+	ppm_out_initialize();
+	ppm_capture_initialize();
+	record_playback_initialize();
 	
 
 	// display_menu();
@@ -131,7 +131,7 @@ int main(void)
 		SVPWM(0, 0, 0, 0, 0, 0);
 	
 
-	if (/* has_ADC_completed_20_conversions() */ 1 == 1) {
+	if ( has_ADC_completed_20_conversions() == 1) {
 		
 			reset_ADC();
 			//	Flag zurück setzen

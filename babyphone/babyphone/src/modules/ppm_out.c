@@ -7,14 +7,14 @@
 #define TC  TC0
 
 /** Configure TC0 channel 1 as waveform output. **/
-#define TC_CHANNEL_WAVEFORM 1
-#define ID_TC_WAVEFORM      ID_TC1
+#define TC_CHANNEL_WAVEFORM 0
+#define ID_TC_WAVEFORM      ID_TC0
 
-#define PIN_TC_WAVEFORM_MUX PIN_TC0_TIOA1_MUX
+#define PIN_TC_WAVEFORM_MUX PIN_TC0_TIOA0_MUX
 
 /** Use TC1_Handler for TC waveform interrupt**/
-#define TC_Handler  TC1_Handler // (TC0 channel 1)
-#define TC_IRQn     TC1_IRQn
+#define TC_Handler  TC0_Handler // (TC0 channel 1)
+#define TC_IRQn     TC0_IRQn
 
 #define TICKS_PER_uS 42
 #define MIN_PWM_MICROS 600
