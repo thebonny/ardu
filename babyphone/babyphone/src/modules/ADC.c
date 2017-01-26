@@ -142,7 +142,7 @@ void	INIT_ADC(void)
 //	12 Bit / x4  -> ADC-Werte: 21 (2926 ... 2946)
 //	Verteilung VW_MW = 2936;
 
-	REG_ADC_MR = REG_ADC_MR			| 0x1E900205u;				// LOWRES von 1 auf 0 (10Bit -> 12Bit)
+	REG_ADC_MR = REG_ADC_MR			| 0x1E900209u;				// LOWRES von 1 auf 0 (10Bit -> 12Bit)
 //	12 Bit / x4  -> ADC-Werte: 10 (2931 ... 2940) nach 1000 Messungen
 
 	REG_ADC_CHER = REG_ADC_CHER		| 0x000000E0u;
