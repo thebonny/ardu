@@ -3,7 +3,7 @@
 	
 	#include "stdio_serial.h"			// UART		z.B. printf("MEC22_STEPS:   %i\r\n", ENC1_C);
 	#include "conf_clock.h"
-	#include "math.h"					//			z.B. cos(x)
+	
 
 	#include "delay.h"
 	#include "includes/utils.h"
@@ -14,48 +14,7 @@
 	#include "includes/ppm_out.h"
 	#include "includes/record_playback.h"
 
-	
-	#define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
-
-	#define REG_ADC_CDR7			(*(__I  uint32_t*)0x400C006CU) // ADC Channel Data Register
-
-	#define	PI		3.141592654f
-	#define	WK1		(PI/180)
-	#define	WK2		(PI*2/3)
-	#define	WK3		(PI*4/3)
-		
-
-
-	float myInput1_1;
-	float myInput1_2;
-
-	double myOutput1_1;
-	double myOutput1_2;
-	
-	//	Leistungsfaktor	0 ... 1 Leistung | 0.5 -> 50% Leistung | 1.0 -> 100% Leistung
-	volatile	float	LF1	= 1.0;
-	volatile	float	LF2	= 1.0;
-	
-	volatile	float	DWE1		= 0.0;
-	volatile	float	DWE_a1		= 0.0;									// alter DWE-Wert
-
-	volatile	float	DWE2		= 0.0;
-	volatile	float	DWE_a2		= 0.0;
-	
-	volatile	float	WKL_OFF_1 =		5.5;							// Winkel_Offset für Poti_MOTOR1 Vertikal		(Nullposition)	-> "+" Stick wandert nach unten
-	volatile	float	WKL_OFF_2 =		-16.0;
-	
-	//	für SVPWM()
-	float	X1, Y1, Z1;
-	float	X2, Y2, Z2;
-
 	static		int		cnt_1ms_poll = 0;	
-	
-	char s1[32];
-	char s2[32];
-	char s3[32];
-	
-
 
 	volatile	float	CH1_WERT1_1			= 0.0;						// Empfänger-Wert
 	volatile	float	CH1_WERT1_1_alt		= 0.0;
@@ -174,81 +133,11 @@ int main(void)
 			motor_X_position.setpoint = CH2_WERT1_1_li_nor;												//int wert Übergabe
 			
 			
-			//	REGLER rechnen
-
-//	REGLER POSITION
-	motor_X_position.input = get_average_adc_input_X();								
-	LF1 = pid_compute(&motor_X_position);							
-
-
-//	Ausgabe an MOTOR1
-//	Zum Verständnis:
-//	Wenn der Leistungsfaktor	-> positiv, dann +90° (elektrisch) Vektor raus geben
-//								-> negativ, dann -90° (elektrisch) Vektor raus geben
-			if (LF1 >= 0)
-			{	DWE1 = 7 * ((33 * (get_average_adc_input_X() - 2418) / 1677.0) + WKL_OFF_1) + 90;	// "-" bei [2]
-
-
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X1 = LF1 * cos(DWE1*WK1);
-				Y1 = LF1 * cos(DWE1*WK1-WK2);
-				Z1 = LF1 * cos(DWE1*WK1-WK3);
-			}
-			if (LF1 < 0)
-			{
-				DWE1 = 7 * ((33 * (get_average_adc_input_X() - 2418) / 1677.0) + WKL_OFF_1) - 90;	// "+" bei [2]						
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X1 = -LF1 * cos(DWE1*WK1);
-				Y1 = -LF1 * cos(DWE1*WK1-WK2);
-				Z1 = -LF1 * cos(DWE1*WK1-WK3);
-			}
-
+			
 			if (cnt_1ms_poll % 200 == 0)			// 500 x 1ms = 500ms
 						{
-				printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
-					doubleToString(s1, X1), doubleToString(s2, Y1), doubleToString(s3, Z1));
-				printf("| Sollwert      : %15s\r\n",
-					doubleToString(s1, motor_X_position.setpoint));
-					printf("\r\n");
-				printf("| X2      : %15s| Y2      : %15s| Z2  : %15s\r\n",
-				doubleToString(s1, X2), doubleToString(s2, Y2), doubleToString(s3, Z2));
-				printf("| Sollwert      : %15s\r\n",
-				doubleToString(s1, motor_Y_position.setpoint));	
-				printf("------------\r\n");
+		compute_all_controllers();
 						}
-	
-
-			motor_Y_position.input = get_average_adc_input_Y();
-			LF2 = pid_compute(&motor_Y_position);
-	
-
-//	Ausgabe an MOTOR2
-//	Zum Verständnis:
-//	Wenn der Leistungsfaktor	-> positiv (Stick links),	dann -90° (elektrisch) Vektor raus geben
-//								-> negativ (Stick rechts),	dann +90° (elektrisch) Vektor raus geben
-			if (LF2 >= 0)
-			{
-				DWE2 = 7 * ((33 * (get_average_adc_input_Y() - 2304) / 1641.0) + WKL_OFF_2) + 90;	
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X2 = LF2 * cos(DWE2*WK1);
-				Y2 = LF2 * cos(DWE2*WK1-WK2);
-				Z2 = LF2 * cos(DWE2*WK1-WK3);
-			}
-
-			if (LF2 < 0)
-			{
-				DWE2 = 7 * ((33 * (get_average_adc_input_Y() - 2304) / 1641.0) + WKL_OFF_2) - 90;					
-
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X2 = -LF2 * cos(DWE2*WK1);
-				Y2 = -LF2 * cos(DWE2*WK1-WK2);
-				Z2 = -LF2 * cos(DWE2*WK1-WK3);
-			}
-	
-
-		
-//	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
-		SVPWM(X1, Y1, Z1, X2, Y2, Z2);
 
 		}	// if (svpwm_int == 1)
 

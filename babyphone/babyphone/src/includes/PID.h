@@ -27,5 +27,6 @@ extern pid_controller motor_X_speed;
 extern pid_controller motor_Y_speed;
 
 double pid_compute(pid_controller *controller);
+void compute_all_controllers(void);
 
 #endif /* PID_H_ */
