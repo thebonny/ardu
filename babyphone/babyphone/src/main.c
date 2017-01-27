@@ -121,9 +121,6 @@ int main(void)
 		if ( has_ADC_completed_20_conversions() == 1) {
 		
 			reset_ADC();
-			//	Flag zurück setzen
-			// svpwm_int = 0;
-
 			cnt_1ms_poll++;
 
 			//	REGLER rechnen

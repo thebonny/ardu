@@ -5,8 +5,50 @@
  *  Author: tmueller
  */ 
 #include "stdio.h"
-//	1.Regler MOTOR1
-//	PID1_1 Regler GESCHWINDIGKEIT
+
+typedef struct  {
+	float setpoint;
+	float input;
+	float lastInput;
+	double ITerm;
+	double outMax;
+	double outMin;
+	double kp;
+	double ki;
+	double kd;
+} pid_controller;
+
+pid_controller motor_X_position = { 0.0, 0.0, 0.0, 1.0, -1.0, 0.0015, 0.0, 0.0035 };
+pid_controller motor_Y_position = { 0.0, 0.0, 0.0, 1.0, -1.0, 0.0015, 0.0, 0.0035 };
+pid_controller motor_X_speed = { 0.0, 0.0, 0.0, 1.0, -1.0, 0.0015, 0.0, 0.0035 };
+pid_controller motor_Y_speed = { 0.0, 0.0, 0.0, 1.0, -1.0, 0.0015, 0.0, 0.0035 };
+	
+double pid_compute(pid_controller *controller)
+{
+	float error = controller->setpoint - controller->input;
+	controller->ITerm += (controller->ki * error);
+	
+	if(controller->ITerm > controller->outMax) {
+		controller->ITerm = controller->outMax;
+	} else if(controller->ITerm < controller->outMin) {
+		controller->ITerm = controller->outMin;
+	}
+	float dInput = (controller->input - controller->lastInput);
+	
+	// Reglerausgang berechnen
+	double output = controller->kp * error + controller->ITerm - controller->kd * dInput;
+
+	// Überläufe kappen
+	if(output > controller->outMax) {
+		output = controller->outMax;
+	} else if(output < controller->outMin) {
+		output = controller->outMin;
+	}
+	//	letzten Wert speichern
+	controller->lastInput = controller->input;
+	return output;
+}
+
 float myInput1_1;
 
 float error1_1 = 0.0, input1_1 = 0.0, dInput1_1 = 0.0, lastInput1_1 = 0.0, mySetpoint1_1 = 0.0;
@@ -115,6 +157,7 @@ void INIT_PID(void) {
 }
 
 
+
 //	MOTOR1
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER1_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 void PID1_1(void)
@@ -137,7 +180,7 @@ void PID1_1(void)
 	//	letzten Wert speichern
 	lastInput1_1 = input1_1;
 }
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER1_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 
 
 //	MOTOR2
