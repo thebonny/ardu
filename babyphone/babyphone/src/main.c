@@ -27,10 +27,8 @@
 
 
 	float myInput1_1;
-	int myInput2_1;
 	float myInput1_2;
-	
-	double myOutput2_1;
+
 	double myOutput1_1;
 	double myOutput1_2;
 	
@@ -59,7 +57,24 @@
 	
 
 
+	volatile	float	CH1_WERT1_1			= 0.0;						// Empfänger-Wert
+	volatile	float	CH1_WERT1_1_alt		= 0.0;
+	volatile	float	CH1_WERT1_1_li		= 0.0;						// linear interpoliert
+	volatile	float	CH1_WERT1_1_li_nor	= 0.0;						// linear interpoliert und normiert
+	volatile	float	CH1_DELTA			= 0.0;						// Delta-Wert für 1ms
+	
+	volatile	float	CH1_WERT2_1 = 0.0;
+	volatile	int		CH1_WERT3_1 = 0;
 
+
+	volatile	float	CH2_WERT1_1			= 0.0;						// Empfänger-Wert
+	volatile	float	CH2_WERT1_1_alt		= 0.0;
+	volatile	float	CH2_WERT1_1_li		= 0.0;						// linear interpoliert
+	volatile	float	CH2_WERT1_1_li_nor	= 0.0;						// linear interpoliert und normiert
+	volatile	float	CH2_DELTA			= 0.0;						// Delta-Wert für 1ms
+	
+	volatile	float	CH2_WERT2_1 = 0.0;
+	volatile	int		CH2_WERT3_1 = 0;
 
 
 static void configure_console(void)
@@ -105,15 +120,12 @@ int main(void)
 	
 	INIT_PWM();
 	INIT_ADC();
-	INIT_PID();
-		
 	ppm_out_initialize();
 	ppm_capture_initialize();
 	record_playback_initialize();
 	
 
 	// display_menu();
-
 	
 	while (1)
 	{
@@ -123,93 +135,120 @@ int main(void)
 			reset_ADC();
 			cnt_1ms_poll++;
 
+			// Lineare Interpolation, um 1ms Werte vom Master zu bekommen, der nur alle 20ms einen aktuellen Wert versendet
+			//	alle 20ms
+			if (cnt_1ms_poll % 20 == 0)																// 20ms
+			{
+				//	CH1 (TIOA7)
+				CH1_WERT1_1_alt = CH1_WERT1_1;													// alten CH0-Wert retten
+				CH1_WERT1_1 = get_captured_channel_value(1) * 2;														// alle 20ms neuen CH0-Wert übernehmen
+				CH1_DELTA = (CH1_WERT1_1 - CH1_WERT1_1_alt)/20;
+
+				CH1_WERT1_1_li = CH1_WERT1_1_li - CH1_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
+
+				//	CH2 (TIOA8)
+
+				CH2_WERT1_1_alt = CH2_WERT1_1;													// alten CH0-Wert retten
+				CH2_WERT1_1 = get_captured_channel_value(2) * 2;														// alle 20ms neuen CH0-Wert übernehmen
+				CH2_DELTA = (CH2_WERT1_1 - CH2_WERT1_1_alt)/20;
+
+				CH2_WERT1_1_li = CH2_WERT1_1_li - CH2_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
+			}
+			
+			
+			
+			
+			//	jede ms
+			//	CH1 (TIOA7)
+			CH1_WERT1_1_li = CH1_WERT1_1_li + CH1_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
+
+			
+			CH1_WERT1_1_li_nor = CH1_WERT1_1_li;			// Normierung auf Laufwege HS
+			motor_Y_position.setpoint = CH1_WERT1_1_li_nor;												//int wert Übergabe
+
+			//	CH2 (TIOA8)
+			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
+
+			
+			CH2_WERT1_1_li_nor = CH2_WERT1_1_li;			// Normierung auf Laufwege HS
+			motor_X_position.setpoint = CH2_WERT1_1_li_nor;												//int wert Übergabe
+			
+			
 			//	REGLER rechnen
 
-			//	REGLER POSITION
-				myInput1_1 = REG_ADC_CDR7;								// Input: Positionsdaten:
-				PID1_1();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
-			//	mySetpoint2_1 = myOutput1_1;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
-				LF1 = myOutput1_1;									// Wenn nur POSITIONS-REGLER
-	
-			//	REGLER GESCHWINDIGKEIT (REG_TC0_CV0)
-			//	myInput2_1 = POT_V_1;
-			//	PID2_1();
-			//	LF1 = myOutput2_1;
+//	REGLER POSITION
+	motor_X_position.input = get_average_adc_input_X();								
+	LF1 = pid_compute(&motor_X_position);							
 
 
-			//	Ausgabe an MOTOR1
-			//	Zum Verständnis:
-			//	Wenn der Leistungsfaktor	-> positiv, dann +90° (elektrisch) Vektor raus geben
-			//								-> negativ, dann -90° (elektrisch) Vektor raus geben
-				if (LF1 >= 0)
-				{	DWE1 = 7 * ((33 * (REG_ADC_CDR6 - 2418) / 1677.0) + WKL_OFF_1) + 90;	
-	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-					X1 = LF1 * cos(DWE1*WK1);
-					Y1 = LF1 * cos(DWE1*WK1-WK2);
-					Z1 = LF1 * cos(DWE1*WK1-WK3);
-				}
-				if (LF1 < 0)
-				{
-					DWE1 = 7 * ((33 * (REG_ADC_CDR6 - 2418) / 1677.0) + WKL_OFF_1) - 90;						
-	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-					X1 = -LF1 * cos(DWE1*WK1);
-					Y1 = -LF1 * cos(DWE1*WK1-WK2);
-					Z1 = -LF1 * cos(DWE1*WK1-WK3);
-				}
-
-			//	MOTOR2 -------------------------------------------------------------------------------------------------------------------
-			//	REGLER rechnen
-
-			//	REGLER POSITION
-				myInput1_2 = REG_ADC_CDR6;								// Input: Positionsdaten:
-				PID1_2();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
-			//	mySetpoint2_2 = myOutput1_2;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
-				LF2 = myOutput1_2;									// Wenn nur POSITIONS-REGLER
-	
-			//	REGLER GESCHWINDIGKEIT
-			//	myInput2_2 = POT_V_2;
-			//	PID2_2();
-			//	LF2 = myOutput2_2;
+//	Ausgabe an MOTOR1
+//	Zum Verständnis:
+//	Wenn der Leistungsfaktor	-> positiv, dann +90° (elektrisch) Vektor raus geben
+//								-> negativ, dann -90° (elektrisch) Vektor raus geben
+			if (LF1 >= 0)
+			{	DWE1 = 7 * ((33 * (get_average_adc_input_X() - 2418) / 1677.0) + WKL_OFF_1) + 90;	// "-" bei [2]
 
 
-			//	Ausgabe an MOTOR2
-			//	Zum Verständnis:
-			//	Wenn der Leistungsfaktor	-> positiv (Stick links),	dann -90° (elektrisch) Vektor raus geben
-			//								-> negativ (Stick rechts),	dann +90° (elektrisch) Vektor raus geben
-				if (LF2 >= 0)
-				{
-					DWE2 = 7 * ((33 * (REG_ADC_CDR6 - 2304) / 1641.0) + WKL_OFF_2) + 90;	
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+				X1 = LF1 * cos(DWE1*WK1);
+				Y1 = LF1 * cos(DWE1*WK1-WK2);
+				Z1 = LF1 * cos(DWE1*WK1-WK3);
+			}
+			if (LF1 < 0)
+			{
+				DWE1 = 7 * ((33 * (get_average_adc_input_X() - 2418) / 1677.0) + WKL_OFF_1) - 90;	// "+" bei [2]						
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+				X1 = -LF1 * cos(DWE1*WK1);
+				Y1 = -LF1 * cos(DWE1*WK1-WK2);
+				Z1 = -LF1 * cos(DWE1*WK1-WK3);
+			}
 
-	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-					X2 = LF2 * cos(DWE2*WK1);
-					Y2 = LF2 * cos(DWE2*WK1-WK2);
-					Z2 = LF2 * cos(DWE2*WK1-WK3);
-				}
-
-				if (LF2 < 0)
-				{
-					DWE2 = 7 * ((33 * (REG_ADC_CDR6 - 2304) / 1641.0) + WKL_OFF_2) - 90;						
-
-	//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-					X2 = -LF2 * cos(DWE2*WK1);
-					Y2 = -LF2 * cos(DWE2*WK1-WK2);
-					Z2 = -LF2 * cos(DWE2*WK1-WK3);
-				}
-	
-			if (cnt_1ms_poll % 20 == 0)			// 500 x 1ms = 500ms
+			if (cnt_1ms_poll % 200 == 0)			// 500 x 1ms = 500ms
 						{
 				printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
 					doubleToString(s1, X1), doubleToString(s2, Y1), doubleToString(s3, Z1));
-		//		printf("| Sollwert      : %15s\r\n",doubleToString(s1, mySetpoint1_1));
+				printf("| Sollwert      : %15s\r\n",
+					doubleToString(s1, motor_X_position.setpoint));
 					printf("\r\n");
 				printf("| X2      : %15s| Y2      : %15s| Z2  : %15s\r\n",
 				doubleToString(s1, X2), doubleToString(s2, Y2), doubleToString(s3, Z2));
-		//		printf("| Sollwert      : %15s\r\n",	doubleToString(s1, mySetpoint1_2));	
+				printf("| Sollwert      : %15s\r\n",
+				doubleToString(s1, motor_Y_position.setpoint));	
 				printf("------------\r\n");
 						}
+	
+
+			motor_Y_position.input = get_average_adc_input_Y();
+			LF2 = pid_compute(&motor_Y_position);
+	
+
+//	Ausgabe an MOTOR2
+//	Zum Verständnis:
+//	Wenn der Leistungsfaktor	-> positiv (Stick links),	dann -90° (elektrisch) Vektor raus geben
+//								-> negativ (Stick rechts),	dann +90° (elektrisch) Vektor raus geben
+			if (LF2 >= 0)
+			{
+				DWE2 = 7 * ((33 * (get_average_adc_input_Y() - 2304) / 1641.0) + WKL_OFF_2) + 90;	
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+				X2 = LF2 * cos(DWE2*WK1);
+				Y2 = LF2 * cos(DWE2*WK1-WK2);
+				Z2 = LF2 * cos(DWE2*WK1-WK3);
+			}
+
+			if (LF2 < 0)
+			{
+				DWE2 = 7 * ((33 * (get_average_adc_input_Y() - 2304) / 1641.0) + WKL_OFF_2) - 90;					
+
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+				X2 = -LF2 * cos(DWE2*WK1);
+				Y2 = -LF2 * cos(DWE2*WK1-WK2);
+				Z2 = -LF2 * cos(DWE2*WK1-WK3);
+			}
+	
+
 		
-		//	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
-			SVPWM(X1, Y1, Z1, X2, Y2, Z2);
+//	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
+		SVPWM(X1, Y1, Z1, X2, Y2, Z2);
 
 		}	// if (svpwm_int == 1)
 

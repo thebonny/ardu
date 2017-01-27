@@ -115,6 +115,14 @@ void reset_ADC(void) {
 	svpwm_int = 0;
 }
 
+int get_average_adc_input_X(void) {
+	return AF_A0_i;
+}
+
+int get_average_adc_input_Y(void) {
+	return AF_A1_i;
+}
+
 
 void	INIT_ADC(void)
 {

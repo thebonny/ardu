@@ -13,5 +13,7 @@
 void INIT_ADC(void);
 int has_ADC_completed_20_conversions(void);
 void reset_ADC(void);
+int get_average_adc_input_X(void);
+int get_average_adc_input_Y(void);
 
 #endif /* ADC_H_ */
