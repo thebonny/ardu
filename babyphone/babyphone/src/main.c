@@ -114,30 +114,20 @@ int main(void)
 				CH2_WERT1_1_li = CH2_WERT1_1_li - CH2_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
 			}
 			
-			
-			
-			
-			//	jede ms
-			//	CH1 (TIOA7)
 			CH1_WERT1_1_li = CH1_WERT1_1_li + CH1_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-
-			
 			CH1_WERT1_1_li_nor = CH1_WERT1_1_li;			// Normierung auf Laufwege HS
 			motor_Y_position.setpoint = CH1_WERT1_1_li_nor;												//int wert Übergabe
 
-			//	CH2 (TIOA8)
 			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-
-			
 			CH2_WERT1_1_li_nor = CH2_WERT1_1_li;			// Normierung auf Laufwege HS
 			motor_X_position.setpoint = CH2_WERT1_1_li_nor;												//int wert Übergabe
 			
 			
 			
 			if (cnt_1ms_poll % 200 == 0)			// 500 x 1ms = 500ms
-						{
-		compute_all_controllers();
-						}
+			{
+				compute_all_controllers();
+			}
 
 		}	// if (svpwm_int == 1)
 
