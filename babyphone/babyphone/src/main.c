@@ -70,6 +70,20 @@ static void display_menu(void)
 			"------\n\r\r");
 }
 
+static void display_debug_output() {
+		char s1[32], s2[32], s3[32];
+	printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
+	doubleToString(s1, motor_X_space_vector.X), doubleToString(s2, motor_X_space_vector.Y), doubleToString(s3, motor_X_space_vector.Z));
+	printf("| Sollwert      : %15s\r\n",
+	doubleToString(s1, motor_X_position_controller.setpoint));
+	printf("\r\n");
+	printf("| X2      : %15s| Y2      : %15s| Z2  : %15s\r\n",
+	doubleToString(s1, motor_Y_space_vector.X), doubleToString(s2, motor_Y_space_vector.Y), doubleToString(s3, motor_Y_space_vector.Z));
+	printf("| Sollwert      : %15s\r\n",
+	doubleToString(s1, motor_Y_position_controller.setpoint));
+	printf("------------\r\n");
+}
+
 
 int main(void)
 {
@@ -83,60 +97,12 @@ int main(void)
 	ppm_capture_initialize();
 	record_playback_initialize();
 	
-
+	char key;
 	// display_menu();
 	
 	while (1)
 	{
-		
-		if ( has_ADC_completed_20_conversions() == 1) {
-		
-			reset_ADC();
-			cnt_1ms_poll++;
-
-			// Lineare Interpolation, um 1ms Werte vom Master zu bekommen, der nur alle 20ms einen aktuellen Wert versendet
-			//	alle 20ms
-			if (cnt_1ms_poll % 20 == 0)																// 20ms
-			{
-				//	CH1 (TIOA7)
-				CH1_WERT1_1_alt = CH1_WERT1_1;													// alten CH0-Wert retten
-				CH1_WERT1_1 = get_captured_channel_value(1) * 2;														// alle 20ms neuen CH0-Wert übernehmen
-				CH1_DELTA = (CH1_WERT1_1 - CH1_WERT1_1_alt)/20;
-
-				CH1_WERT1_1_li = CH1_WERT1_1_li - CH1_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
-
-				//	CH2 (TIOA8)
-
-				CH2_WERT1_1_alt = CH2_WERT1_1;													// alten CH0-Wert retten
-				CH2_WERT1_1 = get_captured_channel_value(2) * 2;														// alle 20ms neuen CH0-Wert übernehmen
-				CH2_DELTA = (CH2_WERT1_1 - CH2_WERT1_1_alt)/20;
-
-				CH2_WERT1_1_li = CH2_WERT1_1_li - CH2_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
-			}
-			
-			CH1_WERT1_1_li = CH1_WERT1_1_li + CH1_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-			CH1_WERT1_1_li_nor = CH1_WERT1_1_li;			// Normierung auf Laufwege HS
-			motor_Y_position.setpoint = CH1_WERT1_1_li_nor;												//int wert Übergabe
-
-			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-			CH2_WERT1_1_li_nor = CH2_WERT1_1_li;			// Normierung auf Laufwege HS
-			motor_X_position.setpoint = CH2_WERT1_1_li_nor;												//int wert Übergabe
-			
-			
-			
-			if (cnt_1ms_poll % 200 == 0)			// 500 x 1ms = 500ms
-			{
-				compute_all_controllers();
-			}
-
-		}	// if (svpwm_int == 1)
-
-	}	// while (1)
-}
-		
-		
-		
-	/*	scanf("%c", (char *)&key);
+		scanf("%c", (char *)&key);
 
 		switch (key) {
 		case 'm':
@@ -177,4 +143,53 @@ int main(void)
 		default:
 		puts("Not recognized key pressed \r");
 		break;
-		}*/
+		}
+		
+		if ( has_ADC_completed_20_conversions() == 1) {
+		
+			reset_ADC();
+			cnt_1ms_poll++;
+
+			// Lineare Interpolation, um 1ms Werte vom Master zu bekommen, der nur alle 20ms einen aktuellen Wert versendet
+			//	alle 20ms
+			if (cnt_1ms_poll % 20 == 0)																// 20ms
+			{
+				//	CH1 (TIOA7)
+				CH1_WERT1_1_alt = CH1_WERT1_1;													// alten CH0-Wert retten
+				CH1_WERT1_1 = get_captured_channel_value(1) * 2;														// alle 20ms neuen CH0-Wert übernehmen
+				CH1_DELTA = (CH1_WERT1_1 - CH1_WERT1_1_alt)/20;
+
+				CH1_WERT1_1_li = CH1_WERT1_1_li - CH1_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
+
+				//	CH2 (TIOA8)
+
+				CH2_WERT1_1_alt = CH2_WERT1_1;													// alten CH0-Wert retten
+				CH2_WERT1_1 = get_captured_channel_value(2) * 2;														// alle 20ms neuen CH0-Wert übernehmen
+				CH2_DELTA = (CH2_WERT1_1 - CH2_WERT1_1_alt)/20;
+
+				CH2_WERT1_1_li = CH2_WERT1_1_li - CH2_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
+			}
+			
+			CH1_WERT1_1_li = CH1_WERT1_1_li + CH1_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
+			CH1_WERT1_1_li_nor = CH1_WERT1_1_li;			// Normierung auf Laufwege HS
+			motor_Y_position_controller.setpoint = CH1_WERT1_1_li_nor;												//int wert Übergabe
+
+			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
+			CH2_WERT1_1_li_nor = CH2_WERT1_1_li;			// Normierung auf Laufwege HS
+			motor_X_position_controller.setpoint = CH2_WERT1_1_li_nor;												//int wert Übergabe
+			
+			
+			compute_all_controllers();
+			if (cnt_1ms_poll % 1000 == 0) {
+				// display_debug_output();
+			}
+
+
+		}	
+
+	}	
+}
+		
+		
+		
+

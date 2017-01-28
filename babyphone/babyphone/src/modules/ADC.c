@@ -8,22 +8,8 @@
 #include "stdio.h"
 
 //	ADC, diese defines fehlen leider in der CMSIS
-
-#define REG_ADC_CDR1			(*(__I  uint32_t*)0x400C0054U) // ADC Channel Data Register
-#define REG_ADC_CDR2			(*(__I  uint32_t*)0x400C0058U) // ADC Channel Data Register
-#define REG_ADC_CDR3			(*(__I  uint32_t*)0x400C005CU) // ADC Channel Data Register
-#define REG_ADC_CDR4			(*(__I  uint32_t*)0x400C0060U) // ADC Channel Data Register
-#define REG_ADC_CDR5			(*(__I  uint32_t*)0x400C0064U) // ADC Channel Data Register
 #define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
 #define REG_ADC_CDR7			(*(__I  uint32_t*)0x400C006CU) // ADC Channel Data Register
-#define REG_ADC_CDR8			(*(__I  uint32_t*)0x400C0070U) // ADC Channel Data Register
-#define REG_ADC_CDR9			(*(__I  uint32_t*)0x400C0074U) // ADC Channel Data Register
-#define REG_ADC_CDR10			(*(__I  uint32_t*)0x400C0078U) // ADC Channel Data Register
-#define REG_ADC_CDR11			(*(__I  uint32_t*)0x400C007CU) // ADC Channel Data Register
-#define REG_ADC_CDR12			(*(__I  uint32_t*)0x400C0080U) // ADC Channel Data Register
-#define REG_ADC_CDR13			(*(__I  uint32_t*)0x400C0084U) // ADC Channel Data Register
-#define REG_ADC_CDR14			(*(__I  uint32_t*)0x400C0088U) // ADC Channel Data Register
-#define REG_ADC_CDR15			(*(__I  uint32_t*)0x400C008CU) // ADC Channel Data Register
 
 //	für ADC_ISR()
 //	Anzahl Aufrufe
@@ -178,41 +164,21 @@ void ADC_Handler(void)
 {		
 //	Kommt alle 50us (20kHz)
 //	Wird von der PWM Event Line getriggert
-//	Impuls auf der EventLine wird mit jedem 10. PWM-Referenzimpuls erzeugt (1 x 100us = 100us) -> siehe Init_PWM
 
+//	Hier wird jetzt die Mittelwertbildung (20-fach) durchgeführt
 
-//	Hier wird jetzt die Mittelwertbildung (10-fach) durchgeführt
-
-//	Analogkanäle lesen 1x/100us -> Snapshot
+//	Analogkanäle lesen 1x/50us -> Snapshot
 	SS_ADC_A0_i = REG_ADC_CDR7;									// Poti HapStik vertikal
 	SS_ADC_A1_i = REG_ADC_CDR6;									// Poti HapStik horizontal
-	SS_ADC_A2_i = REG_ADC_CDR5;									// Poti, Sollwertvorgabe
 	
-/*
-//	PRINT
-//	Jeden ADC-Wert printen
-	printf("| SS_ADC_A0_i   : %15d|\r\n",
-	SS_ADC_A0_i);
-*/
-
-
 	SUM_AF_i_1 = SUM_AF_i_1 + SS_ADC_A0_i;						// Summenbildung: aktueller ADC_A0-Wert wird dazu addiert
 	SUM_AF_i_2 = SUM_AF_i_2 + SS_ADC_A1_i;						// Summenbildung: aktueller ADC_A1-Wert wird dazu addiert
 
 	af_count_i ++;												// "af" -> Average-Filter
 																
-	PRINT_VERT_cnt_i = PRINT_VERT_cnt_i + 1;					// Zähler der Print-Ausgaben
-
-		
-
-
 	if (af_count_i == 20)										// 20 ADC-Werte wurden addiert, 1ms ist vorbei
 	{
-		
-//		printf("|WERTE-VERTEILUNG-------------------------------------------------------------------------------------------------------------------|\r\n");
 
-//		AF_A0_f = 0.5 + SUM_AF_i / 10.0;						// hier 0,5 zur Rundung dazu addieren
-		
 		AF_A0_f = SUM_AF_i_1 / 20.0;							// Addition von 0,5 kann aber auch entfallen, da der Absolutwert nicht so wichtig ist,
 		AF_A1_f = SUM_AF_i_2 / 20.0;							// da ja alle Positionen beim Start des Sticks eingemessen werden
 
@@ -224,11 +190,5 @@ void ADC_Handler(void)
 		SUM_AF_i_2 = 0;
 				
 		svpwm_int = 1;
-																
-
 	}
-	
-
-	
 }
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       ADC_ISR        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

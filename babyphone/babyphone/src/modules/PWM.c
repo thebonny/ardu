@@ -19,138 +19,65 @@
 //		- PWMu2, PWMv2, PWMw2
 
 #include "asf.h"
+#include "includes/PID.h"
 
-//	für SV_PWM()
-volatile	float	PWMu1, PWMv1, PWMw1;
-volatile	float	PWMu2, PWMv2, PWMw2;
 
-void SVPWM(float uum1, float uvm1, float uwm1, float uum2, float uvm2, float uwm2)
-{
-	//	Motor_1
 
-	if (uum1 >= 0)
-	{
-		if (uvm1 >= 0)
-		{
-			PWMw1 = (1-uvm1-uum1)/2;
-			PWMv1 = PWMw1 + uvm1;
-			PWMu1 = PWMv1 + uum1;
-		}
-		else
-		{
-			if (uwm1 >= 0)
-			{
-				PWMv1 = (1-uum1-uwm1)/2;
-				PWMu1 = PWMv1 + uum1;
-				PWMw1 = PWMu1 + uwm1;
-			}
-			else
-			{
-				PWMv1 = (1+uvm1+uwm1)/2;
-				PWMw1 = PWMv1 - uvm1;
-				PWMu1 = PWMw1 - uwm1;
+void compute_space_vector_PWM(space_vector *sv) {
+	if (sv->X >= 0) {
+		if (sv->Y >= 0) {
+			sv->PWM_w = (1 - sv->Y - sv->X)/2;
+			sv->PWM_v = sv->PWM_w + sv->Y;
+			sv->PWM_u = sv->PWM_v + sv->X;
+		} else {
+			if (sv->Z >= 0) {
+				sv->PWM_v = (1 - sv->X - sv->Z)/2;
+				sv->PWM_u = sv->PWM_v + sv->X;
+				sv->PWM_w = sv->PWM_u + sv->Z;
+			} else {
+				sv->PWM_v = (1 + sv->Y + sv->Z)/2;
+				sv->PWM_w = sv->PWM_v - sv->Y;
+				sv->PWM_u = sv->PWM_w - sv->Z;
 			}
 		}
-	}
-	else
-	{
-		if (uvm1 >= 0)
-		{
-			if (uwm1 >= 0)
-			{
-				PWMu1 = (1-uwm1-uvm1)/2;
-				PWMw1 = PWMu1 + uwm1;
-				PWMv1 = PWMw1 + uvm1;
+	} else {
+		if (sv->Y >= 0) {
+			if (sv->Z >= 0) {
+				sv->PWM_u = (1 - sv->Z - sv->Y)/2;
+				sv->PWM_w = sv->PWM_u + sv->Z;
+				sv->PWM_v = sv->PWM_w + sv->Y;
+			} else {
+				sv->PWM_w = (1+sv->Z+sv->X)/2;
+				sv->PWM_u = sv->PWM_w - sv->Z;
+				sv->PWM_v = sv->PWM_u - sv->X;
 			}
-			else
-			{
-				PWMw1 = (1+uwm1+uum1)/2;
-				PWMu1 = PWMw1 - uwm1;
-				PWMv1 = PWMu1 - uum1;
-			}
-		}
-		else
-		{
-			PWMu1 = (1+uum1+uvm1)/2;
-			PWMv1 = PWMu1 - uum1;
-			PWMw1 = PWMv1 - uvm1;
+		} else {
+			sv->PWM_u = (1+sv->X+sv->Y)/2;
+			sv->PWM_v = sv->PWM_u - sv->X;
+			sv->PWM_w = sv->PWM_v - sv->Y;
 		}
 	}
-
-
-	//	Motor_2
-
-	if (uum2 >= 0)
-	{
-		if (uvm2 >= 0)
-		{
-			PWMw2 = (1-uvm2-uum2)/2;
-			PWMv2 = PWMw2 + uvm2;
-			PWMu2 = PWMv2 + uum2;
-		}
-		else
-		{
-			if (uwm2 >= 0)
-			{
-				PWMv2 = (1-uum2-uwm2)/2;
-				PWMu2 = PWMv2 + uum2;
-				PWMw2 = PWMu2 + uwm2;
-			}
-			else
-			{
-				PWMv2 = (1+uvm2+uwm2)/2;
-				PWMw2 = PWMv2 - uvm2;
-				PWMu2 = PWMw2 - uwm2;
-			}
-		}
-	}
-	else
-	{
-		if (uvm2 >= 0)
-		{
-			if (uwm2 >= 0)
-			{
-				PWMu2 = (1-uwm2-uvm2)/2;
-				PWMw2 = PWMu2 + uwm2;
-				PWMv2 = PWMw2 + uvm2;
-			}
-			else
-			{
-				PWMw2 = (1+uwm2+uum2)/2;
-				PWMu2 = PWMw2 - uwm2;
-				PWMv2 = PWMu2 - uum2;
-			}
-		}
-		else
-		{
-			PWMu2 = (1+uum2+uvm2)/2;
-			PWMv2 = PWMu2 - uum2;
-			PWMw2 = PWMv2 - uvm2;
-		}
-	}
-	
-	//	Ausgabe an den PWM-VController
-
-	REG_PWM_CDTYUPD0 = (1 - PWMu1) * 2100;
-	REG_PWM_CDTYUPD1 = (1 - PWMv1) * 2100;
-	REG_PWM_CDTYUPD2 = (1 - PWMw1) * 2100;
-
-	REG_PWM_CDTYUPD3 = (1 - PWMu2) * 2100;
-	REG_PWM_CDTYUPD4 = (1 - PWMv2) * 2100;
-	REG_PWM_CDTYUPD5 = (1 - PWMw2) * 2100;
-	//	A Duty Cycle Update, Übernahme der Register Enable PWM channels (S.1016)
-	//	- Register: PWM_SCUC (Sync Channel Update)
-	//	- es gibt nur ein Bit in diesem Register:UPDULOCK (Unlock synchronous channels update)
-	//	- wird es 1 gesetzt werden die Register für Duty Cycle ... übernommen
-
-	//	Ausgabe
-	REG_PWM_SCUC = 0x00000001u;
 }
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx      SVPWM       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+void update_pwm_duty_cycles(space_vector *sv_motor_X, space_vector *sv_motor_Y) {
+		REG_PWM_CDTYUPD0 = (1 - sv_motor_X->PWM_u) * 2100;
+		REG_PWM_CDTYUPD1 = (1 - sv_motor_X->PWM_v) * 2100;
+		REG_PWM_CDTYUPD2 = (1 - sv_motor_X->PWM_w) * 2100;
+		
+		REG_PWM_CDTYUPD3 = (1 - sv_motor_Y->PWM_u) * 2100;
+		REG_PWM_CDTYUPD4 = (1 - sv_motor_Y->PWM_v) * 2100;
+		REG_PWM_CDTYUPD5 = (1 - sv_motor_Y->PWM_w) * 2100;		
+		
+		//	A Duty Cycle Update, Übernahme der Register Enable PWM channels (S.1016)
+		//	- Register: PWM_SCUC (Sync Channel Update)
+		//	- es gibt nur ein Bit in diesem Register:UPDULOCK (Unlock synchronous channels update)
+		//	- wird es 1 gesetzt werden die Register für Duty Cycle ... übernommen
 
+		//	Ausgabe
+		REG_PWM_SCUC = 0x00000001u;
+}
+	
 
-//	ANFANG **********************************************     FUNKTIONEN     *************************************************
 void	INIT_PWM(void)
 {
 	
@@ -250,17 +177,6 @@ void	INIT_PWM(void)
 	- Periode = CPRD/84MHz = 8400/84MHz = 100us
 	- Periode = CPRD/84MHz = 4200/84MHz =  50us		
 
-
-	Werte für 100us:
-	REG_PWM_CPRD0 = REG_PWM_CPRD0	|	0x00001068u;		// 4200
-	REG_PWM_CPRD1 = REG_PWM_CPRD1	|	0x00001068u;		// 4200	
-	REG_PWM_CPRD2 = REG_PWM_CPRD2	|	0x00001068u;		// 4200
-
-	REG_PWM_CPRD3 = REG_PWM_CPRD3	|	0x00001068u;		// 4200
-	REG_PWM_CPRD4 = REG_PWM_CPRD4	|	0x00001068u;		// 4200
-	REG_PWM_CPRD5 = REG_PWM_CPRD5	|	0x00001068u;		// 4200
-	
-	REG_PWM_CPRD6 = REG_PWM_CPRD6	|	0x000020D0u;		// 8400
 */
 
 //	Werte für 50us:

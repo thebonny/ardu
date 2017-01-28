@@ -9,7 +9,9 @@
 #ifndef PWM_H_
 #define PWM_H_
 
-void SVPWM(float uum1, float uvm1, float uwm1, float uum2, float uvm2, float uwm2);
+void compute_space_vector_PWM(space_vector *sv);
+void update_pwm_duty_cycles(space_vector *sv_motor_X, space_vector *sv_motor_Y);
+
 void INIT_PWM(void);
 
 #endif /* PWM_H_ */
