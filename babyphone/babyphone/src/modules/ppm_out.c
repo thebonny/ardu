@@ -79,7 +79,7 @@ void ppm_out_initialize(void)
 	
 	NVIC_DisableIRQ(TC_IRQn);
 	NVIC_ClearPendingIRQ(TC_IRQn);
-	NVIC_SetPriority(TC_IRQn, 0);
+	NVIC_SetPriority(TC_IRQn, 10);
 	NVIC_EnableIRQ(TC_IRQn);
 	tc_enable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
 	

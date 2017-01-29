@@ -141,7 +141,7 @@ void record_playback_initialize(void)
 
 	NVIC_DisableIRQ(TC7_IRQn);
 	NVIC_ClearPendingIRQ(TC7_IRQn);
-	NVIC_SetPriority(TC7_IRQn, 1);
+	NVIC_SetPriority(TC7_IRQn, 15);
 	NVIC_EnableIRQ(TC7_IRQn);
 	tc_enable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
 	tc_start(TC, TC_CHANNEL_WAVEFORM);

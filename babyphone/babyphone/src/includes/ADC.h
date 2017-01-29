@@ -9,11 +9,12 @@
 #ifndef ADC_H_
 #define ADC_H_
 
+typedef struct {
+	int X;
+	int Y;
+} ADC_inputs;
 
 void INIT_ADC(void);
-int has_ADC_completed_20_conversions(void);
-void reset_ADC(void);
-int get_average_adc_input_X(void);
-int get_average_adc_input_Y(void);
+ADC_inputs get_oversampled_adc_inputs(void);
 
 #endif /* ADC_H_ */
