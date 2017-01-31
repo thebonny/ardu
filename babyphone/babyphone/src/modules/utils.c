@@ -9,26 +9,25 @@
 #include "math.h"					//			z.B. cos(x)
 #include "string.h"
 #include "asf.h"
-
+#include "conf_debug.h"
 
 static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!
 
 
-void debug_pulse_c24(void) {
-	//	DEBUG
-//	Debug_Pin C.24= 1 -> C.24 = 0 -> DUE_Pin6
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x01000000u; 		// Ausgang C24 =1 (DUE_Pin6)
-   // delay_us(1);
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x01000000u; 		// Ausgang C24 =0 (DUE_Pin6)
+void debug_pulse(int debug_pin) {
+	#ifdef PULSE_DEBUG_LEVEL
+		if (debug_pin == 0) {
+			//	Debug_Pin C.12
+			REG_PIOC_SODR	= REG_PIOC_SODR		|	0x00001000u; 		// Ausgang C12 =1 (DUE_Pin6)
+			REG_PIOC_CODR	= REG_PIOC_CODR		|	0x00001000u; 		// Ausgang C12 =0 (DUE_Pin6)
+		} else if (debug_pin == 1) {
+			//	Debug_Pin C.24
+			REG_PIOC_SODR	= REG_PIOC_SODR		|	0x00004000u; 		// Ausgang C14 =1 (DUE_Pin6)
+			REG_PIOC_CODR	= REG_PIOC_CODR		|	0x00004000u; 		// Ausgang C14 =0 (DUE_Pin6)
+		}
+	#endif
 }
 
-void debug_pulse_c23(void) {
-	//	DEBUG
-//	Debug_Pin C.24= 1 -> C.24 = 0 -> DUE_Pin6
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x00800000u; 		// Ausgang C24 =1 (DUE_Pin6)
-  //  delay_us(1);
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x00800000u; 		// Ausgang C24 =0 (DUE_Pin6)
-}
 
 char * doubleToString(char *s, double n);
 

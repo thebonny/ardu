@@ -14,7 +14,7 @@ typedef struct {
 	int Y;
 } ADC_inputs;
 
-void INIT_ADC(void);
+void adc_initialize(void);
 ADC_inputs get_oversampled_adc_inputs(void);
 
 #endif /* ADC_H_ */

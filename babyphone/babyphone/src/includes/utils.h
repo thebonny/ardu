@@ -12,7 +12,6 @@
 
 char * doubleToString(char *s, double n);
 void float_to_string(float n, char *Ergebnis, int afterpoint);
-void debug_pulse_c24(void) ;
-void debug_pulse_c23(void);
+void debug_pulse(int debug_pin);
 
 #endif /* UTILS_H_ */

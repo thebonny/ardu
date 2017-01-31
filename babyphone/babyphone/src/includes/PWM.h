@@ -12,6 +12,6 @@
 void compute_space_vector_PWM(space_vector *sv);
 void update_pwm_duty_cycles(space_vector *sv_motor_X, space_vector *sv_motor_Y);
 
-void INIT_PWM(void);
+void pwm_initialize(void);
 
 #endif /* PWM_H_ */

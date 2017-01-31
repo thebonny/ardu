@@ -1,18 +1,16 @@
-	#include "asf.h"
-	#include "conf_board.h"
+#include "asf.h"
+#include "conf_board.h"
 	
-	#include "stdio_serial.h"			// UART		z.B. printf("MEC22_STEPS:   %i\r\n", ENC1_C);
-	#include "conf_clock.h"
+#include "stdio_serial.h"
+#include "conf_clock.h"
 	
-
-	#include "delay.h"
-	#include "includes/utils.h"
-	#include "includes/PID.h"
-	#include "includes/PWM.h"
-	#include "includes/ADC.h"
-	#include "includes/ppm_capture.h"
-	#include "includes/ppm_out.h"
-	#include "includes/record_playback.h"
+#include "includes/utils.h"
+#include "includes/PID.h"
+#include "includes/PWM.h"
+#include "includes/ADC.h"
+#include "includes/ppm_capture.h"
+#include "includes/ppm_out.h"
+#include "includes/record_playback.h"
 
 static void configure_console(void)
 {
@@ -26,11 +24,11 @@ static void configure_console(void)
 }
 
 
-static void INIT_GPIO(void)
+static void gpio_initialize(void)
 {
-
-	REG_PIOC_PER	= REG_PIOC_PER		|		0x01800000u;
-	REG_PIOC_OER	 = REG_PIOC_OER		|		0x01800000u;		// -> die anderen werden für Ansteuerung Motor_2 benötigt	
+	// init debug pins c.12 and c.14 for output
+	REG_PIOC_PER	= REG_PIOC_PER		|		0x00005000u;
+	REG_PIOC_OER	 = REG_PIOC_OER		|		0x00005000u;	
 }
 
 /**
@@ -53,25 +51,25 @@ static void display_menu(void)
 			"------\n\r\r");
 }
 
-
-
-
 int main(void)
 {
 	sysclk_init();
 	board_init();
 	configure_console();
 	
-	INIT_PWM();
-	INIT_ADC();
-	INIT_GPIO();
+	// init core HAPStik Modules
+	gpio_initialize();
+	pwm_initialize();
+	adc_initialize();
 	pid_initialize();
+	
+	// init peripheral modules to support rc Tx and simulator playback
 	ppm_out_initialize();
 	ppm_capture_initialize();
 	record_playback_initialize();
 	
 	char key;
-	// display_menu();
+	display_menu();
 	
 	while (1)
 	{

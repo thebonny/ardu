@@ -46,12 +46,13 @@ ADC_inputs get_oversampled_adc_inputs(void) {
 
 void ADC_Handler(void)
 {		
+	debug_pulse(0);
 	SUM_AF_i_1 += REG_ADC_CDR7;						// Summenbildung: aktueller ADC_A0-Wert wird dazu addiert
 	SUM_AF_i_2 += REG_ADC_CDR6;						// Summenbildung: aktueller ADC_A1-Wert wird dazu addiert
 	af_count_i ++;												// "af" -> Average-Filter
 }
 
-void	INIT_ADC(void)
+void adc_initialize(void)
 {
 /*A 
 	ADC-Leitungen (C.2 - C.9) im Prozessor vom PIO-Controller trennen

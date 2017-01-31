@@ -11,7 +11,8 @@
 #include "includes/PWM.h"
 #include "includes/ppm_capture.h"
 #include "includes/utils.h"
-#include "math.h"					
+#include "math.h"		
+#include "conf_debug.h"			
 
 #define	PI		3.141592654f
 #define	WK1		(PI/180)
@@ -30,7 +31,7 @@
 #define ELECTRICAL_MECHANICAL_GEAR_FACTOR 7  // dies ist vom Motortyp (#Magnete etc.) abhängig
 	
 const float	ANGLE_OFFSET_X = 5.5;							// Winkel_Offset für Poti_MOTOR1 Vertikal		(Nullposition)	-> "+" Stick wandert nach unten
-const float	ANGLE_OFFSET_Y =	-16.0;
+const float	ANGLE_OFFSET_Y = -16.0;
 
 typedef struct  {
 	float setpoint;
@@ -132,7 +133,6 @@ void compute_space_vector_motor_Y(space_vector *sv, int input, float power_facto
 
 
 void compute_all_controllers(void) {
-	
 	ADC_inputs inputs = get_oversampled_adc_inputs();
 	motor_X_position_controller.input = inputs.X;
 	compute_space_vector_motor_X(&motor_X_space_vector, inputs.X, pid_compute(&motor_X_position_controller));
@@ -147,24 +147,27 @@ void compute_all_controllers(void) {
 }
 
 static void display_debug_output() {
+	#ifdef CONSOLE_DEBUG_LEVEL
 		char s1[32], s2[32], s3[32];
-	printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
-	doubleToString(s1, motor_X_space_vector.X), doubleToString(s2, motor_X_space_vector.Y), doubleToString(s3, motor_X_space_vector.Z));
-	printf("| Sollwert      : %15s\r\n",
-	doubleToString(s1, motor_X_position_controller.setpoint));
-	printf("\r\n");
-	printf("| X2      : %15s| Y2      : %15s| Z2  : %15s\r\n",
-	doubleToString(s1, motor_Y_space_vector.X), doubleToString(s2, motor_Y_space_vector.Y), doubleToString(s3, motor_Y_space_vector.Z));
-	printf("| Sollwert      : %15s\r\n",
-	doubleToString(s1, motor_Y_position_controller.setpoint));
-	printf("------------\r\n");
+		printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
+		doubleToString(s1, motor_X_space_vector.X), doubleToString(s2, motor_X_space_vector.Y), doubleToString(s3, motor_X_space_vector.Z));
+		printf("| Sollwert      : %15s\r\n",
+		doubleToString(s1, motor_X_position_controller.setpoint));
+		printf("\r\n");
+		printf("| X2      : %15s| Y2      : %15s| Z2  : %15s\r\n",
+		doubleToString(s1, motor_Y_space_vector.X), doubleToString(s2, motor_Y_space_vector.Y), doubleToString(s3, motor_Y_space_vector.Z));
+		printf("| Sollwert      : %15s\r\n",
+		doubleToString(s1, motor_Y_position_controller.setpoint));
+		printf("------------\r\n");
+	#endif
 }
 
 
 
 void TC1_Handler(void) {
 	if ((tc_get_status(TC, TC_CHANNEL) & TC_SR_CPCS) == TC_SR_CPCS) {
-			//debug_pulse_c23();
+		
+		//	debug_pulse(1);
 			cnt_1ms_poll++;
 				// Lineare Interpolation, um 1ms Werte vom Master zu bekommen, der nur alle 20ms einen aktuellen Wert versendet
 			//	alle 20ms
@@ -193,14 +196,11 @@ void TC1_Handler(void) {
 			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
 			CH2_WERT1_1_li_nor = CH2_WERT1_1_li;			// Normierung auf Laufwege HS
 			motor_X_position_controller.setpoint = CH2_WERT1_1_li_nor;												//int wert Übergabe
-			
 			compute_all_controllers();
 		
-		
-			if (cnt_1ms_poll % 1000 == 0) {
+			if (cnt_1ms_poll % 200 == 0) {
 				 display_debug_output();
 			}
-			
 		
 	}
 }
