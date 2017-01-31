@@ -28,6 +28,30 @@ void debug_pulse(int debug_pin) {
 	#endif
 }
 
+void performance_trace_start(int debug_pin) {
+	#ifdef PERFORMANCE_TRACE_LEVEL
+	if (debug_pin == 0) {
+			//	Debug_Pin C.12
+			REG_PIOC_SODR	= REG_PIOC_SODR		|	0x00001000u; 		// Ausgang C12 =1 (DUE_Pin6)
+	} else if (debug_pin == 1) {
+			//	Debug_Pin C.24
+			REG_PIOC_SODR	= REG_PIOC_SODR		|	0x00004000u; 		// Ausgang C14 =1 (DUE_Pin6)
+	}
+	#endif
+}
+
+void performance_trace_stop(int debug_pin) {
+	#ifdef PERFORMANCE_TRACE_LEVEL
+	if (debug_pin == 0) {
+			//	Debug_Pin C.12
+			REG_PIOC_CODR	= REG_PIOC_CODR		|	0x00001000u; 		// Ausgang C12 =0 (DUE_Pin6)
+	} else if (debug_pin == 1) {
+			//	Debug_Pin C.24
+			REG_PIOC_CODR	= REG_PIOC_CODR		|	0x00004000u; 		// Ausgang C14 =0 (DUE_Pin6)
+	}
+	#endif
+}
+
 
 char * doubleToString(char *s, double n);
 

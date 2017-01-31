@@ -31,7 +31,7 @@ volatile static uint32_t accumulated_frame_length = 0;
 
 
 void TC_Handler(void) {
-	debug_pulse(1);
+	// debug_pulse(1);
 	uint32_t ra, rc;
 	if ((tc_get_status(TC, TC_CHANNEL_WAVEFORM) & TC_SR_CPCS) == TC_SR_CPCS) {
 		if (current_channel >= NUMBER_OF_RC_CHANNELS) {
@@ -81,7 +81,7 @@ void ppm_out_initialize(void)
 	
 	NVIC_DisableIRQ(TC_IRQn);
 	NVIC_ClearPendingIRQ(TC_IRQn);
-	NVIC_SetPriority(TC_IRQn, 15);
+	NVIC_SetPriority(TC_IRQn, 0);
 	NVIC_EnableIRQ(TC_IRQn);
 	tc_enable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
 	

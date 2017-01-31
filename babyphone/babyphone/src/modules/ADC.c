@@ -92,7 +92,7 @@ void adc_initialize(void)
 	REG_ADC_IER = REG_ADC_IER | 0x00000080u;
 	NVIC_DisableIRQ(ADC_IRQn);
 	NVIC_ClearPendingIRQ(ADC_IRQn);
-	NVIC_SetPriority(ADC_IRQn, 0);
+	NVIC_SetPriority(ADC_IRQn, 1);
 	//	Enable ADC interrupt, schreibt das Register ISER im NVIC (Nested Vector Interrupt Controller)
 	NVIC_EnableIRQ(ADC_IRQn);
 

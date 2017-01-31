@@ -26,7 +26,7 @@
 
 #define UPDATE_CONTROLLER_MILLIS 1  // recalculate all controllers within defined frequency 1/x
 #define TICKS_PER_MILLISECOND 42000
-#define PID_INTERRUPT_PRIORITY 5
+#define PID_INTERRUPT_PRIORITY 2
 
 #define ELECTRICAL_MECHANICAL_GEAR_FACTOR 7  // dies ist vom Motortyp (#Magnete etc.) abhängig
 	
@@ -53,28 +53,7 @@ pid_controller motor_Y_speed_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.000
 space_vector motor_X_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 space_vector motor_Y_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };		
 
-
-
 int volatile cnt_1ms_poll = 0;
-
-	volatile	float	CH1_WERT1_1			= 0.0;						// Empfänger-Wert
-	volatile	float	CH1_WERT1_1_alt		= 0.0;
-	volatile	float	CH1_WERT1_1_li		= 0.0;						// linear interpoliert
-	volatile	float	CH1_WERT1_1_li_nor	= 0.0;						// linear interpoliert und normiert
-	volatile	float	CH1_DELTA			= 0.0;						// Delta-Wert für 1ms
-	
-	volatile	float	CH1_WERT2_1 = 0.0;
-	volatile	int		CH1_WERT3_1 = 0;
-
-
-	volatile	float	CH2_WERT1_1			= 0.0;						// Empfänger-Wert
-	volatile	float	CH2_WERT1_1_alt		= 0.0;
-	volatile	float	CH2_WERT1_1_li		= 0.0;						// linear interpoliert
-	volatile	float	CH2_WERT1_1_li_nor	= 0.0;						// linear interpoliert und normiert
-	volatile	float	CH2_DELTA			= 0.0;						// Delta-Wert für 1ms
-	
-	volatile	float	CH2_WERT2_1 = 0.0;
-	volatile	int		CH2_WERT3_1 = 0;
 
 double pid_compute(pid_controller *controller)
 {
@@ -169,34 +148,16 @@ void TC1_Handler(void) {
 		
 		//	debug_pulse(1);
 			cnt_1ms_poll++;
-				// Lineare Interpolation, um 1ms Werte vom Master zu bekommen, der nur alle 20ms einen aktuellen Wert versendet
-			//	alle 20ms
-			if (cnt_1ms_poll % 20 == 0)																// 20ms
-			{
-				//	CH1 (TIOA7)
-				CH1_WERT1_1_alt = CH1_WERT1_1;													// alten CH0-Wert retten
-				CH1_WERT1_1 = get_captured_channel_value(1) * 2;														// alle 20ms neuen CH0-Wert übernehmen
-				CH1_DELTA = (CH1_WERT1_1 - CH1_WERT1_1_alt)/20;
 
-				CH1_WERT1_1_li = CH1_WERT1_1_li - CH1_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
-
-				//	CH2 (TIOA8)
-
-				CH2_WERT1_1_alt = CH2_WERT1_1;													// alten CH0-Wert retten
-				CH2_WERT1_1 = get_captured_channel_value(2) * 2;														// alle 20ms neuen CH0-Wert übernehmen
-				CH2_DELTA = (CH2_WERT1_1 - CH2_WERT1_1_alt)/20;
-
-				CH2_WERT1_1_li = CH2_WERT1_1_li - CH2_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
-			}
+			motor_Y_position_controller.setpoint = get_interpolated_channel_ppm(1, cnt_1ms_poll % 20);
+			motor_X_position_controller.setpoint = get_interpolated_channel_ppm(2, cnt_1ms_poll % 20);
 			
-			CH1_WERT1_1_li = CH1_WERT1_1_li + CH1_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-			CH1_WERT1_1_li_nor = CH1_WERT1_1_li;			// Normierung auf Laufwege HS
-			motor_Y_position_controller.setpoint = CH1_WERT1_1_li_nor;												//int wert Übergabe
+	//		printf("IP: %d\r\n", get_interpolated_channel_ppm(1, cnt_1ms_poll % 20));
 
-			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-			CH2_WERT1_1_li_nor = CH2_WERT1_1_li;			// Normierung auf Laufwege HS
-			motor_X_position_controller.setpoint = CH2_WERT1_1_li_nor;												//int wert Übergabe
+			
+			performance_trace_start(0);
 			compute_all_controllers();
+			performance_trace_stop(0);
 		
 			if (cnt_1ms_poll % 200 == 0) {
 				 display_debug_output();
