@@ -7,34 +7,22 @@
 #include "asf.h"
 #include "stdio.h"
 #include "includes/ADC.h"
+#include "includes/utils.h"
 
 //	ADC, diese defines fehlen leider in der CMSIS
 #define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
 #define REG_ADC_CDR7			(*(__I  uint32_t*)0x400C006CU) // ADC Channel Data Register
 
-//	für Potis an den Analogeingängen A0, A1, A2
-volatile	int		ADC_A1_i = 0;									// Integer, Poti HapStik vertikal
-volatile	int		ADC_A2_i = 0;									// Integer, Poti HapStik horizontal
-
-// SnapShot der ADC-Werte in der Print-Ausgabe erstellt
-volatile	int		SS_ADC_A0_i;
-volatile	int		SS_ADC_A1_i;
-volatile	int		SS_ADC_A2_i;
-
-volatile	float	ADC_A1_f = 0.0f;								// Float, Poti HapStik vertikal
-volatile	float	ADC_A2_f = 0.0f;								// Float, Poti HapStik horizontal
-
-
 // Mittelwertfilter
 
-static		int		af_count_i	= 0;						// Laufvariable im AF-Array
-static		int		SUM_AF_i_1	= 0;						// Summe MOTOR1
-static		int		SUM_AF_i_2	= 0;						// Summe MOTOR2
+volatile int af_count_i	= 0;						// Laufvariable im AF-Array
+volatile int	SUM_AF_i_1	= 0;						// Summe MOTOR1
+volatile int	SUM_AF_i_2	= 0;						// Summe MOTOR2
 
-static		int		AF_A0_i		= 0;						// Average_Filterwert für ADC-Kanal A0
-static		float	AF_A0_f		= 0;
-static		int		AF_A1_i		= 0;						// Average_Filterwert für ADC-Kanal A0
-static		float	AF_A1_f		= 0;
+volatile int	AF_A0_i		= 0;						// Average_Filterwert für ADC-Kanal A0
+volatile float	AF_A0_f		= 0;
+volatile int	AF_A1_i		= 0;						// Average_Filterwert für ADC-Kanal A0
+volatile float	AF_A1_f		= 0;
 
 
 
@@ -44,7 +32,7 @@ ADC_inputs get_oversampled_adc_inputs(void) {
 	AF_A1_f = SUM_AF_i_2 / af_count_i;							// da ja alle Positionen beim Start des Sticks eingemessen werden
 	AF_A0_i = AF_A0_f;										// Ganzzahliger Anteil wird übergeben
 	AF_A1_i = AF_A1_f;		
-	printf("A: %d\r\n", af_count_i);
+	
 	af_count_i = 0;											// Counter auf Anfang stellen
 	
 	SUM_AF_i_1 = 0;											// Summe wieder rücksetzen
@@ -58,12 +46,8 @@ ADC_inputs get_oversampled_adc_inputs(void) {
 
 void ADC_Handler(void)
 {		
-	SS_ADC_A0_i = REG_ADC_CDR7;									// Poti HapStik vertikal
-	SS_ADC_A1_i = REG_ADC_CDR6;									// Poti HapStik horizontal
-	
-	SUM_AF_i_1 = SUM_AF_i_1 + SS_ADC_A0_i;						// Summenbildung: aktueller ADC_A0-Wert wird dazu addiert
-	SUM_AF_i_2 = SUM_AF_i_2 + SS_ADC_A1_i;						// Summenbildung: aktueller ADC_A1-Wert wird dazu addiert
-
+	SUM_AF_i_1 += REG_ADC_CDR7;						// Summenbildung: aktueller ADC_A0-Wert wird dazu addiert
+	SUM_AF_i_2 += REG_ADC_CDR6;						// Summenbildung: aktueller ADC_A1-Wert wird dazu addiert
 	af_count_i ++;												// "af" -> Average-Filter
 }
 

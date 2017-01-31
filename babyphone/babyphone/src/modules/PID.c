@@ -25,8 +25,13 @@
 
 #define UPDATE_CONTROLLER_MILLIS 1  // recalculate all controllers within defined frequency 1/x
 #define TICKS_PER_MILLISECOND 42000
-#define PID_INTERRUPT_PRIORITY 15
+#define PID_INTERRUPT_PRIORITY 5
+
+#define ELECTRICAL_MECHANICAL_GEAR_FACTOR 7  // dies ist vom Motortyp (#Magnete etc.) abhängig
 	
+const float	ANGLE_OFFSET_X = 5.5;							// Winkel_Offset für Poti_MOTOR1 Vertikal		(Nullposition)	-> "+" Stick wandert nach unten
+const float	ANGLE_OFFSET_Y =	-16.0;
+
 typedef struct  {
 	float setpoint;
 	float input;
@@ -47,8 +52,7 @@ pid_controller motor_Y_speed_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.000
 space_vector motor_X_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 space_vector motor_Y_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };		
 
-const float	WKL_OFF_1 =	 5.5;							// Winkel_Offset für Poti_MOTOR1 Vertikal		(Nullposition)	-> "+" Stick wandert nach unten
-const float	WKL_OFF_2 =	-16.0;
+
 
 int volatile cnt_1ms_poll = 0;
 
@@ -105,7 +109,7 @@ void compute_space_vector_components(space_vector *sv, float rotation_angle, flo
 
 
 void compute_space_vector_motor_X(space_vector *sv, int input, float power_factor) {
-	float rotation_angle = 7 * ((33 * (input - 2418) / 1677.0) + WKL_OFF_1);
+	float rotation_angle = ELECTRICAL_MECHANICAL_GEAR_FACTOR * ((33 * (input - 2418) / 1677.0) + ANGLE_OFFSET_X);
 	if (power_factor >= 0) {
 			rotation_angle += 90;
 			compute_space_vector_components(sv, rotation_angle, power_factor);
@@ -116,7 +120,7 @@ void compute_space_vector_motor_X(space_vector *sv, int input, float power_facto
 }
 
 void compute_space_vector_motor_Y(space_vector *sv, int input, float power_factor) {
-	float rotation_angle = 7 * ((33 * (input - 2304) / 1641.0) + WKL_OFF_2);
+	float rotation_angle = ELECTRICAL_MECHANICAL_GEAR_FACTOR * ((33 * (input - 2304) / 1641.0) + ANGLE_OFFSET_Y);
 	if (power_factor >= 0) {
 		rotation_angle += 90;
 		compute_space_vector_components(sv, rotation_angle, power_factor);
@@ -160,6 +164,7 @@ static void display_debug_output() {
 
 void TC1_Handler(void) {
 	if ((tc_get_status(TC, TC_CHANNEL) & TC_SR_CPCS) == TC_SR_CPCS) {
+			//debug_pulse_c23();
 			cnt_1ms_poll++;
 				// Lineare Interpolation, um 1ms Werte vom Master zu bekommen, der nur alle 20ms einen aktuellen Wert versendet
 			//	alle 20ms
@@ -193,8 +198,10 @@ void TC1_Handler(void) {
 		
 		
 			if (cnt_1ms_poll % 1000 == 0) {
-				// display_debug_output();
+				 display_debug_output();
 			}
+			
+		
 	}
 }
 

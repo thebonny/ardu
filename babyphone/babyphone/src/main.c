@@ -26,7 +26,12 @@ static void configure_console(void)
 }
 
 
+static void INIT_GPIO(void)
+{
 
+	REG_PIOC_PER	= REG_PIOC_PER		|		0x01800000u;
+	REG_PIOC_OER	 = REG_PIOC_OER		|		0x01800000u;		// -> die anderen werden für Ansteuerung Motor_2 benötigt	
+}
 
 /**
  * \brief Display the user menu on the UART.
@@ -59,6 +64,7 @@ int main(void)
 	
 	INIT_PWM();
 	INIT_ADC();
+	INIT_GPIO();
 	pid_initialize();
 	ppm_out_initialize();
 	ppm_capture_initialize();

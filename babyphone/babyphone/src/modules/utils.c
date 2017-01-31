@@ -8,10 +8,27 @@
 
 #include "math.h"					//			z.B. cos(x)
 #include "string.h"
+#include "asf.h"
 
 
 static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!
 
+
+void debug_pulse_c24(void) {
+	//	DEBUG
+//	Debug_Pin C.24= 1 -> C.24 = 0 -> DUE_Pin6
+	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x01000000u; 		// Ausgang C24 =1 (DUE_Pin6)
+   // delay_us(1);
+	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x01000000u; 		// Ausgang C24 =0 (DUE_Pin6)
+}
+
+void debug_pulse_c23(void) {
+	//	DEBUG
+//	Debug_Pin C.24= 1 -> C.24 = 0 -> DUE_Pin6
+	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x00800000u; 		// Ausgang C24 =1 (DUE_Pin6)
+  //  delay_us(1);
+	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x00800000u; 		// Ausgang C24 =0 (DUE_Pin6)
+}
 
 char * doubleToString(char *s, double n);
 
