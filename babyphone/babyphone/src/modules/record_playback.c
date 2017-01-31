@@ -30,7 +30,7 @@ int max_recorded_record = 0;
 
 void copy_captured_channels_to_record() {
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-		recorded_flight_records[current_record][i] = get_captured_channel_value(i);
+		recorded_flight_records[current_record][i] = rc_channels[i].current_captured_ppm_value;
 	}
 	
 }
@@ -39,7 +39,7 @@ void TC7_Handler(void) {
 	if ((tc_get_status(TC, TC_CHANNEL_WAVEFORM) & TC_SR_CPCS) == TC_SR_CPCS) {
 		if (mode == MODE_BYPASS || mode == MODE_RECORD) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-				set_ppm_out_channel_value(i, get_captured_channel_value(i));
+				set_ppm_out_channel_value(i, rc_channels[i].current_captured_ppm_value);
 			}
 		}
 		if (mode == MODE_RECORD) {
@@ -141,7 +141,7 @@ void record_playback_initialize(void)
 
 	NVIC_DisableIRQ(TC7_IRQn);
 	NVIC_ClearPendingIRQ(TC7_IRQn);
-	NVIC_SetPriority(TC7_IRQn, 15);
+	NVIC_SetPriority(TC7_IRQn, 5);
 	NVIC_EnableIRQ(TC7_IRQn);
 	tc_enable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
 	tc_start(TC, TC_CHANNEL_WAVEFORM);
