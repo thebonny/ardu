@@ -11,7 +11,7 @@
 
 
 // #define PULSE_DEBUG_LEVEL
-// #define CONSOLE_DEBUG_LEVEL
+ #define CONSOLE_DEBUG_LEVEL
 // #define PERFORMANCE_TRACE_LEVEL
 
 

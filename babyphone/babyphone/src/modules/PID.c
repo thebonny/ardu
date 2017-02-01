@@ -4,13 +4,13 @@
  * Created: 19.01.2017 22:44:04
  *  Author: tmueller
  */ 
-#include "asf.h"
 #include "stdio.h"
 #include "includes/PID.h"
 #include "includes/ADC.h"
 #include "includes/PWM.h"
 #include "includes/ppm_capture.h"
 #include "includes/utils.h"
+#include "includes/registers.h"
 #include "math.h"		
 #include "conf_debug.h"			
 
@@ -18,11 +18,6 @@
 #define	WK1		(PI/180)
 #define	WK2		(PI*2/3)
 #define	WK3		(PI*4/3)
-
-// recalculcation of all controllers is scheduled by timer counter 0, channel 1
-#define TC TC0
-#define TC_CHANNEL 1  
-#define ID_TC   ID_TC1
 
 #define UPDATE_CONTROLLER_MILLIS 1  // recalculate all controllers within defined frequency 1/x
 #define TICKS_PER_MILLISECOND 42000
@@ -144,7 +139,7 @@ static void display_debug_output() {
 
 
 void TC1_Handler(void) {
-	if ((tc_get_status(TC, TC_CHANNEL) & TC_SR_CPCS) == TC_SR_CPCS) {
+	if ((TC0_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
 		
 		//	debug_pulse(1);
 			cnt_1ms_poll++;
@@ -159,7 +154,7 @@ void TC1_Handler(void) {
 			compute_all_controllers();
 			performance_trace_stop(0);
 		
-			if (cnt_1ms_poll % 200 == 0) {
+			if (cnt_1ms_poll % 1000 == 0) {
 				 display_debug_output();
 			}
 		
@@ -168,26 +163,26 @@ void TC1_Handler(void) {
 
 
 
+
 void pid_initialize(void)
 {
 	uint32_t rc;
 	// enable clock for timer
-	sysclk_enable_peripheral_clock(ID_TC);
-	tc_init(TC, TC_CHANNEL,
-	TC_CMR_TCCLKS_TIMER_CLOCK1
-	| TC_CMR_WAVE /* Waveform mode is enabled */
-	| TC_CMR_ACPA_CLEAR /* RA Compare Effect: set */
-	| TC_CMR_ACPC_SET /* RC Compare Effect: clear */
-	| TC_CMR_CPCTRG  /* UP mode with automatic trigger on RC Compare */
-	);
+	PMC_PCER0 = PMC_PCER0 | 0x10000000u;
+	
+    TC0_CHANNEL1_CCR = TC0_CHANNEL1_CCR | 0x00000002u;
+	TC0_CHANNEL1_CMR = TC0_CHANNEL1_CMR | TC_CMR_TCCLKS_TIMER_CLOCK1	| TC_CMR_WAVE | TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET | TC_CMR_CPCTRG;
+	
+	TC0_CHANNEL1_RC = TICKS_PER_MILLISECOND * UPDATE_CONTROLLER_MILLIS;
 
-	tc_write_rc( TC, TC_CHANNEL, TICKS_PER_MILLISECOND * UPDATE_CONTROLLER_MILLIS);
-
-	NVIC_DisableIRQ(TC1_IRQn);
-	NVIC_ClearPendingIRQ(TC1_IRQn);
-	NVIC_SetPriority(TC1_IRQn, PID_INTERRUPT_PRIORITY);
-	NVIC_EnableIRQ(TC1_IRQn);
-	tc_enable_interrupt(TC, TC_CHANNEL, TC_IER_CPCS);
-	tc_start(TC, TC_CHANNEL);
-
+	ICER0 = ICER0 |  0x10000000u;
+	ICPR0 = ICPR0 |  0x10000000u;
+ //	NVIC_SetPriority(TC1_IRQn, PID_INTERRUPT_PRIORITY);
+	ISER0 = ISER0 | 0x10000000u;
+	// interrupt on rc compare	
+	TC0_CHANNEL1_IER = TC0_CHANNEL1_IER | 0x00000010u;
+	// start tc0 channel 1
+    TC0_CHANNEL1_CCR = TC0_CHANNEL1_CCR | 0x00000005u;
+	
 }
+

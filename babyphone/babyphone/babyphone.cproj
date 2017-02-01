@@ -615,6 +615,9 @@
     <Compile Include="src\includes\record_playback.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\includes\registers.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\includes\utils.h">
       <SubType>compile</SubType>
     </Compile>

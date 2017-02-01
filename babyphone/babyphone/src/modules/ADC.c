@@ -4,14 +4,11 @@
  * Created: 19.01.2017 22:42:13
  *  Author: tmueller
  */ 
-#include "asf.h"
 #include "stdio.h"
 #include "includes/ADC.h"
 #include "includes/utils.h"
+#include "includes/registers.h"
 
-//	ADC, diese defines fehlen leider in der CMSIS
-#define REG_ADC_CDR6			(*(__I  uint32_t*)0x400C0068U) // ADC Channel Data Register
-#define REG_ADC_CDR7			(*(__I  uint32_t*)0x400C006CU) // ADC Channel Data Register
 
 // Mittelwertfilter
 
@@ -90,11 +87,11 @@ void adc_initialize(void)
 
 
 	REG_ADC_IER = REG_ADC_IER | 0x00000080u;
-	NVIC_DisableIRQ(ADC_IRQn);
-	NVIC_ClearPendingIRQ(ADC_IRQn);
-	NVIC_SetPriority(ADC_IRQn, 1);
-	//	Enable ADC interrupt, schreibt das Register ISER im NVIC (Nested Vector Interrupt Controller)
-	NVIC_EnableIRQ(ADC_IRQn);
+	ICER1 = ICER1 |  0x00000020u;
+	ICPR1 = ICPR1 |  0x00000020u;
+// 	NVIC_SetPriority(ADC_IRQn, 1);
+	ISER1 = ISER1 | 0x00000020u;
+
 
 
 }
