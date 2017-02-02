@@ -8,6 +8,7 @@
 #include "includes/PID.h"
 #include "includes/ADC.h"
 #include "includes/PWM.h"
+#include "includes/ppm_capture.h"
 #include "includes/utils.h"
 #include "includes/registers.h"
 #include "math.h"		
@@ -143,8 +144,8 @@ void TC1_Handler(void) {
 			debug_pulse(1);
 			cnt_1ms_poll++;
 
-			motor_Y_position_controller.setpoint = 1000;
-			motor_X_position_controller.setpoint = 1000;
+			motor_Y_position_controller.setpoint = get_interpolated_channel_ppm(1, cnt_1ms_poll % 20);
+			motor_X_position_controller.setpoint = get_interpolated_channel_ppm(2, cnt_1ms_poll % 20);
 			
 	//		printf("IP: %d\r\n", get_interpolated_channel_ppm(1, cnt_1ms_poll % 20));
 

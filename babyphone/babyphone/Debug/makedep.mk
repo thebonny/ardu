@@ -20,7 +20,13 @@ src\modules\ADC.c
 
 src\modules\PID.c
 
+src\modules\ppm_capture.c
+
+src\modules\ppm_out.c
+
 src\modules\PWM.c
+
+src\modules\record_playback.c
 
 src\modules\utils.c
 

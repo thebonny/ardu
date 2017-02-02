@@ -8,6 +8,9 @@
 #include "includes/PID.h"
 #include "includes/PWM.h"
 #include "includes/ADC.h"
+#include "includes/ppm_capture.h"
+#include "includes/ppm_out.h"
+#include "includes/record_playback.h"
 
 static void configure_console(void)
 {
@@ -60,7 +63,11 @@ int main(void)
 	adc_initialize();
 	pid_initialize();
 	
-
+	// init peripheral modules to support rc Tx and simulator playback
+/*	ppm_out_initialize();
+	ppm_capture_initialize();
+	record_playback_initialize();*/
+	
 	char key;
 	display_menu();
 	
@@ -73,7 +80,40 @@ int main(void)
 		display_menu();
 		break;
 
-	
+		case 'r':
+		puts("\n\rStart recording flight sequence!\r");
+		start_record();
+
+		break;
+
+		case 'p':
+		puts("\n\rStart playback of flight sequence!\r");
+		start_playback();
+		break;
+		
+		case 'l':
+		puts("\n\rLooped playback of flight sequence!\r");
+		loop_playback();
+		break;
+		
+		case 'b':
+		puts("\n\rBypass captured PPM Signal directly to PPM out!\r");
+		stop_record();
+		break;
+		
+		case 'd':
+		puts("\n\rDouble up record/playback speed!\r");
+		double_speed();
+		break;
+		
+		case 'h':
+		puts("\n\rHalf record/playback speed!\r");
+		half_speed();
+		break;
+
+		default:
+		puts("Not recognized key pressed \r");
+		break;
 		}
 		
 
