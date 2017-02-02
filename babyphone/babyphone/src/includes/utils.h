@@ -22,4 +22,6 @@ void DisableIRQ(uint32_t irq_id);
 void ClearPendingIRQ(uint32_t irq_id);
 void EnableIRQ(uint32_t irq_id);
 
+uint32_t pin_to_mask(uint32_t pin);
+
 #endif /* UTILS_H_ */

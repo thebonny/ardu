@@ -34,6 +34,11 @@ void EnableIRQ(uint32_t irq_id)
   NestedIC->ISER[(irq_id >> 5)] = (1 << (irq_id & 0x1F)); /* enable interrupt */
 }
 
+uint32_t pin_to_mask(uint32_t pin)
+{
+	return 1U << (pin & 0x1F);
+}
+
 void debug_pulse(int debug_pin) {
 	#ifdef PULSE_DEBUG_LEVEL
 		if (debug_pin == 0) {

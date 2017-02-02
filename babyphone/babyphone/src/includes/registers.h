@@ -95,6 +95,15 @@ typedef struct
 #define REG_PIOC_SODR   (*(volatile uint32_t*)0x400E1230U) /**< \brief (PIOC) Set Output Data Register */
 #define REG_PIOC_CODR   (*(volatile uint32_t*)0x400E1234U) /**< \brief (PIOC) Clear Output Data Register */
 
+
+#define REG_PIOB_PUDR  (*(volatile uint32_t*)0x400E1060U)
+#define REG_PIOB_MDDR  (*(volatile uint32_t*)0x400E1054U)
+#define REG_PIOB_IFDR  (*(volatile uint32_t*)0x400E1024U)
+#define REG_PIOB_SCIFSR (*(volatile uint32_t*)0x400E1080U)
+#define REG_PIOB_ABSR  (*(volatile uint32_t*)0x400E1070U)
+#define REG_PIOB_PDR   (*(volatile uint32_t*)0x400E1004U) /**< \brief (PIOB) PIO Disable Register */
+
+
 // ADC registers
 #define REG_ADC_CR		(*(volatile uint32_t*)0x400C0000U)
 #define REG_ADC_MR		(*(volatile uint32_t*)0x400C0004U)
@@ -106,6 +115,14 @@ typedef struct
 #define PMC_PCER0		(*(volatile uint32_t*)0x400E0610U)
 #define REG_PMC_PCER1	(*(volatile uint32_t*)0x400E0700U)
 
+
+// TC0 channel 0 registers (PPM out)
+#define TC0_CHANNEL0_CCR  (*(volatile uint32_t*)0x40080000U)
+#define TC0_CHANNEL0_IER  (*(volatile uint32_t*)0x40080024U)
+#define TC0_CHANNEL0_CMR  (*(volatile uint32_t*)0x40080004U)
+#define TC0_CHANNEL0_RC   (*(volatile uint32_t*)0x4008001CU)
+#define TC0_CHANNEL0_RA   (*(volatile uint32_t*)0x40080014U)
+#define TC0_CHANNEL0_SR   (*(volatile uint32_t*)0x40080020U)
 
 // TC0 channel 1 registers (PID controller update)
 #define TC0_CHANNEL1_CCR  (*(volatile uint32_t*)0x40080040U)
