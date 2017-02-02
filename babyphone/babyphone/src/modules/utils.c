@@ -8,8 +8,8 @@
 
 #include "math.h"					//			z.B. cos(x)
 #include "string.h"
-#include "asf.h"
 #include "conf_debug.h"
+#include "includes/registers.h"
 
 static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!
 

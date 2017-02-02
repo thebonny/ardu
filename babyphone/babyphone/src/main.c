@@ -54,7 +54,7 @@ static void display_menu(void)
 int main(void)
 {
 	sysclk_init();
-	board_init();
+    board_init();
 	configure_console();
 	
 	// init core HAPStik Modules
