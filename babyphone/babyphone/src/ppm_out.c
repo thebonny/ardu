@@ -1,6 +1,6 @@
-#include <includes/ppm_out.h>
-#include "includes/utils.h"
-#include "includes/registers.h"
+#include <ppm_out.h>
+#include <utils.h>
+#include <registers.h>
 
 #define TICKS_PER_uS 42
 #define MIN_PWM_MICROS 600

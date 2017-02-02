@@ -1,8 +1,8 @@
 #include <conf_board.h>
 #include <conf_clock.h>
-#include <includes/ppm_capture.h>
-#include "includes/utils.h"
-#include "includes/registers.h"
+#include <ppm_capture.h>
+#include <utils.h>
+#include <registers.h>
 
 #define PPM_OFFSET 400
 

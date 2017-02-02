@@ -1,10 +1,10 @@
-#include "stdio.h"
-#include <includes/record_playback.h>
-#include <includes/ppm_capture.h>
-#include <includes/ppm_out.h>
-#include <includes/PID.h>
-#include "includes/utils.h"
-#include "includes/registers.h"
+#include <stdio.h>
+#include <record_playback.h>
+#include <ppm_capture.h>
+#include <ppm_out.h>
+#include <PID.h>
+#include <utils.h>
+#include <registers.h>
 
 
 #define RC_PER_MILLISECOND 42000

@@ -8,7 +8,7 @@
 
 #ifndef UTILS_H_
 #define UTILS_H_
-#include "stdint.h"
+#include <stdint.h>
 
 char * doubleToString(char *s, double n);
 void float_to_string(float n, char *Ergebnis, int afterpoint);

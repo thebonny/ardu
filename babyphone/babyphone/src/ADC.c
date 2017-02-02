@@ -4,10 +4,10 @@
  * Created: 19.01.2017 22:42:13
  *  Author: tmueller
  */ 
-#include "stdio.h"
-#include "includes/ADC.h"
-#include "includes/utils.h"
-#include "includes/registers.h"
+#include <stdio.h>
+#include <ADC.h>
+#include <utils.h>
+#include <registers.h>
 
 
 // Mittelwertfilter

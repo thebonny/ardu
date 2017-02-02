@@ -9,7 +9,7 @@
 #ifndef REGISTERS_H_
 #define REGISTERS_H_
 
-#include "stdint.h"
+#include <stdint.h>
 
 
 // PWM registers
