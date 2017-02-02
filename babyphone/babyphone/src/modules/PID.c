@@ -141,7 +141,7 @@ static void display_debug_output() {
 void TC1_Handler(void) {
 	if ((TC0_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
 		
-		//	debug_pulse(1);
+			debug_pulse(1);
 			cnt_1ms_poll++;
 
 			motor_Y_position_controller.setpoint = get_interpolated_channel_ppm(1, cnt_1ms_poll % 20);

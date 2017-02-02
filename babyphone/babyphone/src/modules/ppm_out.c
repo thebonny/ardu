@@ -1,6 +1,7 @@
  #include <asf.h>
 #include <includes/ppm_out.h>
 #include "includes/utils.h"
+#include "includes/registers.h"
 
 
 
@@ -60,11 +61,12 @@ void set_ppm_out_channel_value(int idx, int value) {
 void ppm_out_initialize(void)
 {
 	uint32_t rc;
-	// enable clock for timer
-	sysclk_enable_peripheral_clock(ID_TC_WAVEFORM);
+	// enable clock for TC0 channel 0 (ID 27)
+	PMC_PCER0 |= (1 << 27);
 	// configure PPM Out Pin
 	ioport_set_pin_mode(PIN_PPM_OUT, PIN_TC_WAVEFORM_MUX);
-	ioport_disable_pin(PIN_PPM_OUT);
+	
+	REG_PIOB_PDR |= (1 << 25);
 	
 	tc_init(TC, TC_CHANNEL_WAVEFORM,
 			TC_CMR_TCCLKS_TIMER_CLOCK1
@@ -91,9 +93,27 @@ void ppm_out_initialize(void)
 	}
 	
 	tc_start(TC, TC_CHANNEL_WAVEFORM);
+	
+	
+		// enable clock for timer
+	/* PMC_PCER0 = PMC_PCER0 | 0x10000000u;
+	
+    TC0_CHANNEL1_CCR = TC0_CHANNEL1_CCR | 0x00000002u;
+	TC0_CHANNEL1_CMR = TC0_CHANNEL1_CMR | TC_CMR_TCCLKS_TIMER_CLOCK1	| TC_CMR_WAVE | TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET | TC_CMR_CPCTRG;
+	
+	TC0_CHANNEL1_RC = TICKS_PER_MILLISECOND * UPDATE_CONTROLLER_MILLIS;
+
+	ICER0 = ICER0 |  0x10000000u;
+	ICPR0 = ICPR0 |  0x10000000u;
+ //	NVIC_SetPriority(TC1_IRQn, PID_INTERRUPT_PRIORITY);
+	ISER0 = ISER0 | 0x10000000u;
+	// interrupt on rc compare	
+	TC0_CHANNEL1_IER = TC0_CHANNEL1_IER | 0x00000010u;
+	// start tc0 channel 1
+    TC0_CHANNEL1_CCR = TC0_CHANNEL1_CCR | 0x00000005u;
+*/
+
 }
-
-
 
 
 

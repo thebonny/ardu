@@ -69,9 +69,23 @@
 
 
 // PIO registers
+#define REG_PIOB_PDR	(*(volatile uint32_t*)0x400E1004U)
+#define REG_PIOB_PUDR	(*(volatile uint32_t*)0x400E1060U)
+#define REG_PIOB_MDDR	(*(volatile uint32_t*)0x400E1054U)
+#define REG_PIOB_IFDR	(*(volatile uint32_t*)0x400E1024U)
+#define REG_PIOB_SCIFSR	(*(volatile uint32_t*)0x400E1080U)
+#define REG_PIOB_ABSR   (*(volatile uint32_t*)0x400E1070U)
+
+
+
+
+
+
 #define REG_PIOC_PDR	(*(volatile uint32_t*)0x400E1204U)
 #define REG_PIOC_SODR   (*(volatile uint32_t*)0x400E1230U) /**< \brief (PIOC) Set Output Data Register */
 #define REG_PIOC_CODR   (*(volatile uint32_t*)0x400E1234U) /**< \brief (PIOC) Clear Output Data Register */
+
+
 
 // ADC registers
 #define REG_ADC_CR		(*(volatile uint32_t*)0x400C0000U)
