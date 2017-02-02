@@ -94,6 +94,8 @@ typedef struct
 #define REG_PIOC_PDR	(*(volatile uint32_t*)0x400E1204U)
 #define REG_PIOC_SODR   (*(volatile uint32_t*)0x400E1230U) /**< \brief (PIOC) Set Output Data Register */
 #define REG_PIOC_CODR   (*(volatile uint32_t*)0x400E1234U) /**< \brief (PIOC) Clear Output Data Register */
+#define REG_PIOC_PER    (*(volatile uint32_t*)0x400E1200U) /**< \brief (PIOC) PIO Enable Register */
+#define REG_PIOC_OER    (*(volatile uint32_t*)0x400E1210U) /**< \brief (PIOC) Output Enable Register */
 
 
 #define REG_PIOB_PUDR  (*(volatile uint32_t*)0x400E1060U)
