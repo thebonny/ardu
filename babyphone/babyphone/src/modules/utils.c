@@ -14,9 +14,24 @@
 static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!
 
 
-void Interrupt_SetPriority(uint32_t irq_id, uint32_t priority)
+void SetPriorityIRQ(uint32_t irq_id, uint32_t priority)
 {
     NestedIC->IP[irq_id] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff);  
+}
+
+void DisableIRQ(uint32_t irq_id)
+{
+  NestedIC->ICER[(irq_id >> 5)] = (1 << (irq_id & 0x1F)); /* disable interrupt */
+}
+
+void ClearPendingIRQ(uint32_t irq_id)
+{
+  NestedIC->ICPR[(irq_id >> 5)] = (1 << (irq_id & 0x1F)); /* Clear pending interrupt */
+}
+
+void EnableIRQ(uint32_t irq_id)
+{
+  NestedIC->ISER[(irq_id >> 5)] = (1 << (irq_id & 0x1F)); /* enable interrupt */
 }
 
 void debug_pulse(int debug_pin) {

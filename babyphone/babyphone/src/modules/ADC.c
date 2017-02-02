@@ -87,10 +87,10 @@ void adc_initialize(void)
 
 
 	REG_ADC_IER = REG_ADC_IER | 0x00000080u;
-	ICER1 = ICER1 |  0x00000020u;
-	ICPR1 = ICPR1 |  0x00000020u;
- 	Interrupt_SetPriority(37, 0);
-	ISER1 = ISER1 | 0x00000020u;
+	DisableIRQ(37);
+	ClearPendingIRQ(37);
+ 	SetPriorityIRQ(37, 0);
+	EnableIRQ(37);
 
 
 

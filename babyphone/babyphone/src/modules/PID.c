@@ -175,10 +175,11 @@ void pid_initialize(void)
 	
 	TC0_CHANNEL1_RC = TICKS_PER_MILLISECOND * UPDATE_CONTROLLER_MILLIS;
 
-	ICER0 = ICER0 |  0x10000000u;
-	ICPR0 = ICPR0 |  0x10000000u;
-    Interrupt_SetPriority(28, PID_INTERRUPT_PRIORITY);
-	ISER0 = ISER0 | 0x10000000u;
+	DisableIRQ(28);
+	ClearPendingIRQ(28);
+    SetPriorityIRQ(28, PID_INTERRUPT_PRIORITY);
+	EnableIRQ(28);
+	
 	// interrupt on rc compare	
 	TC0_CHANNEL1_IER = TC0_CHANNEL1_IER | 0x00000010u;
 	// start tc0 channel 1

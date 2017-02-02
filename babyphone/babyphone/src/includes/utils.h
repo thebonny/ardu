@@ -8,7 +8,7 @@
 
 #ifndef UTILS_H_
 #define UTILS_H_
-
+#include "stdint.h"
 
 char * doubleToString(char *s, double n);
 void float_to_string(float n, char *Ergebnis, int afterpoint);
@@ -17,6 +17,9 @@ void debug_pulse(int debug_pin);
 void performance_trace_start(int debug_pin);
 void performance_trace_stop(int debug_pin);
 
-void Interrupt_SetPriority(uint32_t irq_id, uint32_t priority);
+void SetPriorityIRQ(uint32_t irq_id, uint32_t priority);
+void DisableIRQ(uint32_t irq_id);
+void ClearPendingIRQ(uint32_t irq_id);
+void EnableIRQ(uint32_t irq_id);
 
 #endif /* UTILS_H_ */
