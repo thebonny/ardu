@@ -2,23 +2,9 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
-src\ADC.c
-
 src\ASF\common\utils\stdio\read.c
 
 src\ASF\sam\drivers\usart\usart.c
-
-src\PID.c
-
-src\ppm_capture.c
-
-src\ppm_out.c
-
-src\PWM.c
-
-src\record_playback.c
-
-src\utils.c
 
 src\ASF\common\utils\stdio\write.c
 
@@ -52,5 +38,5 @@ src\ASF\sam\utils\cmsis\sam3x\source\templates\system_sam3x.c
 
 src\ASF\sam\utils\syscalls\gcc\syscalls.c
 
-src\main.c
+src\HAPStik_Arduino.c
 

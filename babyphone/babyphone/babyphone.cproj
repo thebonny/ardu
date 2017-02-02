@@ -544,55 +544,10 @@
     <Folder Include="src\config\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\ADC.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\ADC.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\ASF\common\utils\stdio\read.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ASF\sam\drivers\usart\usart.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\PID.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\PID.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\ppm_capture.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\ppm_capture.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\ppm_out.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\ppm_out.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\PWM.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\PWM.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\record_playback.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\record_playback.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\registers.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\utils.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\utils.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\ASF\sam\drivers\usart\usart.h">
@@ -1054,7 +1009,7 @@
     <Compile Include="src\ASF\sam\utils\syscalls\gcc\syscalls.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\main.c">
+    <Compile Include="src\HAPStik_Arduino.c">
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\ASF\thirdparty\CMSIS\Lib\GCC\libarm_cortexM3l_math.a">
