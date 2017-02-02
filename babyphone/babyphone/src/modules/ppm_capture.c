@@ -14,6 +14,7 @@ static int channel_id = 0;
 
 void TC6_Handler(void)
 {
+	debug_pulse(0);
 	if ((TC2_CHANNEL0_SR & TC_SR_LDRBS) == TC_SR_LDRBS) {
 		uint16_t micros = 0;
 		gs_ul_captured_rb = TC2_CHANNEL0_RB;
@@ -54,7 +55,7 @@ void ppm_capture_initialize(void)
 	ICER1 = ICER1 |  0x00000002u;
 	ICPR1 = ICPR1 |  0x00000002u;
 	
-	Interrupt_SetPriority(33, 5);
+	Interrupt_SetPriority(33, 15);
 	ISER1 = ISER1 | 0x00000002u;
 	// enable interrupt
 	TC2_CHANNEL0_IER = TC2_CHANNEL0_IER | TC_IER_LDRBS;

@@ -21,7 +21,7 @@
 
 #define UPDATE_CONTROLLER_MILLIS 1  // recalculate all controllers within defined frequency 1/x
 #define TICKS_PER_MILLISECOND 42000
-#define PID_INTERRUPT_PRIORITY 2
+#define PID_INTERRUPT_PRIORITY 3
 
 #define ELECTRICAL_MECHANICAL_GEAR_FACTOR 7  // dies ist vom Motortyp (#Magnete etc.) abhängig
 	
@@ -177,7 +177,7 @@ void pid_initialize(void)
 
 	ICER0 = ICER0 |  0x10000000u;
 	ICPR0 = ICPR0 |  0x10000000u;
-	// Interrupt_SetPriority(28, PID_INTERRUPT_PRIORITY);
+    Interrupt_SetPriority(28, PID_INTERRUPT_PRIORITY);
 	ISER0 = ISER0 | 0x10000000u;
 	// interrupt on rc compare	
 	TC0_CHANNEL1_IER = TC0_CHANNEL1_IER | 0x00000010u;
