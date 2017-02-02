@@ -14,6 +14,11 @@
 static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!
 
 
+void Interrupt_SetPriority(uint32_t irq_id, uint32_t priority)
+{
+    NestedIC->IP[irq_id] = ((priority << (8 - __NVIC_PRIO_BITS)) & 0xff);  
+}
+
 void debug_pulse(int debug_pin) {
 	#ifdef PULSE_DEBUG_LEVEL
 		if (debug_pin == 0) {

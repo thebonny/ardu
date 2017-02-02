@@ -2,6 +2,7 @@
 #include <conf_clock.h>
 #include <includes/ppm_capture.h>
 #include "includes/registers.h"
+#include "includes/utils.h"
 
 #define PPM_OFFSET 400
 
@@ -53,7 +54,7 @@ void ppm_capture_initialize(void)
 	ICER1 = ICER1 |  0x00000002u;
 	ICPR1 = ICPR1 |  0x00000002u;
 	
-// 	NVIC_SetPriority(TC_IRQn, 5);
+	Interrupt_SetPriority(33, 5);
 	ISER1 = ISER1 | 0x00000002u;
 	// enable interrupt
 	TC2_CHANNEL0_IER = TC2_CHANNEL0_IER | TC_IER_LDRBS;

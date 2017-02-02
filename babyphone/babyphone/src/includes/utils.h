@@ -17,4 +17,6 @@ void debug_pulse(int debug_pin);
 void performance_trace_start(int debug_pin);
 void performance_trace_stop(int debug_pin);
 
+void Interrupt_SetPriority(uint32_t irq_id, uint32_t priority);
+
 #endif /* UTILS_H_ */

@@ -177,7 +177,7 @@ void pid_initialize(void)
 
 	ICER0 = ICER0 |  0x10000000u;
 	ICPR0 = ICPR0 |  0x10000000u;
- //	NVIC_SetPriority(TC1_IRQn, PID_INTERRUPT_PRIORITY);
+	// Interrupt_SetPriority(28, PID_INTERRUPT_PRIORITY);
 	ISER0 = ISER0 | 0x10000000u;
 	// interrupt on rc compare	
 	TC0_CHANNEL1_IER = TC0_CHANNEL1_IER | 0x00000010u;

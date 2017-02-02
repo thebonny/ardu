@@ -89,7 +89,7 @@ void adc_initialize(void)
 	REG_ADC_IER = REG_ADC_IER | 0x00000080u;
 	ICER1 = ICER1 |  0x00000020u;
 	ICPR1 = ICPR1 |  0x00000020u;
-// 	NVIC_SetPriority(ADC_IRQn, 1);
+ //	Interrupt_SetPriority(37, 1);
 	ISER1 = ISER1 | 0x00000020u;
 
 

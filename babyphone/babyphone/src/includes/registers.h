@@ -67,25 +67,33 @@
 #define ICER1  (*(volatile uint32_t*)0xE000E184U)
 #define ICPR1  (*(volatile uint32_t*)0xE000E284U)
 
+typedef struct
+{
+  volatile uint32_t ISER[8];                 /*!< Offset: 0x000 (R/W)  Interrupt Set Enable Register           */
+       uint32_t RESERVED0[24];
+  volatile uint32_t ICER[8];                 /*!< Offset: 0x080 (R/W)  Interrupt Clear Enable Register         */
+       uint32_t RSERVED1[24];
+  volatile uint32_t ISPR[8];                 /*!< Offset: 0x100 (R/W)  Interrupt Set Pending Register          */
+       uint32_t RESERVED2[24];
+  volatile uint32_t ICPR[8];                 /*!< Offset: 0x180 (R/W)  Interrupt Clear Pending Register        */
+       uint32_t RESERVED3[24];
+  volatile uint32_t IABR[8];                 /*!< Offset: 0x200 (R/W)  Interrupt Active bit Register           */
+       uint32_t RESERVED4[56];
+  volatile uint8_t  IP[240];                 /*!< Offset: 0x300 (R/W)  Interrupt Priority Register (8Bit wide) */
+       uint32_t RESERVED5[644];
+  volatile  uint32_t STIR;                    /*!< Offset: 0xE00 ( /W)  Software Trigger Interrupt Register     */
+}  NestedIC_Type;
+
+#define SCS_BASE            (0xE000E000UL)                            /*!< System Control Space Base Address  */
+#define NVIC_BASE           (SCS_BASE +  0x0100UL)                    /*!< NVIC Base Address                  */
+#define __NVIC_PRIO_BITS       4      /**< SAM3X8H uses 4 Bits for the Priority Levels */
+#define NestedIC                ((NestedIC_Type      *)     NVIC_BASE     )   /*!< NVIC configuration struct          */
+
 
 // PIO registers
-#define REG_PIOB_PDR	(*(volatile uint32_t*)0x400E1004U)
-#define REG_PIOB_PUDR	(*(volatile uint32_t*)0x400E1060U)
-#define REG_PIOB_MDDR	(*(volatile uint32_t*)0x400E1054U)
-#define REG_PIOB_IFDR	(*(volatile uint32_t*)0x400E1024U)
-#define REG_PIOB_SCIFSR	(*(volatile uint32_t*)0x400E1080U)
-#define REG_PIOB_ABSR   (*(volatile uint32_t*)0x400E1070U)
-
-
-
-
-
-
 #define REG_PIOC_PDR	(*(volatile uint32_t*)0x400E1204U)
 #define REG_PIOC_SODR   (*(volatile uint32_t*)0x400E1230U) /**< \brief (PIOC) Set Output Data Register */
 #define REG_PIOC_CODR   (*(volatile uint32_t*)0x400E1234U) /**< \brief (PIOC) Clear Output Data Register */
-
-
 
 // ADC registers
 #define REG_ADC_CR		(*(volatile uint32_t*)0x400C0000U)
