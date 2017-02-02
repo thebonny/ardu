@@ -138,6 +138,13 @@ typedef struct
 #define TC2_CHANNEL0_SR   (*(volatile uint32_t*)0x40088020U)
 #define TC2_CHANNEL0_RB   (*(volatile uint32_t*)0x40088018U)
 
+// TC2 channel 1 registers (record playback)
+#define TC2_CHANNEL1_CCR  (*(volatile uint32_t*)0x40088040U)
+#define TC2_CHANNEL1_IER  (*(volatile uint32_t*)0x40088064U)
+#define TC2_CHANNEL1_CMR  (*(volatile uint32_t*)0x40088044U)
+#define TC2_CHANNEL1_RC   (*(volatile uint32_t*)0x4008805CU)
+#define TC2_CHANNEL1_SR   (*(volatile uint32_t*)0x40088060U)
+
 // TC control bits
 #define TC_CMR_TCCLKS_TIMER_CLOCK1 (0x0u << 0)
 #define TC_CMR_WAVE (0x1u << 15)

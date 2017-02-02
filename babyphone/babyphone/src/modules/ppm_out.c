@@ -16,7 +16,7 @@ volatile static uint32_t accumulated_frame_length = 0;
 
 
 void TC0_Handler(void) {
-	 debug_pulse(1);
+	// debug_pulse(1);
 	uint32_t ra, rc;
 	if ((TC0_CHANNEL0_SR & TC_SR_CPCS) == TC_SR_CPCS) {
 		if (current_channel >= NUMBER_OF_RC_CHANNELS) {

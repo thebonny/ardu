@@ -62,13 +62,11 @@ int main(void)
 	pwm_initialize();
 	adc_initialize();
 	pid_initialize();
-	
-	ppm_capture_initialize();
-	
+
 	// init peripheral modules to support rc Tx and simulator playback
+	ppm_capture_initialize();
 	ppm_out_initialize();
-	
-	// record_playback_initialize();
+	record_playback_initialize();
 	
 	char key;
 	display_menu();

@@ -1,16 +1,11 @@
- #include <asf.h>
+#include "stdio.h"
 #include <includes/record_playback.h>
 #include <includes/ppm_capture.h>
 #include <includes/ppm_out.h>
 #include <includes/PID.h>
+#include "includes/utils.h"
+#include "includes/registers.h"
 
-
-/** Use TC Peripheral 2 **/
-#define TC  TC2
-
-/** Configure TC2 channel 2 as waveform output. **/
-#define TC_CHANNEL_WAVEFORM 1
-#define ID_TC_WAVEFORM      ID_TC7
 
 #define RC_PER_MILLISECOND 42000
 #define DEFAULT_FRAMERATE_MILLIS 20
@@ -36,7 +31,8 @@ void copy_captured_channels_to_record() {
 }
 
 void TC7_Handler(void) {
-	if ((tc_get_status(TC, TC_CHANNEL_WAVEFORM) & TC_SR_CPCS) == TC_SR_CPCS) {
+	// debug_pulse(1);
+	if ((TC2_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
 		if (mode == MODE_BYPASS || mode == MODE_RECORD) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				set_ppm_out_channel_value(i, rc_channels[i].current_captured_ppm_value);
@@ -73,32 +69,17 @@ void TC7_Handler(void) {
 
 
 void set_master_framerate(int milliseconds) {
-	tc_write_rc(TC, TC_CHANNEL_WAVEFORM, milliseconds * RC_PER_MILLISECOND);
+	TC2_CHANNEL1_RC = milliseconds * RC_PER_MILLISECOND;
 }
 
 void double_speed() {
-	/*
-	uint32_t rc = tc_read_rc(TC, TC_CHANNEL_WAVEFORM);
-	
-	printf("Previous framerate was: %fms, framerate is now %ldms\r\n", rc / RC_PER_MILLISECOND, (rc/(RC_PER_MILLISECOND * 2)));
-	tc_disable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
-	tc_stop(TC, TC_CHANNEL_WAVEFORM);
-	tc_write_rc(TC, TC_CHANNEL_WAVEFORM, rc / 2);
-	tc_enable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
-	tc_start(TC, TC_CHANNEL_WAVEFORM);
-	*/
-	
+	printf("Previous framerate was: %fms, framerate is now %ldms\r\n", TC2_CHANNEL1_RC / RC_PER_MILLISECOND, (TC2_CHANNEL1_RC/(RC_PER_MILLISECOND * 2)));
+	TC2_CHANNEL1_RC = TC2_CHANNEL1_RC / 2;
 }
 
 void half_speed() {
-	/*uint32_t rc = tc_read_rc(TC, TC_CHANNEL_WAVEFORM);
-	printf("Previous framerate was: %fms, framerate is now %ldms\r\n", rc / RC_PER_MILLISECOND, (rc/(RC_PER_MILLISECOND /2)));
-	tc_disable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
-	tc_stop(TC, TC_CHANNEL_WAVEFORM);
-	tc_write_rc(TC, TC_CHANNEL_WAVEFORM, rc * 2);
-	tc_enable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
-	tc_start(TC, TC_CHANNEL_WAVEFORM);
-	*/
+	printf("Previous framerate was: %fms, framerate is now %ldms\r\n", TC2_CHANNEL1_RC / RC_PER_MILLISECOND, (TC2_CHANNEL1_RC/(RC_PER_MILLISECOND /2)));
+	TC2_CHANNEL1_RC = TC2_CHANNEL1_RC * 2;
 }
 
 void start_record() {
@@ -127,26 +108,22 @@ void loop_playback() {
 
 void record_playback_initialize(void)
 {
-	uint32_t rc;
 	// enable clock for timer
-	sysclk_enable_peripheral_clock(ID_TC_WAVEFORM);
-	tc_init(TC, TC_CHANNEL_WAVEFORM,
-	TC_CMR_TCCLKS_TIMER_CLOCK1
-	| TC_CMR_WAVE /* Waveform mode is enabled */
-	| TC_CMR_ACPA_CLEAR /* RA Compare Effect: set */
-	| TC_CMR_ACPC_SET /* RC Compare Effect: clear */
-	| TC_CMR_CPCTRG  /* UP mode with automatic trigger on RC Compare */
-	);
+	// TC2 channel 1 is peripheral ID = 34, second bit in PCER1
+	REG_PMC_PCER1 |= (1 << 2);
+	
+	TC2_CHANNEL1_CCR |= 0x00000002u;
+	TC2_CHANNEL1_CMR |= TC_CMR_TCCLKS_TIMER_CLOCK1	| TC_CMR_WAVE | TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET | TC_CMR_CPCTRG;
+	TC2_CHANNEL1_RC = DEFAULT_FRAMERATE_MILLIS * RC_PER_MILLISECOND;
 
-	rc = DEFAULT_FRAMERATE_MILLIS * RC_PER_MILLISECOND;
-		
-	tc_write_rc( TC, TC_CHANNEL_WAVEFORM, rc);
-
-	NVIC_DisableIRQ(TC7_IRQn);
-	NVIC_ClearPendingIRQ(TC7_IRQn);
-	NVIC_SetPriority(TC7_IRQn, 5);
-	NVIC_EnableIRQ(TC7_IRQn);
-	tc_enable_interrupt(TC, TC_CHANNEL_WAVEFORM, TC_IER_CPCS);
-	tc_start(TC, TC_CHANNEL_WAVEFORM);
+	DisableIRQ(34);
+	ClearPendingIRQ(34);
+	SetPriorityIRQ(34, 5);
+	EnableIRQ(34);
+	
+	// interrupt on rc compare	
+	TC2_CHANNEL1_IER |= 0x00000010u;
+	// start tc2 channel 1
+    TC2_CHANNEL1_CCR |= 0x00000005u;
 
 }
