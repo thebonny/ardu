@@ -85,7 +85,7 @@ void compute_space_vector_components(space_vector *sv, float rotation_angle, flo
 	sv->X = power_factor * cos(rotation_angle * WK1);
 	sv->Y = power_factor * cos(rotation_angle * WK1-WK2);
 	sv->Z = power_factor * cos(rotation_angle * WK1-WK3);
-	compute_space_vector_PWM(&sv);
+	compute_space_vector_PWM(sv);
 }
 
 void rotate_motor_degrees_from_start_angle(space_vector *sv, float start_angle, int no_of_degrees, int direction_sign) {
@@ -97,8 +97,8 @@ void rotate_motor_degrees_from_start_angle(space_vector *sv, float start_angle, 
 			power_factor = FULL_POWER;
 		}
 		float rot_angle = start_angle + (ELECTRICAL_MECHANICAL_GEAR_FACTOR * step * direction_sign); // Winkel pro Step = 1°
-		compute_space_vector_components(&sv, rot_angle, power_factor);
-		update_pwm_duty_cycles(&sv);
+		compute_space_vector_components(sv, rot_angle, power_factor);
+		update_pwm_duty_cycles(sv);
 		delay_ms(2);
 	}
 }
