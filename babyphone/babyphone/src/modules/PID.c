@@ -180,18 +180,15 @@ void calibration_sequence(void) {
 	/* Proportinalitätsfaktoren für "-" und "+"Kennlinienbereiche
 	//	Proportionalitätsfaktor für +33° -> +1500 und -33° -> -1500
 	*/
-	x_minus_prop_factor	= MAX_STEPS / x_max_throw_minus_adc;
-	x_plus_prop_factor	= MAX_STEPS / x_max_throw_plus_adc;
+	x_minus_prop_factor	= (double)MAX_STEPS / x_max_throw_minus_adc;
+	x_plus_prop_factor	= (double)MAX_STEPS / x_max_throw_plus_adc;
 
-	y_minus_prop_factor	= MAX_STEPS / y_max_throw_minus_adc;
-	y_plus_prop_factor	= MAX_STEPS / y_max_throw_plus_adc;
+	y_minus_prop_factor	= (double)MAX_STEPS / y_max_throw_minus_adc;
+	y_plus_prop_factor	= (double)MAX_STEPS / y_max_throw_plus_adc;
 	
 	//	PRINT
-	printf("| propfaktor_mX : %15s| propfaktor_pX : %15s|\r\n",
-	doubleToString(s1, x_minus_prop_factor), doubleToString(s2, x_plus_prop_factor));
-
-	printf("| propfaktor_mY : %15s| propfaktor_pY : %15s|\r\n\n",
-	doubleToString(s1, y_minus_prop_factor), doubleToString(s2, y_plus_prop_factor));
+	printf("| propfaktor_mX : %.2f| propfaktor_pX : %.2f|\r\n", x_minus_prop_factor, x_plus_prop_factor);
+	printf("| propfaktor_mY : %.2f| propfaktor_pY : %.2f|\r\n\n", y_minus_prop_factor, y_plus_prop_factor);
 }
 
 
