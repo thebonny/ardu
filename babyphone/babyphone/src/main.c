@@ -56,23 +56,23 @@ int main(void)
 	sysclk_init();
     board_init();
 	configure_console();
-		printf("Da\r\n");
 	// init core HAPStik Modules
 	gpio_initialize();
-	pwm_initialize();
-	adc_initialize();
-	// pid_initialize();
 
+	// the pwm drives the motors as well as the adc handler, so kick it off first	
+	pwm_initialize();
+	// adc data is required for calibration, so we start the adc handler next
+	adc_initialize();
+	// then we have to calibrate the stick
+	calibration_sequence();
+	// then we start the general pid update cycles	
+	pid_initialize();
+	
 	// init peripheral modules to support rc Tx and simulator playback
 	ppm_capture_initialize();
 	ppm_out_initialize();
 	record_playback_initialize();
-	
 
-	calibration_sequence();
-	
-	
-	
 	
 	char key;
 	display_menu();
