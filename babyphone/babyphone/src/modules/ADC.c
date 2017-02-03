@@ -12,7 +12,7 @@
 
 // Mittelwertfilter
 
-volatile int af_count_i	= 0;						// Laufvariable im AF-Array
+volatile int    af_count_i	= 0;						// Laufvariable im AF-Array
 volatile int	SUM_AF_i_1	= 0;						// Summe MOTOR1
 volatile int	SUM_AF_i_2	= 0;						// Summe MOTOR2
 
@@ -35,7 +35,7 @@ ADC_inputs get_oversampled_adc_inputs(void) {
 	SUM_AF_i_1 = 0;											// Summe wieder rücksetzen
 	SUM_AF_i_2 = 0;
 	
-	ADC_inputs inputs = { AF_A0_i, AF_A1_i };
+	ADC_inputs inputs = { AF_A1_i, AF_A0_i };  // A1 ist y Poti, A0 ist x Poti
 		
 	return inputs;
 }

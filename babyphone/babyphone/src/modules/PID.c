@@ -4,6 +4,7 @@
  * Created: 19.01.2017 22:44:04
  *  Author: tmueller
  */ 
+#include "asf.h"
 #include "stdio.h"
 #include "includes/PID.h"
 #include "includes/ADC.h"
@@ -23,10 +24,37 @@
 #define TICKS_PER_MILLISECOND 42000
 #define PID_INTERRUPT_PRIORITY 3
 
+
+#define	ANGLE_OFFSET_X 23.0		 // HAPStik spezifischer Offset für Mittenposition in Winkelgraden
+#define	ANGLE_OFFSET_Y 30.0
+
 #define ELECTRICAL_MECHANICAL_GEAR_FACTOR 7  // dies ist vom Motortyp (#Magnete etc.) abhängig
-	
-const float	ANGLE_OFFSET_X = 5.5;							// Winkel_Offset für Poti_MOTOR1 Vertikal		(Nullposition)	-> "+" Stick wandert nach unten
-const float	ANGLE_OFFSET_Y = -16.0;
+#define MAX_STEPS 1500
+#define CENTER_ROTATION_ANGLE_X (ELECTRICAL_MECHANICAL_GEAR_FACTOR * ANGLE_OFFSET_X)
+#define CENTER_ROTATION_ANGLE_Y (ELECTRICAL_MECHANICAL_GEAR_FACTOR * ANGLE_OFFSET_Y)
+
+const float ZERO_POWER    = 0.0;
+const float QUARTER_POWER = 0.25;
+const float HALF_POWER    = 0.5;
+const float FULL_POWER    = 1.0;
+
+const int MAX_THROW_DEGREES = 33;
+
+const int POSITIVE_DIRECTION = 1;
+const int NEGATIVE_DIRECTION = -1;
+
+
+int x_max_throw_plus_adc = 0;
+int x_max_throw_minus_adc = 0;
+int y_max_throw_plus_adc = 0;
+int y_max_throw_minus_adc = 0;
+int x_null_adc = 0;
+int y_null_adc = 0;
+
+float x_minus_prop_factor = 0.0;
+float x_plus_prop_factor = 0.0;
+float y_minus_prop_factor = 0.0;
+float y_plus_prop_factor = 0.0;
 
 typedef struct  {
 	float setpoint;
@@ -45,10 +73,129 @@ pid_controller motor_Y_position_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.
 pid_controller motor_X_speed_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0005, 0.00125, 0.0 };
 pid_controller motor_Y_speed_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0005, 0.00125, 0.0 };
 	
-space_vector motor_X_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-space_vector motor_Y_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };		
+space_vector motor_X_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'X', CENTER_ROTATION_ANGLE_X};
+space_vector motor_Y_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'Y', CENTER_ROTATION_ANGLE_Y };		
+space_vector null_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'N', 0.0 };
 
 int volatile cnt_1ms_poll = 0;
+
+
+
+void compute_space_vector_components(space_vector *sv, float rotation_angle, float power_factor) {
+	sv->X = power_factor * cos(rotation_angle * WK1);
+	sv->Y = power_factor * cos(rotation_angle * WK1-WK2);
+	sv->Z = power_factor * cos(rotation_angle * WK1-WK3);
+	compute_space_vector_PWM(&sv);
+}
+
+void rotate_motor_degrees_from_start_angle(space_vector *sv, float start_angle, int no_of_degrees, int direction_sign) {
+	float power_factor = HALF_POWER;
+	for (int step =1 ; step <=no_of_degrees; step++) {
+		if (step == no_of_degrees)
+		{
+			// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+			power_factor = FULL_POWER;
+		}
+		float rot_angle = start_angle + (ELECTRICAL_MECHANICAL_GEAR_FACTOR * step * direction_sign); // Winkel pro Step = 1°
+		compute_space_vector_components(&sv, rot_angle, power_factor);
+		update_pwm_duty_cycles(&sv);
+		delay_ms(2);
+	}
+}
+
+void adjust_neutral_position(void) {
+
+	compute_space_vector_components(&motor_X_space_vector, motor_X_space_vector.center_angle, QUARTER_POWER);
+	compute_space_vector_components(&motor_Y_space_vector, motor_Y_space_vector.center_angle, QUARTER_POWER);
+	update_pwm_duty_cycles(&motor_X_space_vector);
+	update_pwm_duty_cycles(&motor_Y_space_vector);
+}
+
+void calibration_sequence(void) {
+	adjust_neutral_position();
+	//	Stick beruhigen lassen
+	delay_ms(500);
+	//	MOTOR_Y
+	//	---------------------------------------------------------------------------------------------------- Stick in Position +Y
+	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y, MAX_THROW_DEGREES, POSITIVE_DIRECTION);
+	delay_ms(500);								// Stick beruhigen lassen
+	y_max_throw_plus_adc = get_oversampled_adc_inputs().Y;					
+	//	----------------------------------------------------------------------------------------------------- Stick in Position -Y
+	//	HOCH
+	//	Schleifendurchläufe 66 (von +33° nach -33°)
+	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y + MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , (2 * MAX_THROW_DEGREES), NEGATIVE_DIRECTION);
+	delay_ms(500);								// Stick beruhigen lassen
+	y_max_throw_minus_adc = get_oversampled_adc_inputs().Y;	
+
+	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y - MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , MAX_THROW_DEGREES, POSITIVE_DIRECTION);
+	delay_ms(500);								// Stick beruhigen lassen
+	y_null_adc = get_oversampled_adc_inputs().Y;
+
+	//	MOTOR_X
+	//	---------------------------------------------------------------------------------------------------- Stick in Position +Y
+	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X, MAX_THROW_DEGREES, POSITIVE_DIRECTION);
+	delay_ms(500);								// Stick beruhigen lassen
+	x_max_throw_plus_adc = get_oversampled_adc_inputs().X;
+	//	----------------------------------------------------------------------------------------------------- Stick in Position -Y
+	//	HOCH
+	//	Schleifendurchläufe 66 (von +33° nach -33°)
+	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X + MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , (2 * MAX_THROW_DEGREES), NEGATIVE_DIRECTION);
+	delay_ms(500);								// Stick beruhigen lassen
+	x_max_throw_minus_adc = get_oversampled_adc_inputs().X;
+
+	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X - MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , MAX_THROW_DEGREES, POSITIVE_DIRECTION);
+	delay_ms(500);								// Stick beruhigen lassen
+	x_null_adc = get_oversampled_adc_inputs().X;
+	
+
+	char s1[32];
+	char s2[32];
+	char s3[32];
+	char s4[32];
+	char s5[32];
+		//	PRINT
+	printf("| minusX_33     : %15s| nullX         : %15s| plusX_33     : %15s|\r\n",
+	doubleToString(s1, x_max_throw_minus_adc), doubleToString(s2, x_null_adc), doubleToString(s3, x_max_throw_plus_adc));
+	
+	printf("| minusY_33     : %15s| nullY         : %15s| plusY_33     : %15s|\r\n\n",
+	doubleToString(s1, y_max_throw_minus_adc), doubleToString(s2, y_null_adc), doubleToString(s3, y_max_throw_plus_adc));
+
+	update_pwm_duty_cycles(&null_space_vector);
+	delay_ms(2);
+
+	//	----- Kennlinie in Nullpunkt verschieben -> Nullpunkt wird 0
+	x_max_throw_minus_adc = x_max_throw_minus_adc - x_null_adc;
+	x_max_throw_plus_adc  = x_max_throw_plus_adc  - x_null_adc;
+
+	y_max_throw_minus_adc = y_max_throw_minus_adc - y_null_adc;
+	y_max_throw_plus_adc  = y_max_throw_plus_adc  - y_null_adc;
+
+	//	PRINT
+	printf("| minusX_33     : %15s| plusX_33      : %15s|\r\n",
+	doubleToString(s1, x_max_throw_minus_adc), doubleToString(s3, x_max_throw_plus_adc));
+	
+	printf("| minusY_33     : %15s| plusY_33      : %15s|\r\n\n\n",
+	doubleToString(s1, y_max_throw_minus_adc), doubleToString(s3, y_max_throw_plus_adc));
+	
+	/* Proportinalitätsfaktoren für "-" und "+"Kennlinienbereiche
+	//	Proportionalitätsfaktor für +33° -> +1500 und -33° -> -1500
+	*/
+	x_minus_prop_factor	= MAX_STEPS / x_max_throw_minus_adc;
+	x_plus_prop_factor	= MAX_STEPS / x_max_throw_plus_adc;
+
+	y_minus_prop_factor	= MAX_STEPS / y_max_throw_minus_adc;
+	y_plus_prop_factor	= MAX_STEPS / y_max_throw_plus_adc;
+	
+	//	PRINT
+	printf("| propfaktor_mX : %15s| propfaktor_pX : %15s|\r\n",
+	doubleToString(s1, x_minus_prop_factor), doubleToString(s2, x_plus_prop_factor));
+
+	printf("| propfaktor_mY : %15s| propfaktor_pY : %15s|\r\n\n",
+	doubleToString(s1, y_minus_prop_factor), doubleToString(s2, y_plus_prop_factor));
+}
+
+
+
 
 double pid_compute(pid_controller *controller)
 {
@@ -76,13 +223,6 @@ double pid_compute(pid_controller *controller)
 	return output;
 }
 
-void compute_space_vector_components(space_vector *sv, float rotation_angle, float power_factor) {
-	sv->X = power_factor * cos(rotation_angle * WK1);
-	sv->Y = power_factor * cos(rotation_angle * WK1-WK2);
-	sv->Z = power_factor * cos(rotation_angle * WK1-WK3);
-}
-
-
 void compute_space_vector_motor_X(space_vector *sv, int input, float power_factor) {
 	float rotation_angle = ELECTRICAL_MECHANICAL_GEAR_FACTOR * ((33 * (input - 2418) / 1677.0) + ANGLE_OFFSET_X);
 	if (power_factor >= 0) {
@@ -106,18 +246,21 @@ void compute_space_vector_motor_Y(space_vector *sv, int input, float power_facto
 }
 
 
+
+
+
+
+
+
 void compute_all_controllers(void) {
 	ADC_inputs inputs = get_oversampled_adc_inputs();
 	motor_X_position_controller.input = inputs.X;
 	compute_space_vector_motor_X(&motor_X_space_vector, inputs.X, pid_compute(&motor_X_position_controller));
-
 	motor_Y_position_controller.input = inputs.Y;
 	compute_space_vector_motor_Y(&motor_Y_space_vector, inputs.Y, pid_compute(&motor_Y_position_controller));
+	update_pwm_duty_cycles(&motor_X_space_vector);
+	update_pwm_duty_cycles(&motor_Y_space_vector);
 	
-	compute_space_vector_PWM(&motor_X_space_vector);
-	compute_space_vector_PWM(&motor_Y_space_vector);
-	
-	update_pwm_duty_cycles(&motor_X_space_vector, &motor_Y_space_vector);
 }
 
 static void display_debug_output() {

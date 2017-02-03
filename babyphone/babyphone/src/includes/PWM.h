@@ -10,7 +10,7 @@
 #define PWM_H_
 
 void compute_space_vector_PWM(space_vector *sv);
-void update_pwm_duty_cycles(space_vector *sv_motor_X, space_vector *sv_motor_Y);
+void update_pwm_duty_cycles(space_vector *sv_motor);
 
 void pwm_initialize(void);
 

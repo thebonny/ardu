@@ -20,6 +20,7 @@
 
 #include "includes/PID.h"
 #include "includes/registers.h"
+#include "stdio.h"
 // #include "asf.h"
 
 void compute_space_vector_PWM(space_vector *sv) {
@@ -58,15 +59,25 @@ void compute_space_vector_PWM(space_vector *sv) {
 	}
 }
 
-void update_pwm_duty_cycles(space_vector *sv_motor_X, space_vector *sv_motor_Y) {
-		REG_PWM_CDTYUPD0 = (1 - sv_motor_X->PWM_u) * 2100;
-		REG_PWM_CDTYUPD1 = (1 - sv_motor_X->PWM_v) * 2100;
-		REG_PWM_CDTYUPD2 = (1 - sv_motor_X->PWM_w) * 2100;
-		
-		REG_PWM_CDTYUPD3 = (1 - sv_motor_Y->PWM_u) * 2100;
-		REG_PWM_CDTYUPD4 = (1 - sv_motor_Y->PWM_v) * 2100;
-		REG_PWM_CDTYUPD5 = (1 - sv_motor_Y->PWM_w) * 2100;		
-		
+void update_pwm_duty_cycles(space_vector *sv_motor) {
+	printf("PWM UPDATE!\r\n");
+	if (sv_motor->motor == 'X') {
+		REG_PWM_CDTYUPD0 = (1 - sv_motor->PWM_u) * 2100;
+		REG_PWM_CDTYUPD1 = (1 - sv_motor->PWM_v) * 2100;
+		REG_PWM_CDTYUPD2 = (1 - sv_motor->PWM_w) * 2100;
+	} else if (sv_motor->motor == 'Y') {	
+		REG_PWM_CDTYUPD3 = (1 - sv_motor->PWM_u) * 2100;
+		REG_PWM_CDTYUPD4 = (1 - sv_motor->PWM_v) * 2100;
+		REG_PWM_CDTYUPD5 = (1 - sv_motor->PWM_w) * 2100;		
+	} else if (sv_motor->motor == 'N') {
+		// nullvektor auf alle kanäle!
+		REG_PWM_CDTYUPD0 = (1 - sv_motor->PWM_u) * 2100;
+		REG_PWM_CDTYUPD1 = (1 - sv_motor->PWM_v) * 2100;
+		REG_PWM_CDTYUPD2 = (1 - sv_motor->PWM_w) * 2100;
+		REG_PWM_CDTYUPD3 = (1 - sv_motor->PWM_u) * 2100;
+		REG_PWM_CDTYUPD4 = (1 - sv_motor->PWM_v) * 2100;
+		REG_PWM_CDTYUPD5 = (1 - sv_motor->PWM_w) * 2100;
+	}
 		//	A Duty Cycle Update, Übernahme der Register Enable PWM channels (S.1016)
 		//	- Register: PWM_SCUC (Sync Channel Update)
 		//	- es gibt nur ein Bit in diesem Register:UPDULOCK (Unlock synchronous channels update)

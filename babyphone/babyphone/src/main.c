@@ -56,17 +56,23 @@ int main(void)
 	sysclk_init();
     board_init();
 	configure_console();
-	
+		printf("Da\r\n");
 	// init core HAPStik Modules
 	gpio_initialize();
 	pwm_initialize();
 	adc_initialize();
-	pid_initialize();
+	// pid_initialize();
 
 	// init peripheral modules to support rc Tx and simulator playback
 	ppm_capture_initialize();
 	ppm_out_initialize();
 	record_playback_initialize();
+	
+
+	calibration_sequence();
+	
+	
+	
 	
 	char key;
 	display_menu();
