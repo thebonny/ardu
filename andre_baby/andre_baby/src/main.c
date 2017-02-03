@@ -1,4 +1,13 @@
 
+
+/*	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx                  HAPSTIK Modul                xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DATUM:		23.01.2017
+AUTOR:		André Frank
+NAME:		Potiwerte lesen, PID Position für beide Achsen
+			HS-Modul abgespeckte Version
+				- minimale Kommentare / Erläuterungen
+------------------------------------------------------------------------------------------------------------------------------
+*/
 //	ANFANG **********************************************     Includes       *************************************************
 	#include "asf.h"
 	#include "conf_board.h"
@@ -10,12 +19,6 @@
 	#include "math.h"					//			z.B. cos(x)
 	#include "string.h"
 //	ENDE ************************************************     Includes       *************************************************
-
-	#include "includes/ppm_capture.h"
-	#include "includes/ppm_out.h"
-	#include "includes/record_playback.h"
-
-
 
 //	ANFANG **********************************************     defines        *************************************************
 //	ADC, diese defines fehlen leider in der CMSIS
@@ -40,26 +43,32 @@
 	#define	WK1		(PI/180)
 	#define	WK2		(PI*2/3)
 	#define	WK3		(PI*4/3)
+
+	#define	NOR1	0.022f
 //	ENDE ************************************************     defines        *************************************************
-
-
-
-
 
 //	ANFANG ********************************************     Global Variables       *******************************************
 
+/*
+Grundsätzliches:
+volatile:	ist ein Operator, der dem Compiler sagt, dass der Inhalt einer Variablen sich außerhalb
+			des Programmkontextes ändern kann.
+
+/*
+static:		ist ein Schlüsselwort 
+			- vor Funktionen, damit sie nur in der Datei genutzt werden kann, in der sie steht.
+			- vor Variablen, damit die Variable von mehreren Funktionen innerhalb der Datei genutzt werden kann
+			- die Variable wird auf einer festen Speicheradresse gespeichert. Daraus ergibt sich die Möglichkeit, dass
+			  eine Funktion, die mit static-Variablen arbeitet, beim nächsten Durchlauf die Informationen erneut nutzen kann,
+		      die in der Variablen gespeichert wurden, wie in einem Gedächtnis.	
+			Die Speicherklasse static legt innerhalb einer Funktion fest, daß dauerhaft für
+			die Variable Speicherplatz reserviert wird. Normalerweise ist der Wert einer Variablen
+			innerhalb einer Funktion bei jeden Aufruf anfänglich undefiniert. Bei einer
+			statischen Variable ist das nicht der Fall.
+*/
 
 
-//	für RECORDER
-	static		int		iREC1[10000];		// moveDaten MOTOR1
-	static		int		iREC2[10000];		// moveDaten MOTOR2
-		
-	static		int		cnt_scan = 0;
-	
-	static		int		iPT = 1;			// ProgrammTeil
-
-
-//	für TÄNZCHEN
+//	Für Tänzchen
 	static		float	IST1 = 0.0;			// MOTOR1
 	static		float	IST2 = 0.0;			// MOTOR2	
 	
@@ -81,8 +90,8 @@
 	static		float	DW_1 = 0.0;			// MOTOR1 -> DeltaWinkel
 	static		float	DW_2 = 0.0;			// MOTOR2 -> DeltaWinkel
 	
-	static		int		TAE_1ms = 0;		// 1ms zählen	
-		
+	static		int		TAE_1ms = 0;							// 1ms zählen	
+	static		int		SEQUENZ_1ms = 0;							// 1ms zählen			
 		
 //	für Schleifen -> Zählvariablen
 	volatile	int		a, b, c, d;
@@ -95,62 +104,12 @@
 	volatile	int		TD4;
 	volatile	int		TD5;
 
-
-//	für Anzeige der Verteilung von Werten
-
-	volatile	int		PRINT_VERT_cnt_i = 0;			// Zählvariable für PRINT_WERT Ausgaben
-
-	volatile	int		VW_i   =  0;
-
-	volatile	int		VW_MW_i;						//  Mittelwert, der von Hand eingetragen werden muss
-														//  und etwa die Mitte von VW_MIN bis VW_MAX betragen sollte
-														
-														
-	volatile	int		VW_1 =  0;						//	Initialisierung der Vergleichswerte:
-	volatile	int		VW_2 =  0;
-	volatile	int		VW_3 =  0;
-	volatile	int		VW_4 =  0;
-	volatile	int		VW_5 =  0;
-	volatile	int		VW_6 =  0;
-	volatile	int		VW_7 =  0;
-	volatile	int		VW_8 =  0;
-	volatile	int		VW_9 =  0;
-
-	
-		
-								
-	volatile	int		VW_MIN_i =  1000000;			// Startwerte
-	volatile	int 	VW_MAX_i = -1000000;	
-
-	volatile	int		VW_cnt_1 =  0;					//	Zähler
-	volatile	int		VW_cnt_2 =  0;
-	volatile	int		VW_cnt_3 =  0;
-	volatile	int		VW_cnt_4 =  0;
-	volatile	int		VW_cnt_5 =  0;
-	volatile	int		VW_cnt_6 =  0;
-	volatile	int		VW_cnt_7 =  0;
-	volatile	int		VW_cnt_8 =  0;
-	volatile	int		VW_cnt_9 =  0;
-	volatile	int		VW_cnt_10 = 0;	
-
-	volatile	float	VW_SUM;							// Summe der VW_cnt_* - Werte
-	
-	
 		
 	volatile	float	P_ADC_A0_f;						// Snapshot von den ADC-Werten für Print
 	volatile	float	P_ADC_A1_f;
 	volatile	float	P_ADC_A2_f;
 
 // Mittelwertfilter
-
-
-/* nach oben
-Die Speicherklasse static legt innerhalb einer Funktion fest, daß dauerhaft für
-die Variable Speicherplatz reserviert wird. Normalerweise ist der Wert einer Variablen
-innerhalb einer Funktion bei jeden Aufruf anfänglich undefiniert. Bei einer
-statischen Variable ist das nicht der Fall.
-*/
-
 	static		int		af_count_i	= 0;						// Laufvariable im AF-Array
 	static		int		SUM_AF_i_1	= 0;						// Summe MOTOR1
 	static		int		SUM_AF_i_2	= 0;						// Summe MOTOR2
@@ -160,27 +119,24 @@ statischen Variable ist das nicht der Fall.
 	static		int		AF_A1_i		= 0;						// Average_Filterwert für ADC-Kanal A0
 	static		float	AF_A1_f		= 0;
 	
-	
 //	für SV_PWM()	
 	volatile	float	PWMu1, PWMv1, PWMw1;
 	volatile	float	PWMu2, PWMv2, PWMw2;
 	
-	
-		
 //	für Funktion: MOTOR_DREHT()
 	volatile	int		MOTOR_DREHT_CNT = 0;							// Anzahl Aufrufe
 	volatile	int		M_STEP_Z	=0;
-	volatile	float	DWE1		= 0.0;
-	volatile	float	DWE_a1		= 0.0;									// alter DWE-Wert
+	volatile	float	DWEy		= 0.0;
+	volatile	float	DWE_a1		= 0.0;								// alter DWE-Wert
 
-	volatile	float	DWE2		= 0.0;
-	volatile	float	DWE_a2		= 0.0;									// alter DWE-Wert
+	volatile	float	DWEx		= 0.0;
+	volatile	float	DWE_a2		= 0.0;								// alter DWE-Wert
 	
+	static		int		PS			= 1;								// Programmsequenz
 		
+			
 //	für ADC_ISR()
 //	Anzahl Aufrufe	
-	volatile	int		ADC_ISR_CNT = 0;								// Anzahl Aufrufe des ADC-Interrupts
-	volatile	int		ADC_ISR_CNT_1ms = 0;							// 1ms zählen
 	
 	volatile	float	U_A0 = 2.5, U_A1 = 2.5, U_A2 = 2.5;
 	volatile	float	MAX_U_A0 = 0, MIN_U_A0 = 5.0, MIT_U_A0 = 0;
@@ -194,45 +150,7 @@ statischen Variable ist das nicht der Fall.
 																		// -> für synchrone Vorgänge zu ADC_INT
 
 //	für Poti am Analogeingng A0
-
-
-	volatile	float	CH1_WERT1_1			= 0.0;						// Empfänger-Wert
-	volatile	float	CH1_WERT1_1_alt		= 0.0;
-	volatile	float	CH1_WERT1_1_li		= 0.0;						// linear interpoliert	
-	volatile	float	CH1_WERT1_1_li_nor	= 0.0;						// linear interpoliert und normiert	
-	volatile	float	CH1_DELTA			= 0.0;						// Delta-Wert für 1ms
-		
-	volatile	float	CH1_WERT2_1 = 0.0;		
-	volatile	int		CH1_WERT3_1 = 0;
-
-
-	volatile	float	CH2_WERT1_1			= 0.0;						// Empfänger-Wert
-	volatile	float	CH2_WERT1_1_alt		= 0.0;
-	volatile	float	CH2_WERT1_1_li		= 0.0;						// linear interpoliert	
-	volatile	float	CH2_WERT1_1_li_nor	= 0.0;						// linear interpoliert und normiert	
-	volatile	float	CH2_DELTA			= 0.0;						// Delta-Wert für 1ms
-		
-	volatile	float	CH2_WERT2_1 = 0.0;		
-	volatile	int		CH2_WERT3_1 = 0;
-	
-	
-	
-	
-	static		int		cnt_1ms_poll = 0;								// 1ms Counter, der in der Polling Main inkrementiert wird 
-
-
-
-	volatile	float	ADC_POTI = 0.0f;							//
-
-//	MOTOR1
-	volatile	float	POT_CNT1_1		= 0, POT_CNT2_1 = 0;
-//	MOTOR2
-	volatile	float	POT_CNT1_2		= 0, POT_CNT2_2 = 0;	
-	
-	volatile	float	POT_CNT_3		= 0;
-	volatile	float	POT_V_1			= 0.0;							// Geschwindigkeit MOTOR1
-	volatile	float	POT_V_2			= 0.0;							// Geschwindigkeit MOTOR2
-
+	volatile	float	ADC_POTI = 0.0f;								//
 
 //	für Potis an den Analogeingängen A0, A1, A2
 	volatile	int		ADC_A0_i = 0;									// Integer, Poti vom Stick für Sollpositionsvorgabe
@@ -244,20 +162,17 @@ statischen Variable ist das nicht der Fall.
 	volatile	int		SS_ADC_A1_i;	
 	volatile	int		SS_ADC_A2_i;	
 	
-	
-	
-	
 	volatile	float	ADC_A0_f = 0.0f;								// Float, Poti vom Stick für Sollpositionsvorgabe
 	volatile	float	ADC_A1_f = 0.0f;								// Float, Poti HapStik vertikal
 	volatile	float	ADC_A2_f = 0.0f;								// Float, Poti HapStik horizontal
 
-	volatile	float	POT_U_ver_NULL1 = 0.0f;							// ADC-Spannungswert in der vertikalen Sticknullposition 
-	volatile	float	POT_U_ver_MAX1 = 0.0f;							// ADC-Spannungswert in der vertikalen Stickobenposition 
-	volatile	float	POT_U_ver_MIN1 = 0.0f;							// ADC-Spannungswert in der vertikalen Stickuntenposition	
+	volatile	float	nullY = 0.0f;									// ADC-Spannungswert in der vertikalen Sticknullposition 
+	volatile	float	plusY_33 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickobenposition 
+	volatile	float	minusY_33 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickuntenposition	
 
-	volatile	float	POT_U_ver_NULL2 = 0.0f;							// ADC-Spannungswert in der vertikalen Sticknullposition
-	volatile	float	POT_U_ver_MAX2 = 0.0f;							// ADC-Spannungswert in der vertikalen Stickobenposition
-	volatile	float	POT_U_ver_MIN2 = 0.0f;							// ADC-Spannungswert in der vertikalen Stickuntenposition
+	volatile	float	nullX = 0.0f;									// ADC-Spannungswert in der vertikalen Sticknullposition
+	volatile	float	plusX_33 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickobenposition
+	volatile	float	minusX_33 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickuntenposition
 
 
 	volatile	float	POT_PF_ver = 0.0f;								// Proportionalitätsfaktor zur akzeullen Winkelberechnung
@@ -278,72 +193,47 @@ statischen Variable ist das nicht der Fall.
 	volatile	float	POT_U_hor_MAX2 = 0.0f;							// ADC-Spannungswert in der horizontalen Stickobenposition
 	volatile	float	POT_U_hor_MIN2 = 0.0f;							// ADC-Spannungswert in der horizontalen Stickuntenposition
 
-		
-	volatile	float	WKL_OFF_1 =		5.5;							// Winkel_Offset für Poti_MOTOR1 Vertikal		(Nullposition)	-> "+" Stick wandert nach unten
-	volatile	float	WKL_OFF_2 =		-16.0;							// Winkel_Offset für Poti_MOTOR2 Horizontal		(Nullposition)	-> "+" Stick wandert nach rechts
 
-//	volatile	float	WKL_OFF_ver2 = -14.38;							// Winkel_Offset für POTI vertikal (Nullposition)
-//	volatile	float	WKL_OFF_hor2 = 0.0;								// Winkel_Offset für POTI horizontal (Nullposition)
-		
-	
-//	für STROM()
-	volatile	int		STROM_CNT = 0;									// Anzahl Aufrufe	
-	
-	volatile	float	STROM_A0 = 0, STROM_A1 = 0, STROM_A2 = 0;
-	volatile	float	S_A0 = 0, S_A1 = 0, S_A2 = 0;
-		
-	volatile	float	WINKEL_STROM = 0, WINKEL_STROM_ALT = 0;
-	volatile	float	X_KOMP = 0, Y_KOMP = 0;
-	volatile	float	MV_LAENGE = 0, MV_LAENGE_REZ = 0;
-	volatile	float	ADC_PROP = 2.65;								// ADC-Proportionalitätsfaktor, so dass qpi-Werte zu
-																		// gleichen bzw. ähnlichen qcp-Werten führen
+	volatile	float	propfaktor_minusX_33 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
+	volatile	float	propfaktor_minusY_33 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
 
-//	für QDEC, Encoder
-	volatile	int		ENCODER_CNT		= 0;							// Anzahl Aufrufe
-	
-	volatile	int		ENC_CNT			= 0, ENC_CNT_ALT = 0;
-	volatile	int		ENC_CNT_MOT		= 0;
-	
-	volatile	int		ENC_UMD			= 0;
-	volatile	int		ENC_UMD_MOT		= 0;
-	
-	volatile	float	ENC_CNT_1		= 0, ENC_CNT_2 = 0, ENC_CNT_3 = 0;
-	volatile	float	ENC_V			= 0.0;	
-			
-	volatile	float	ENC_WKL			= 0;
-	volatile	float	ENC_WKL_MOT		= 0;
-//	ACHTUNG DEBUG
-	volatile	int		ENC_WKL_MOT_INT		= 0;
+	volatile	float	propfaktor_plusX_33 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
+	volatile	float	propfaktor_plusY_33 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000	
 		
-	volatile	float	ENC_WKL_MOT60	= 0;
 
-//	für CLARKE_PARK()
-	volatile	float	ENC_WKL_RAD		= 0;
-	volatile	float	ENC_WKL_MOT_RAD = 0;
-	volatile	float	ENC_WKL_MOT60_RAD = 0;
 
-	volatile	float	alpha = 0;
-	volatile	float	beta =0;
-	volatile	float	Dcp = 0;
-	volatile	float	Qcp =0;
+
+
+
+
+
+
+//	Übernehmen		
+//	HS_Nr1
+//	volatile	float	offset_winkel_y =		5.5;
+//	volatile	float	offset_winkel_x =		-16.0;
 	
+//	HS_Nr2
+	volatile	float	offset_winkel_y =		30.0;					// Winkel_Offset [°] in für Poti_MOTOR1 Vertikal (Nullposition)
+																		// -> "+" Stick wandert nach unten
+	volatile	float	offset_winkel_x =		23.0;							// Winkel_Offset für Poti_MOTOR2 Horizontal	(Nullposition)
+																		// -> "+" Stick wandert nach rechts
+
+
+
+
+
+
 //	Array von Zeichen für Funktion: float_to_string(...)
 	char	Ergebnis[20];
 
 //	Leistungsfaktor	0 ... 1 Leistung | 0.5 -> 50% Leistung | 1.0 -> 100% Leistung
-	volatile	float	LF1	= 1.0;
-	volatile	float	LF2	= 1.0;
+	volatile	float	LF_y	= 0.0;
+	volatile	float	LF_x	= 0.0;
 	
-	
-//	Duty cycle buffer for PDC transfer
-//	uint16_t g_us_duty_buffer[3];
-
-//	PDC transfer packet
-//	pdc_packet_t g_pdc_tx_packet;
-
 //	für SVPWM()
-	float	X1, Y1, Z1;
-	float	X2, Y2, Z2;
+	float	xvec_motorY, yvec_motorY, zvec_motorY;
+	float	xvec_motorX, yvec_motorX, zvec_motorX;
 		
 //	für PI-REGLER()	
 	volatile	float	ST = 0.0005;									// 1ms -> SampleTime ADC
@@ -351,50 +241,12 @@ statischen Variable ist das nicht der Fall.
 //	PI-Regler für d
 	volatile	float	Df = 0.0;										// Führungsgröße d
 
-//	ACHTUNG
-	volatile	float	Kdp = 0.2;										// Proportionalitätsbeiwert PI-Regler für d
-	volatile	float	Kdi = 5;										// Integrierbeiwert PI-Regler für d
-
-	volatile	float	De = 0;											// Regeldifferenz für d		
-	volatile	float	Dpy = 0;										// Anteil P-Regler für d
-	volatile	float	Diy = 0;										// Anteil I-Regler für d
-	
-	volatile	float	Dpi = 0;										// Anteil P+I-Regler für d, hier 1 -> maximales
-																		// direktes Moment
-	volatile	float	Dpitemp = 0;									// Anteil P+I-Regler für d			
-
-	volatile	float	Diyv = 0;										// vorhergehender Wert von Diy			
-
-
-//	PI-Regler für q	
-
-//	ACHTUNG
-	volatile	float	Qf = 0.5;										// Führungsgröße q	
-
-	volatile	float	ENC_WKLf = 90;
-
-//	ACHTUNG
-	volatile	float	Kqp = 0.0001;									// Proportionalitätsbeiwert PI-Regler für q
-	volatile	float	Kqi = 0.02;										// Integrierbeiwert PI-Regler für q
-	
-	volatile	float	Qe = 0;											// Regeldifferenz für q	
-	volatile	float	Qpy = 0;										// Anteil P-Regler für q
-	volatile	float	Qiy = 0;										// Anteil I-Regler für q
-	volatile	float	Qpi = 0;										// Anteil P+I-Regler für q
-	volatile	float	Qpitemp = 0;									// Anteil P+I-Regler für q	
-	volatile	float	Qiyv = 0;										// Vorhergehender Wert von Qiy	
-
-
 //	für print float
 	#define STRING_EOL    "\r"
 	#define STRING_HEADER "Test double to ascii conversion"
 
-
-
-
-
 //	static double PRECISION = 0.00000000000001;
-	static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!
+	static double PRECISION = 0.001;									//Anzahl Nachkommastellen, -> hier ohne Rundung!
 	static int MAX_NUMBER_STRING_SIZE = 32;
 
 	char s1[32];
@@ -407,66 +259,64 @@ statischen Variable ist das nicht der Fall.
 	char * doubleToString(char *s, double n);
 	
 
-//	1.Regler MOTOR1	
-//	PID1_1 Regler GESCHWINDIGKEIT
+//	MOTORY	
+//	PID_v_y Regler GESCHWINDIGKEIT
 	float myInput1_1;
 	
-	float error1_1 = 0.0, input1_1 = 0.0, dInput1_1 = 0.0, lastInput1_1 = 0.0, mySetpoint1_1 = 0.0;
+	float error1_1 = 0.0, input1_1 = 0.0, dInput1_1 = 0.0, lastInput1_1 = 0.0, mySetpoint_v_y = 0.0;
 			
 	double myOutput1_1;
 	double ITerm1_1;
-	double ki1_1 = 0.0;
-	double kp1_1 = 0.0;
-	double kd1_1 = 0.0;
-	double outMax1_1;
+	double kp_v_y = 0.0;
+	double ki_v_y = 0.0;
+	double kd_v_y = 0.0;
+	double outMax_v_y;
 	double outMin1_1;
 	
 
-//	2.Regler MOTOR1	
-//	PID2_1 Regler POSITION
-	int myInput2_1;
+//	MOTORY	
+//	PID_p_y Regler POSITION
+	int myInput_p_y;
 		
-	float error2_1 = 0.0, input2_1 = 0.0, dInput2_1 = 0.0, lastInput2_1 = 0.0, mySetpoint2_1 = 0.0;
+	float error2_1 = 0.0, input2_1 = 0.0, dInput2_1 = 0.0, lastInput2_1 = 0.0, mySetpoint_p_y = 0.0;
 
-	double myOutput2_1;
+	double myOutput_p_y;
 	double ITerm2_1;
-	double ki2_1 = 0.0;
-	double kp2_1 = 0.0;
-	double kd2_1 = 0.0;
-	double outMax2_1;
-	double outMin2_1;
+	double kp_p_y = 0.0;
+	double ki_p_y = 0.0;
+	double kd_p_y = 0.0;
+	double outMax_p_y;
+	double outMin_p_y;
 		
 
-//	1.Regler MOTOR2	
-//	PID1_2 Regler GESCHWINDIGKEIT
+//	MOTORX	
+//	PID_v_x Regler GESCHWINDIGKEIT
 	float myInput1_2;
 
-	float error1_2 = 0.0, input1_2 = 0.0, dInput1_2 = 0.0, lastInput1_2 = 0.0, mySetpoint1_2 = 0.0;
+	float error1_2 = 0.0, input1_2 = 0.0, dInput1_2 = 0.0, lastInput1_2 = 0.0, mySetpoint_v_x = 0.0;
 
 	double myOutput1_2;
 	double ITerm1_2;
-	double ki1_2 = 0.0;
-	double kp1_2 = 0.0;
-	double kd1_2 = 0.0;
-	double outMax1_2;
-	double outMin1_2;
+	double kp_v_x = 0.0;
+	double ki_v_x = 0.0;
+	double kd_v_x = 0.0;
+	double outMax_v_x;
+	double outMin_v_x;
 
-//	2.Regler MOTOR2	
-//	PID2_2 Regler POSITION
-	int myInput2_2;
+//	MOTORX	
+//	PID_p_x Regler POSITION
+	int myInput_p_x;
 
-	float error2_2 = 0.0, input2_2 = 0.0, dInput2_2 = 0.0, lastInput2_2 = 0.0, mySetpoint2_2 = 0.0;
+	float error2_2 = 0.0, input2_2 = 0.0, dInput2_2 = 0.0, lastInput2_2 = 0.0, mySetpoint_p_x = 0.0;
 
-	double myOutput2_2;
+	double myOutput_p_x;
 	double ITerm2_2;
-	double ki2_2 = 0.0;
-	double kp2_2 = 0.0;
-	double kd2_2 = 0.0;
-	double outMax2_2;
-	double outMin2_2;
+	double kp_p_x = 0.0;
+	double ki_p_x = 0.0;
+	double kd_p_x = 0.0;
+	double outMax_p_x;
+	double outMin_p_x;
 
-	
-	
 	
 
 	volatile	int		SPRUNG_CNT		= 0;							// Anzahl Aufrufe
@@ -484,118 +334,107 @@ statischen Variable ist das nicht der Fall.
 //	ANFANG **********************************************     FUNKTIONEN     *************************************************
 
 
-//	MOTOR1
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER1_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-void PID1_1(void)
+//	MOTORY Geschwindigkeit
+//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_v_y  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+void PID_v_y(void)
 {
 	  input1_1 = myInput1_1;
-      error1_1 = mySetpoint1_1 - input1_1;
-      ITerm1_1+= (ki1_1 * error1_1);
-      if(ITerm1_1 > outMax1_1) ITerm1_1= outMax1_1;
+      error1_1 = mySetpoint_v_y - input1_1;
+      ITerm1_1+= (ki_v_y * error1_1);
+      if(ITerm1_1 > outMax_v_y) ITerm1_1= outMax_v_y;
       else if(ITerm1_1 < outMin1_1) ITerm1_1= outMin1_1;
       dInput1_1 = (input1_1 - lastInput1_1);
  
 // Reglerausgang berechnen
-      double output1_1 = kp1_1 * error1_1 + ITerm1_1 - kd1_1 * dInput1_1;
+      double output1_1 = kp_v_y * error1_1 + ITerm1_1 - kd_v_y * dInput1_1;
 
 // Überläufe kappen      
-	  if(output1_1 > outMax1_1) output1_1 = outMax1_1;
+	  if(output1_1 > outMax_v_y) output1_1 = outMax_v_y;
       else if(output1_1 < outMin1_1) output1_1 = outMin1_1;
 	  myOutput1_1 = output1_1;
 	  
 //	letzten Wert speichern
       lastInput1_1 = input1_1;
 }
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER1_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_v_y  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 
-
-
-//	MOTOR2
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER1_2   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-void PID1_2(void)
+//	MOTORX Geschwindigkeit
+//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_v_x  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+void PID_v_x(void)
 {
 	input1_2 = myInput1_2;
-	error1_2 = mySetpoint1_2 - input1_2;
-	ITerm1_2+= (ki1_2 * error1_2);
-	if(ITerm1_2 > outMax1_2) ITerm1_2= outMax1_2;
-	else if(ITerm1_2 < outMin1_2) ITerm1_2= outMin1_2;
+	error1_2 = mySetpoint_v_x - input1_2;
+	ITerm1_2+= (ki_v_x * error1_2);
+	if(ITerm1_2 > outMax_v_x) ITerm1_2= outMax_v_x;
+	else if(ITerm1_2 < outMin_v_x) ITerm1_2= outMin_v_x;
 	dInput1_2 = (input1_2 - lastInput1_2);
 	
 	// Reglerausgang berechnen
-	double output1_2 = kp1_2 * error1_2 + ITerm1_2 - kd1_2 * dInput1_2;
+	double output1_2 = kp_v_x * error1_2 + ITerm1_2 - kd_v_x * dInput1_2;
 
 	// Überläufe kappen
-	if(output1_2 > outMax1_2) output1_2 = outMax1_2;
-	else if(output1_2 < outMin1_2) output1_2 = outMin1_2;
+	if(output1_2 > outMax_v_x) output1_2 = outMax_v_x;
+	else if(output1_2 < outMin_v_x) output1_2 = outMin_v_x;
 	myOutput1_2 = output1_2;
 	
 	//	letzten Wert speichern
 	lastInput1_2 = input1_2;
 }
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER1_2   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_v_x   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 
-
-
-//	MOTOR1
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER2_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-void PID2_1(void)
+//	MOTORY Position
+//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_p_y  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+void PID_p_y(void)
 {
-	input2_1 = myInput2_1;
-    error2_1 = mySetpoint2_1 - input2_1;
-    ITerm2_1+= (ki2_1 * error2_1);
-    if(ITerm2_1 > outMax2_1) ITerm2_1= outMax2_1;
-    else if(ITerm2_1 < outMin2_1) ITerm2_1= outMin2_1;
+	input2_1 = myInput_p_y;
+    error2_1 = mySetpoint_p_y - input2_1;
+    ITerm2_1+= (ki_p_y * error2_1);
+    if(ITerm2_1 > outMax_p_y) ITerm2_1= outMax_p_y;
+    else if(ITerm2_1 < outMin_p_y) ITerm2_1= outMin_p_y;
     dInput2_1 = (input2_1 - lastInput2_1);
  
 // Reglerausgang berechnen
-    double output2_1 = kp2_1 * error2_1 + ITerm2_1 - kd2_1 * dInput2_1;
+    double output2_1 = kp_p_y * error2_1 + ITerm2_1 - kd_p_y * dInput2_1;
 
 // Überläufe kappen      
-	if(output2_1 > outMax2_1) output2_1 = outMax2_1;
-    else if(output2_1 < outMin2_1) output2_1 = outMin2_1;
-	myOutput2_1 = output2_1;
+	if(output2_1 > outMax_p_y) output2_1 = outMax_p_y;
+    else if(output2_1 < outMin_p_y) output2_1 = outMin_p_y;
+	myOutput_p_y = output2_1;
 	  
 //	letzten Wert speichern
 	lastInput2_1 = input2_1;
 }
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER2_1   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_p_y  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 
-
-
-
-//	MOTOR2
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER2_2   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-void PID2_2(void)
+//	MOTORX Position
+//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_p_x  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+void PID_p_x(void)
 {
-	input2_2 = myInput2_2;
-	error2_2 = mySetpoint2_2 - input2_2;
-	ITerm2_2+= (ki2_2 * error2_2);
-	if(ITerm2_2 > outMax2_2) ITerm2_2= outMax2_2;
-	else if(ITerm2_2 < outMin2_2) ITerm2_2= outMin2_2;
+	input2_2 = myInput_p_x;
+	error2_2 = mySetpoint_p_x - input2_2;
+	ITerm2_2+= (ki_p_x * error2_2);
+	if(ITerm2_2 > outMax_p_x) ITerm2_2= outMax_p_x;
+	else if(ITerm2_2 < outMin_p_x) ITerm2_2= outMin_p_x;
 	dInput2_2 = (input2_2 - lastInput2_2);
 	
 // Reglerausgang berechnen
-	double output2_2 = kp2_2 * error2_2 + ITerm2_2 - kd2_2 * dInput2_2;
+	double output2_2 = kp_p_x * error2_2 + ITerm2_2 - kd_p_x * dInput2_2;
 
 // Überläufe kappen
-	if(output2_2 > outMax2_2) output2_2 = outMax2_2;
-	else if(output2_2 < outMin2_2) output2_2 = outMin2_2;
-	myOutput2_2 = output2_2;
+	if(output2_2 > outMax_p_x) output2_2 = outMax_p_x;
+	else if(output2_2 < outMin_p_x) output2_2 = outMin_p_x;
+	myOutput_p_x = output2_2;
 	
 //	letzten Wert speichern
 	lastInput2_2 = input2_2;
 }
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER2_2   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
+//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_p_x  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 
@@ -657,8 +496,6 @@ void float_to_string(float n, char *Ergebnis, int afterpoint)
 		}
 	}
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    Float -> String   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
 
 
 
@@ -739,8 +576,6 @@ char * doubleToString(char *s, double n) {
 
 
 
-
-
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       UART        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 /*	Einstellungen sind:
 		- 115kBaud
@@ -764,8 +599,6 @@ static void configure_console(void)
 
 
 
-
-
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       SVPWM     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //	SpaceVektorPulsWeitenModulation
 //	Gemessene maximale Ausführungszeiten:
@@ -780,118 +613,90 @@ static void configure_console(void)
 //		- PWMu1, PWMv1, PWMw1	"Center aligned PWM-Signale" die direkt auf die Halbbrücken ausgegeben werden
 //		- PWMu2, PWMv2, PWMw2
 
-
-
 void SVPWM(float uum1, float uvm1, float uwm1, float uum2, float uvm2, float uwm2)
 {
-	//	Motor_1
-
+//	MotorY
 	if (uum1 >= 0)
-	{
-		if (uvm1 >= 0)
-		{
-			PWMw1 = (1-uvm1-uum1)/2;
+	{	if (uvm1 >= 0)
+		{	PWMw1 = (1-uvm1-uum1)/2;
 			PWMv1 = PWMw1 + uvm1;
 			PWMu1 = PWMv1 + uum1;
 		}
 		else
-		{
-			if (uwm1 >= 0)
-			{
-				PWMv1 = (1-uum1-uwm1)/2;
+		{	if (uwm1 >= 0)
+			{	PWMv1 = (1-uum1-uwm1)/2;
 				PWMu1 = PWMv1 + uum1;
 				PWMw1 = PWMu1 + uwm1;
 			}
 			else
-			{
-				PWMv1 = (1+uvm1+uwm1)/2;
+			{	PWMv1 = (1+uvm1+uwm1)/2;
 				PWMw1 = PWMv1 - uvm1;
 				PWMu1 = PWMw1 - uwm1;
 			}
 		}
 	}
 	else
-	{
-		if (uvm1 >= 0)
-		{
-			if (uwm1 >= 0)
-			{
-				PWMu1 = (1-uwm1-uvm1)/2;
+	{	if (uvm1 >= 0)
+		{	if (uwm1 >= 0)
+			{	PWMu1 = (1-uwm1-uvm1)/2;
 				PWMw1 = PWMu1 + uwm1;
 				PWMv1 = PWMw1 + uvm1;
 			}
 			else
-			{
-				PWMw1 = (1+uwm1+uum1)/2;
+			{	PWMw1 = (1+uwm1+uum1)/2;
 				PWMu1 = PWMw1 - uwm1;
 				PWMv1 = PWMu1 - uum1;
 			}
 		}
 		else
-		{
-			PWMu1 = (1+uum1+uvm1)/2;
+		{	PWMu1 = (1+uum1+uvm1)/2;
 			PWMv1 = PWMu1 - uum1;
 			PWMw1 = PWMv1 - uvm1;
 		}
 	}
 
 
-	//	Motor_2
-
+//	MotorX
 	if (uum2 >= 0)
-	{
-		if (uvm2 >= 0)
-		{
-			PWMw2 = (1-uvm2-uum2)/2;
+	{	if (uvm2 >= 0)
+		{	PWMw2 = (1-uvm2-uum2)/2;
 			PWMv2 = PWMw2 + uvm2;
 			PWMu2 = PWMv2 + uum2;
 		}
 		else
-		{
-			if (uwm2 >= 0)
-			{
-				PWMv2 = (1-uum2-uwm2)/2;
+		{	if (uwm2 >= 0)
+			{	PWMv2 = (1-uum2-uwm2)/2;
 				PWMu2 = PWMv2 + uum2;
 				PWMw2 = PWMu2 + uwm2;
 			}
 			else
-			{
-				PWMv2 = (1+uvm2+uwm2)/2;
+			{	PWMv2 = (1+uvm2+uwm2)/2;
 				PWMw2 = PWMv2 - uvm2;
 				PWMu2 = PWMw2 - uwm2;
 			}
 		}
 	}
 	else
-	{
-		if (uvm2 >= 0)
-		{
-			if (uwm2 >= 0)
-			{
-				PWMu2 = (1-uwm2-uvm2)/2;
+	{	if (uvm2 >= 0)
+		{	if (uwm2 >= 0)
+			{	PWMu2 = (1-uwm2-uvm2)/2;
 				PWMw2 = PWMu2 + uwm2;
 				PWMv2 = PWMw2 + uvm2;
 			}
 			else
-			{
-				PWMw2 = (1+uwm2+uum2)/2;
+			{	PWMw2 = (1+uwm2+uum2)/2;
 				PWMu2 = PWMw2 - uwm2;
 				PWMv2 = PWMu2 - uum2;
 			}
 		}
 		else
-		{
-			PWMu2 = (1+uum2+uvm2)/2;
+		{	PWMu2 = (1+uum2+uvm2)/2;
 			PWMv2 = PWMu2 - uum2;
 			PWMw2 = PWMv2 - uvm2;
 		}
 	}
-	
-	
-	
 
-	//	Ausgabe an den PWM-VController
-
+//	Ausgabe an den PWM-VController
 	REG_PWM_CDTYUPD0 = (1 - PWMu1) * 2100;
 	REG_PWM_CDTYUPD1 = (1 - PWMv1) * 2100;
 	REG_PWM_CDTYUPD2 = (1 - PWMw1) * 2100;
@@ -900,42 +705,26 @@ void SVPWM(float uum1, float uvm1, float uwm1, float uum2, float uvm2, float uwm
 	REG_PWM_CDTYUPD4 = (1 - PWMv2) * 2100;
 	REG_PWM_CDTYUPD5 = (1 - PWMw2) * 2100;
 
+//	A Duty Cycle Update, Übernahme der Register Enable PWM channels (S.1016)
+//	- Register: PWM_SCUC (Sync Channel Update)
+//	- es gibt nur ein Bit in diesem Register:UPDULOCK (Unlock synchronous channels update)
+//	- wird es 1 gesetzt werden die Register für Duty Cycle ... übernommen
 
-
-
-	//	A Duty Cycle Update, Übernahme der Register Enable PWM channels (S.1016)
-	//	- Register: PWM_SCUC (Sync Channel Update)
-	//	- es gibt nur ein Bit in diesem Register:UPDULOCK (Unlock synchronous channels update)
-	//	- wird es 1 gesetzt werden die Register für Duty Cycle ... übernommen
-
-	//	Ausgabe
+//	Ausgabe
 	REG_PWM_SCUC = 0x00000001u;
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx      SVPWM       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 
-
-
-
-
-
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       ADC_ISR        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
 void ADC_Handler(void)
 {		
-
-
-
-
-
 //	Kommt alle 50us
 //	Wird von der PWM Event Line getriggert
-//	Impuls auf der EventLine wird mit jedem 10. PWM-Referenzimpuls erzeugt (1 x 100us = 100us) -> siehe Init_PWM
-
+//	Impuls auf der EventLine wird mit jedem PWM-Referenzimpuls erzeugt (50us) -> siehe Init_PWM
 
 //	LOKALE VARIABLEN hier deklarieren
-
 		
 //	Disable Interrupt (CH7 vom ADC)
 //	REG_ADC_IDR = REG_ADC_IDR | 0x00000080u;
@@ -943,24 +732,20 @@ void ADC_Handler(void)
 //	NVIC_DisableIRQ(ADC_IRQn);
 
 
-//	ADC_ISR Zähler inkrementieren
-	ADC_ISR_CNT++;
 
 
-/*
 //	DEBUG
 //	Debug_Pin C.24= 1 -> C.24 = 0 -> DUE_Pin6
 	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x01000000u; 		// Ausgang C24 =1 (DUE_Pin6)
-	delay_us(10);
+//	delay_us(2);
 	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x01000000u; 		// Ausgang C24 =0 (DUE_Pin6)
-*/	
+	
 
 
 
+//	Hier Mittelwertbildung (20-fach) durchführen
 
-//	Hier wird jetzt die Mittelwertbildung (10-fach) durchgeführt
-
-//	Analogkanäle lesen 1x/100us -> Snapshot
+//	Analogkanäle lesen 1x/50us -> Snapshot
 	SS_ADC_A0_i = REG_ADC_CDR7;									// Poti HapStik vertikal
 	SS_ADC_A1_i = REG_ADC_CDR6;									// Poti HapStik horizontal
 	SS_ADC_A2_i = REG_ADC_CDR5;									// Poti, Sollwertvorgabe
@@ -972,22 +757,14 @@ void ADC_Handler(void)
 	SS_ADC_A0_i);
 */
 
-
 	SUM_AF_i_1 = SUM_AF_i_1 + SS_ADC_A0_i;						// Summenbildung: aktueller ADC_A0-Wert wird dazu addiert
 	SUM_AF_i_2 = SUM_AF_i_2 + SS_ADC_A1_i;						// Summenbildung: aktueller ADC_A1-Wert wird dazu addiert
 
 	af_count_i ++;												// "af" -> Average-Filter
 																
-	PRINT_VERT_cnt_i = PRINT_VERT_cnt_i + 1;					// Zähler der Print-Ausgaben
-
-		
-
-
 	if (af_count_i == 20)										// 20 ADC-Werte wurden addiert, 1ms ist vorbei
 	{
-		
 //		printf("|WERTE-VERTEILUNG-------------------------------------------------------------------------------------------------------------------|\r\n");
-
 //		AF_A0_f = 0.5 + SUM_AF_i / 10.0;						// hier 0,5 zur Rundung dazu addieren
 		
 		AF_A0_f = SUM_AF_i_1 / 20.0;							// Addition von 0,5 kann aber auch entfallen, da der Absolutwert nicht so wichtig ist,
@@ -1001,7 +778,6 @@ void ADC_Handler(void)
 		SUM_AF_i_2 = 0;
 				
 		svpwm_int = 1;											// Flag setzen, damit Regelschleife mit 1ms läuft
-
 																// -> zur Übergabe an Endlosschleife in MAIN
 /*
 //	PRINT
@@ -1011,312 +787,12 @@ void ADC_Handler(void)
 		delay_ms(500);
 */
 	}
-	
-	
-	
-
-	
-
 //	Enable Interrupt (CH7 vom ADC)
 //	REG_ADC_IER = REG_ADC_IER | 0x00000080u;
 //	Enable ADC interrupt, schreibt das Register ISER im NVIC (Nested Vector Interrupt Controller)
 //	NVIC_EnableIRQ(ADC_IRQn);		
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx       ADC_ISR        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    STROM       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	Input:
-//		- Spannungsabfälle über den 3 externen shunts zur Strommessung:
-//		- U_A0, U_A1, U_A2
-//	Output:
-//		- S_A0, S_A1, S_A2					absolute Spulenströme
-//		- STROM_A0, STROM_A1, STROM_A2		normierte Spulenströme
-//		- WINKEL_STROM						Winkel des magnetischen Vektors
-//		- X_KOMP							X-Komponente des magnetischen Vektors
-//		- Y_KOMP							Y-Komponente des magnetischen Vektors
-//		- MV_LAENGE							Länge des magnetischen Vektors
-
-void STROM(void)
-{
-//	Zähler inkrementieren 	
-	STROM_CNT = STROM_CNT + 1;
-//	printf("STROM-Nr.:   %d\r\n"	,STROM_CNT);	
-	
-//	-----
-//	Ströme bilden:
-//	Mittenwerte für die 3 Kanäle werden wie folgt ermittelt:
-//		- LF = 0 setzen -> keine Ansteuerung der Spulen
-//		- jetzt liegen an den Kanälen die Mittenspannungen an
-
-
-//	S_A0	= U_A0 - 2.501;
-//	S_A1	= U_A1 - 2.500;
-//	S_A2	= U_A2 - 2.478;
-
-//	ACHTUNG DEBUG
-//	Hier noch einen Proportionalitätsfaktor (ADC_PROP) eingeführt, so dass in etwas die q-Vorgabe
-//	zu adäquatem qcp [q nach Clarke_Park()] führt
-	STROM_A0	= ADC_PROP * (U_A0 - 2.501);
-	STROM_A1	= ADC_PROP * (U_A1 - 2.500);
-	STROM_A2	= ADC_PROP * (U_A2 - 2.478);
-
-//	-----
-//	Die Notwendigkeit der Vektorlängennormierung ist fraglich! (23.12.2015)
-//	Vektor-Längennormierung, so dass qmax = 1
-//	Die Ergebnisse sind aber hilfreich bei der Beurteilung der Ergebnisse der MatLab-Simulation
-//	Koordiantensystem-Transformation:  stern -> kartesisch
-//	Aus den 3 Teilvektoren (STROM_A0, STROM_A1, STROM_A2) wird der Winkel (WINKEL_STROM) des resultierenden magnetischen 
-//	Vektors zur x-Achse berechnet
- 
-	X_KOMP			= (2 * STROM_A0 - STROM_A1 - STROM_A2) / 2;
-	Y_KOMP			= (sqrt(3.0) / 2.0) * (STROM_A1 - STROM_A2);
-	MV_LAENGE		= sqrt((X_KOMP * X_KOMP) + (Y_KOMP * Y_KOMP));
-	MV_LAENGE_REZ	= 1.5 * 1/MV_LAENGE;
-
-	S_A0		= MV_LAENGE_REZ * STROM_A0;
-	S_A1		= MV_LAENGE_REZ * STROM_A1;
-	S_A2		= MV_LAENGE_REZ * STROM_A2;
-//	-----
-
-
-
-//	-----
-//	Den magnetischen Winkel berechnen, gegen Excel geprüft i.O. (11.12.2015)
-//	Aus den Teilkomponenten X_KOMP und Y_KOMP den Richtungskosinus berechnen (Kleine Enzyklopädie Mathematik, S.541)
-//	180 / pi = 57.29578
-//	Da der Kosinus zu pi spiegelsymmetrisch ist, müssen wir auf Minus Y_KOMP prüfen und wenn Y_KOMP negativ ist den Winkel als
-//	(360 - WINKEL_STROM) bilden
-
-
-//	Voehergehenden Stromwert retten, um eine Delta-Ausgabe zwischen 2 aufeinanderfolgenden Winkelwerten machen zu können
-
-	WINKEL_STROM_ALT = WINKEL_STROM;
-
-//	Neuen Winkel berechnen
-	if(Y_KOMP < 0)
-	{
-		WINKEL_STROM = 360 - (57.29578 * acos(X_KOMP / sqrt((X_KOMP * X_KOMP) + (Y_KOMP * Y_KOMP))));
-	}
-	else
-	{
-		WINKEL_STROM =        57.29578 * acos(X_KOMP / sqrt((X_KOMP * X_KOMP) + (Y_KOMP * Y_KOMP)));
-	}	
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx      STROM       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ENCODER     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	Encoder Winkelberechnung
-//	Es wird das Register: REG_TC0_CV0 ausgelesen, in dem sich der Zählerstand des Encoders MEC22 befindet: +- 2147483648
-//	Output:
-//		- ENC_UMD			Umdrehunugen in int
-//		- ENC_WKL			Winkel absolut, bezogen auf eine mechanische Umdrehung des Rotors in float
-//		- ENC_WKL_MOT		Winkel relativ, bezogen auf eine magnetische Umdrehung des Rotors in float (7x größer)
-//		- ENC_UMD_MOT		Anzahl elektrischer Umdrehungen des Motors
-	
-//	ACHTUNG:
-//	Das bedeutet, dass nach 268435,456 Umdrehungen ein turn_arround stattfindet
-
-void ENCODER(void)
-{
-
-//	Zähler inkrementieren 	
-	ENCODER_CNT = ENCODER_CNT + 1;
-//	printf("ENCODER-Nr.:   %d\r\n"	,ENCODER_CNT);
-	
-//	ACHTUNG DEBUG -> damit sich der Rotor erst einmal einschwingen kann
-//	delay_ms(250);	
-	
-//	Winkel Rotor
-	ENC_CNT =  REG_TC0_CV0 - ENC_UMD * 8000;
-	
-	if(ENC_CNT >= 8000)
-	{
-		ENC_UMD++;
-	}
-	if(ENC_CNT <= -8000)
-	{
-		ENC_UMD--;
-	}
-
-	ENC_WKL			= (360.0 / 8000.0) * ENC_CNT;						// z.B. ENC_CNT=8000 -> ENC_WKL=360
-	ENC_WKL_RAD		= ENC_WKL * PI / 180;
-
-//	Winkel Motor
-	ENC_WKL_MOT_INT	= (ENC_WKL * 7) / 360;								// Ganzzahliger Anteil elektrischer Umdrehungen
-																		// Anzahl magnetischer Umdrehungen auf einer mech.
-																		// Umdrehung (0...6)
-	ENC_WKL_MOT		= 360 * ((ENC_WKL * 7) / 360 - ENC_WKL_MOT_INT);	// Rest mal 360°
-	ENC_WKL_MOT_RAD	= ENC_WKL_MOT * PI / 180;
-
-//	Anzahl elektrischer Umdrehungen des Motors
-	ENC_UMD_MOT		= (ENC_UMD * 7) + ENC_WKL_MOT_INT;
-	
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    ENCODER     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    CLARKE_PARK       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	Clarke Park Transformation (MATLAB-Block "Clarke Park")
-//	Input:
-//		- STROM_A0, STROM_A1, STROM_A2 aus Funktion STROM()
-//		- ENC_WKL_MOT_RAD
-//	Output:
-//		- alpha, beta
-//		- Dcp, Qcp (d, q)
- 
-void CLARKE_PARK(void)
-{
-//	ACHTUNG DEBUG -> hier  + 60°, hat die MATLAB-Simu ergeben
-	ENC_WKL_MOT60		= -ENC_WKL_MOT - 120;
-	ENC_WKL_MOT60_RAD	= ENC_WKL_MOT60 * PI / 180.0;
-
-//	alpha	= 0.666666 * (STROM_A0 - (STROM_A1 / 2) - (STROM_A2 / 2) );
-//	beta	= 0.57735  * STROM_A1 - 0.57735 * STROM_A2;
-	alpha	= (2.0 / 3.0) * (STROM_A0 - (STROM_A1 / 2) - (STROM_A2 / 2) );
-	beta	= (2.0 / 3.0) * ((sqrt(3.0) / 2.0) * STROM_A1 - (sqrt(3.0) / 2.0) * STROM_A2);	
-
-	Dcp = cos(ENC_WKL_MOT60_RAD)		* alpha + sin(ENC_WKL_MOT60_RAD) * beta;
-	Qcp = cos(ENC_WKL_MOT60_RAD)		* beta  - sin(ENC_WKL_MOT60_RAD) * alpha;		 	
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    CLARKE PARK       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    INV_CLARKE_PARK       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	Inverse Clarke Park Transformation
-//	MATHLAB-Block "Modifizierte Inverse Clarke Park"
-//	Input:
-//		- Dpi, Qpi
-//		- ENC_WKL_MOT_RAD
-//	Output:
-//		- X, Y, Z
-
-void INV_CLARKE_PARK(void)
-{
-	alpha	= cos(ENC_WKL_MOT_RAD) * Dpi - sin(ENC_WKL_MOT_RAD) * Qpi;
-	beta	= sin(ENC_WKL_MOT_RAD) * Dpi + cos(ENC_WKL_MOT_RAD) * Qpi;
-
-//	X = beta								* LF/100;
-//	Y = 0.5 * (sqrt(3.0) * alpha - beta)	* LF/100;
-//	Z = (-0.5) * (beta + sqrt(3.0) * alpha)	* LF/100;
-
-	X1 = beta;
-	Y1 = 0.5 * (sqrt(3.0) * alpha - beta);
-	Z1 = (-0.5) * (beta + sqrt(3.0) * alpha);
-		
-/*
-//	Begrenzung
-		if(X > 1)
-		{
-			X = 1;
-		}
-
-		if(X < -1)
-		{
-			X = -1;
-		}
-
-		if(Y > 1)
-		{
-			Y = 1;
-		}
-
-		if(Y < -1)
-		{
-			Y = -1;
-		}
-
-		if(Z > 1)
-		{
-			Z = 1;
-		}
-
-		if(Z < -1)
-		{
-			Z = -1;
-		}
-*/
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    INV_CLARKE PARK       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
- 
-
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    MOTOR DREHT       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	Motor dreht sich
-//	Funktion muss in einer Loop stehen mit MOTOR_DREHT_CNT als Laufvariablen
-//	z.B.
-//	MOTOR_DREHT(1, -141, 7*360, 1);   -> Rechtslauf, -141° magnetischer Offset, 7*360 Schritte, 1° magnetisch
-//		- DR		Drehrichtung, 1 -> rechts, 0 -> links
-//		- M_OFFSET	Offset in magnetischen ° -> positiver Offset führt zu Drehung links
-//		- M_STEPS	Anzahl von Motor-Ausgabezyklen
-//		- EW_STEP	Schritthub (z.B. 1 -> ein elektrisches Grad)
-
-void	MOTOR_DREHT(int DR, int M_OFFSET, int M_STEPS, float EW_STEP)
-{	
-
-//	Zähler inkrementieren 	
-	MOTOR_DREHT_CNT = MOTOR_DREHT_CNT + 1;
-		
-//	Rechtslauf? Linkslauf?
-	if (M_STEP_Z < M_STEPS) 
-	{
-//	Motor dreht nach links
-		if (DR == 0)
-		{
-			DWE1 = DWE1 - EW_STEP;
-			M_STEP_Z++;		
-		}	
-		else
-		{
-//	Motor dreht nach rechts
-			DWE1 = DWE1 + EW_STEP;
-			M_STEP_Z++;		
-		}	
-	}
-	
-
-	
-//	Debug_Pin C.25 = 1
-//	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x02000000u;
-
-
-
-//	Aus dem magnetischen Winkel die X, Y, Z - Anteile berechnen
-	X1 = cos((DWE1 + M_OFFSET) * WK1)			* LF1/100;
-	Y1 = cos((DWE1 + M_OFFSET) * WK1 - WK2)		* LF1/100;
-	Z1 = cos((DWE1 + M_OFFSET) * WK1 - WK3)		* LF1/100;		// 60us -> der "cos" braucht die Zeit, Format des Argumentes ist egal
-		
-//	Debug_Pin 8 = 0
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x00400000u;
-
-//	SpaceVektor-PWM-Ausgabe
-//	TIME: 17us
-	SVPWM(X1, Y1, Z1, 0, 0, 0);					
-
-//	Debug_Pin 7 = 0
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x00800000u;		
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    MOTOR DREHT       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
 
 
 
@@ -1610,112 +1086,19 @@ void	INIT_PWM(void)
 
 
 
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init TC2 CH1 und CH2 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	REG_TC2_IER1
-//	NVIC_DisableIRQ(TC2_IRQn);
-
-
-/*	Decodierung eines PPM-Signals
-	Blockbild S.864
-	Es gibt 3 Timer/Counter Module.
-	Jedes Modul hat 3 Channels, so dass:
-				 | TC0 CH0 | TC0 CH1 |TC0 CH2 |
-				 | TC1 CH0 | TC1 CH1 |TC1 CH2 |
-				 | TC2 CH0 | TC2 CH1 |TC2 CH2 |				 		
-	Wir benutzen: TC2 CH1, CH2
-	
-	Erste Variante:
-		- Ausgangssignal eines Empfängerkanals (1,5ms +/- 0,5ms) als Input
-		- Input an TIOA7, C.28 (TC2, CH1)
-		- steigende Flanke	-> Trigger (Reset des Counters)
-		- fallende Flanke	-> capture
-
-		- TIOA7 soll den Counter mit der steigenden Flanke triggern (Reset)
-			- ABETRG: TIOA or TIOB External Trigger Selection
-				0: TIOB is used as an external trigger.
-				1: TIOA is used as an external trigger		
-*/
-
-
-void	INIT_TC2(void)
-{
-
-/*	S.563
-	PCM (Power Management Controller) konfigurieren -> enable Timer-Counter-Clock
-	Register: PMC_PCER1 (Power Management Controller Peripheral Clock Enable Register 1)
-		- Clock enable für TC2 CH1 -> TC
-		- Instanz TC7: S.39
-			- ID_TC7: 34 (Identifier für TC2 CH1 -> TC7)
-			- ID_TC7: 35 (Identifier für TC2 CH2 -> TC8)			
-*/
-	REG_PMC_PCER1 = REG_PMC_PCER1	|	0x0000000Cu;
-
-
-/*	S.880
-	Channel Control Register
-	Clock für TC2, CH1 erlauben
-		- CLKEN = 1
-	Clock für TC2, CH2 erlauben
-		- CLKEN = 1		
-*/
-	REG_TC2_CCR1 = REG_TC2_CCR1		|	0x00000001u;
-	REG_TC2_CCR2 = REG_TC2_CCR2		|	0x00000001u;	
-	
-/*	S.881
-	Channel Mode
-		- _ _ _ 1   0 5 0 2
-		- TC_CMR (Timer / Counter Channel Mode Register)
-		- clock selection:	 TIMER_CLOCK3 = MCK/8
-		- clock nicht invertiert
-
-		- ABETRG = 1: -> 1: TIOA7 is used as an external trigger
-		- steigende Flanke	-> Trigger (Reset des Counters)
-		- ETRGEDG = 1H
-		- ETRGEDG = 2H (fallende Flanke)
-
-		- fallende Flanke für (RA Loading Edge Selection) -> zum Laden des Capture-Registers RA
-		- LDRA = 1H
-		- LDRA = 2H (fallende Flanke)
-		
-	Was bedeutet den Counter mit MCK/32 zu takten?
-		- 10500 Clocks je Milisekunde (84000/8)
-		- 5250 Clocks je 0,5ms (Vollauslenkung des Servos)
-		- also haben wir eine Winkelauflösung in der Abtastung von ca. 60°/5250 = 0,0114° -> geht in Ordnung, da der Regler
-		  einen Input mit einer Auflösung von 0,02° bekommt und der Impuls am Empfängerausgang nur eine Auflösung von 1/1024 hat! 
-		  Egal! Vielleicht wird sie ja mal besser! ;-)
-		- Damit sollte der Wertebereich des Capture-Registers RA sein:	*** 5250 ... 10500 ... 15750 ***  	
-		
-*/
-//	REG_TC2_CMR1 = REG_TC2_CMR1		|	0x00020503;			// MCK/128
-//	REG_TC2_CMR1 = REG_TC2_CMR1		|	0x00020500;			// MCK/2
-	REG_TC2_CMR1 = REG_TC2_CMR1		|	0x00020501;			// MCK/8
-
-	REG_TC2_CMR2 = REG_TC2_CMR2		|	0x00020501;			// MCK/8
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init TC        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
-
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init GPIO      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	Ports: PC24 und PC25 als Outputs definieren
+//	Ports: PC21, PC22, PC23, PC24 und PC25 als Outputs definieren
 //	--------------------------------------------------------------------------------------------------------------------------
 
 void	INIT_GPIO(void)
 {
-
 /*
 1.	Pull-up Resistor Control (Pullup Widerstand am Pin zuschalten)
 		- PIO_PUER (Pull-up Enable Register) enable Pullup
 		- PIO_PUDR (Pull-up Disable Resistor) disable Pullup
 		- PIO_PUSR (Pull-up Status Register), hier steht das Ergebnis
 		- nach Reset -> all of the pull-ups are enabled, i.e. PIO_PUSR resets at the value 0x0.
-*/
-
-/*				
+			
 2.	I/O Line or Peripheral Function Selection
 		- PIO_PER (PIO Enable Register, S.633)
 		- PIO_PDR (PIO Disable Register)
@@ -1728,12 +1111,10 @@ void	INIT_GPIO(void)
 		-                   PC24, PC25 sind I/O Lines -> 0x03000000u -> die anderen werden für Ansteuerung Motor_2 benötigt
 */
 	REG_PIOC_PER	= REG_PIOC_PER		|		0x03000000u;
-
-
-
+//	REG_PIOC_PER	= REG_PIOC_PER		|		0x13E00000u; PC28 als Input
 	
 /*
-3.	Output Control (S.636)
+3.	Output Control
 		- wenn die Outputs vom PIO-Controller definiert werden (zugehörenden Bits in PIO_PSR sind 1)
 		- PIO_OER (Output Enable Register) treibt den Pin
 		- PIO_ODR (Output Disable Register) Pin wird nicht getrieben
@@ -1749,20 +1130,14 @@ void	INIT_GPIO(void)
 		- Ports: PC21, PC22, PC23, PC24 und PC25 als Outputs definieren -> 0x03E00000u
 */
 //	REG_PIOC_OER	 = REG_PIOC_OER		|		0x03E00000u;		
-	REG_PIOC_OER	 = REG_PIOC_OER		|		0x01000000u;		// -> die anderen werden für Ansteuerung Motor_2 benötigt			
+	REG_PIOC_OER	 = REG_PIOC_OER		|		0x03000000u;		// -> die anderen werden für Ansteuerung Motor_2 benötigt			
 /*			
 4.	Synchronous Data Output	(S.623)		
 		- nach Reset -> the synchronous data output is disabled on all the I/O lines as PIO_OWSR resets at 0x0.
-*/
 
-
-/*
 5.	Multi Drive Control (Open Drain)
 		- nach Reset -> the Multi Drive feature is disabled on all pins, i.e. PIO_MDSR resets at value 0x0.
-*/
 
-
-/*
 	Zum Debuggen -> 5 Pins ein- und ausschalten:
 	
 		- PIO Controller Set   Output Data Register (S.642)	
@@ -1793,8 +1168,6 @@ void	INIT_GPIO(void)
 
 
 
-
-
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init ADC       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 /*	
 	Analoge Eingänge: (S.1320)
@@ -1822,7 +1195,6 @@ void	INIT_ADC(void)
 	- macht sich im Register: PIO_PSR (PIO Status) als 0 an den zugehörenden Bits bemerkbar!
 */
 	REG_PIOC_PDR = REG_PIOC_PDR		|	0x000003FCu;
-
 
 /*	Clock enable für ADC
 	Instanzen (S.38)
@@ -1856,30 +1228,22 @@ void	INIT_ADC(void)
 				-> passt recht ordentlich!
 		- USEQ = 0, keine bestimmte Kanalsequenz, Normal Mode: The controller converts channels in a simple numeric order.	
 		
-		-> ADC_MR = 1E900209H
-					   
-*/
+		-> ADC_MR = 1E900209H				   
 
-
-/*				- Zusammenfassung der Parameter: (neu definiert 06.10.2016)
-				- 15kOhm	Quellwiderstand
-				- 14MHz		ADC clock
-				- 71,43ns	ADCClock period
-				- 1,071us	Tracktime
-				- 357,15ns	TRANSFER period
-				- 357,15ns	SETTLING period (Einschwingen beim Übergang zum nächsten ADC-Kanal, z.B. andere Verstärkung, etc.
+	- Zusammenfassung der Parameter: (neu definiert 06.10.2016)
+	- 15kOhm	Quellwiderstand
+	- 14MHz		ADC clock
+	- 71,43ns	ADCClock period
+	- 1,071us	Tracktime
+	- 357,15ns	TRANSFER period
+	- 357,15ns	SETTLING period (Einschwingen beim Übergang zum nächsten ADC-Kanal, z.B. andere Verstärkung, etc.
 */								
 //	REG_ADC_MR = REG_ADC_MR			| 0x19100100u;				// Software_Trigger
 //	REG_ADC_MR = REG_ADC_MR			| 0x19100109u;				// Hardware_Trigger -> PWM Event Line 0 
 //	REG_ADC_MR = REG_ADC_MR			| 0x1E900209u;				// neu definiert 06.10.2016
 	
-	
-	
-	
-	
-	
-	
-	
+
+		
 //	TEST
 //	2k + 10k als Spannungsteiler direkt über die Referenz gelötet und den Abgriff auf A0 in der Leiste eingespeist
 //	Steckbrücke über A0 und A1 (beide sehen das selbe)
@@ -1958,22 +1322,7 @@ void	INIT_ADC(void)
 //		- dass die Änderung des Signals schon vor dem PGA stattfinden muss
 //		- UND, dass die Veränderung der ADC-Parameter, auf "allet max" (siehe oben) auch keine Verbesserung bringt
 //		-> damit ist z.B. die Tracktime nicht zu knapp bemessen, etc. ... !!! und 
-//		   REG_ADC_MR = REG_ADC_MR			| 0x1E900209u; vollkommen in Ordnung.	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//		   REG_ADC_MR = REG_ADC_MR			| 0x1E900209u; vollkommen in Ordnun
 
 /*	Kanäle enable
 		- Register: ADC_CHER (ADC Channel Enable Register), S.1338
@@ -1981,8 +1330,6 @@ void	INIT_ADC(void)
 		-> ist im ADC_CHSR (ADC Channel Status Register) zu sehen		
 */
 	REG_ADC_CHER = REG_ADC_CHER		| 0x000000E0u;
-
-
 
 /*	Kanäle Verstärkung
 		- Register: ADC_CGR (ADC Channel Gain Register), S.1349
@@ -2003,10 +1350,6 @@ void	INIT_ADC(void)
 	Achtung, wenn ANACH = 1, dann 
 	
 */
-
-
-
-
 	REG_ADC_CGR = REG_ADC_CGR		| 0x0000F000u;		// Gain = 1 für CH5 (A2) -> Poti zur Spollwertvorgabe
 														// Gain = 4 für CH6 (A1)
 														// Gain = 4 für CH7 (A0)
@@ -2016,30 +1359,22 @@ void	INIT_ADC(void)
 //	REG_ADC_CGR = REG_ADC_CGR		| 0x22222222u;		// Gain = 2 für alle Kanäle
 //	REG_ADC_CGR = REG_ADC_CGR		| 0x00000000u;		// Gain = 1 für alle Kanäle
 
-
-
-
-
-
 //	Kanäle Offset -> nicht benutzt
 	
 /*	Conversion Result der letzten Wandlung
 		- Register: ADC_LCDR (ADC Last Converted Data Register), S.1341
 	REG_ADC_LCDR	->   0x0000 | Kanalnummer 4Bit | DATA 12Bit |
-*/	
 
-/*	Start Conversion ADC -> nur bei Software_Trigger enable (S.1332)
+	Start Conversion ADC -> nur bei Software_Trigger enable (S.1332)
 	REG_ADC_CR = 0x00000002;
-*/
 
-/*	Conversion Result kanalbezogen (untere 12 Bit), S.1351
+	Conversion Result kanalbezogen (untere 12 Bit), S.1351
 		- Register: ADC_CDRx (ADC Channel Data Register)
 		- *CH_A0
 		- *CH_A1
 		- *CH_A2
-*/
 
-/*	Ablauf:
+	Ablauf:
 			
 //	Start Conversion ADC (S.1332), nur bei Software_Trigger
 	REG_ADC_CR = 0x00000002;
@@ -2061,139 +1396,17 @@ void	INIT_ADC(void)
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init ADC       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
-
-
-
-//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     INIT QDEC      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-/*	Encodersignale des MEC22 werden mit Hilfe des QDEC dekodiert.
-	Input (Encoder):
-		- PHA -> PB25
-		- PHB -> PB27
-	Output:
-		- REG_TC0_CV0
-*/					
-
-
-void	INIT_QDEC(void)
-{
-
-/*
-1.	I/O Line or Peripheral Function Selection
-		- PIO_PER (PIO Enable Register)
-		- PIO_PDR (PIO Disable Register)
-		- PIO_PSR (PIO Status Register), hier steht das Ergebnis
-		- 0 -> pin is controlled by the corresponding on-chip peripheral selected in the PIO_ABSR (AB Select Register)
-		- 1 -> pin is controlled by the PIO controller
-		- nach Reset -> generally, the I/O lines are controlled by the PIO controller, i.e. PIO_PSR resets at 1
-
-		- PB25 (TIOA0) und PB27 (TIOB0) werden als Peripheral Function selektiert
-		- geht auch:
-			PIOB -> PIO_PDR = PIOB -> PIO_PDR	|	0x0A000000u;
-*/		
-	REG_PIOB_PDR = REG_PIOB_PDR		|	0x0A000000u;
-
-/*	
-2.	Auswahl, ob Peripheral A oder B (S.858)
-		- PIO_ABSR (PIO Peripheral A, B Select Register)
-		- nach Reset -> 0x00000000 -> Peripheral A
-		
-		- PB25 (TIOA0) und PB27 (TIOB0) werden beide als Peripheral B selektiert	
-		- geht auch:
-	PIOB -> PIO_ABSR = PIOB -> PIO_ABSR |	0x0A000000u;
-*/
-	REG_PIOB_ABSR = REG_PIOB_ABSR	|	0x0A000000u;
-
-/*
-3.	Clock für Instance TC0 (Timer / Counter0) erlauben (S.859)
-		- PMC_PCER0 und PMC_PCER1 (Power Management Controller Peripheral Clock Enable Register 0 und 1)
-		- erlaubt den "peripheral clock" für den zugehörenden "peripheral identifier" (PID)
-
-		- hier ist PID = 27 (Identifier für die TC0)
-		- geht auch:
-	PMC -> PMC_PCER0 = PMC -> PMC_PCER0	|	0x08000000u;
-*/
-	REG_PMC_PCER0 = REG_PMC_PCER0 	|	0x08000000u;
-
-/*
-4.	Channel Mode (S.881)
-		- TC_CMR (Timer / Counter Channel Mode Register)
-		- 0x00000505
-		- Field TCCLKS of TC_CMRx must be configured to select XC0 input (i.e., 0x101)
-		- Channel 0 and 1 must be configured in Capture mode
-		- Capture mode is enabled
-*/
-	REG_TC0_CMR0 = REG_TC0_CMR0		|	0x00000005; 
-
-/*
-5.	Block Mode (S.882)
-		- TC_BMR (Timer / Counter Block Mode Register)- MAXFILT (S.901)
-		- 0x00001300, mit maximalem MAXFILT: 0x03F01300
-		- POSEN bit =1, -> the motor axis position is processed on channel 0 (by means of the PHA, PHB edge detections)
-		  and the number of motor revolutions are recorded on channel 1 if the IDX signal is provided on the TIOB1 input
-*/
-	REG_TC0_BMR = REG_TC0_BMR		|	0x03F11300u;		// 2 Flanken von PHA und PHB -> 4 MAXFILT = 65 und SWAP PHA mit PHB
-															// -> entspricht einer Richtungsumkehr
-//	REG_TC0_BMR = REG_TC0_BMR		|	0x00000300u;		// 2 Flanken von PHA -> 2
-		
-/*
-6.	Channel Control (S.880), Starten des Counters
-		- TC_CCRx (Timer / Counter Channel Control Register)
-		- 0x00000003
-		- A software trigger is performed: the counter is reset and the clock is started
-		- nur einen Reset ausführen:
-			- Counter setzt sich auf Wert: 4294967297 (2 hoch 32) und beim nächsten gültigen clock
-			  steht er auf 0. Deshalb fehlt immer ein Count vom Encoder -> Korrektur vom Reset (+1) erforderlich
-		- Softwaretrigger enable
-*/
-//	REG_TC0_CCR0 = REG_TC0_CCR0		|	0x00000004u;	// Software trigger is performed: the counter is reset and the clock is started.
-	REG_TC0_CCR0 = REG_TC0_CCR0		|	0x00000001u;	// Enables the clock
-
-	
-/*
-	Auslesen des ENC1-Wertes
-	REG_TC0_CV0;
-*/	
-	
-	
-/*	Zusammenfassung, ohne Kommentare
-	REG_PIOB_PDR = REG_PIOB_PDR		|	0x0A000000u;
-	REG_PIOB_ABSR = REG_PIOB_ABSR	|	0x0A000000u;
-	REG_PMC_PCER0 = REG_PMC_PCER0 	|	0x08000000u;
-	REG_TC0_CMR0 = REG_TC0_CMR0		|	0x00000005; 
-	REG_TC0_BMR = REG_TC0_BMR		|	0x00001300u;
-	REG_TC0_CCR0 = REG_TC0_CCR0		|	0x00000005u;
-
-	ENC1_P = REG_TC0_CV0;
-*/
-}
-//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     INIT QDEC      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-		
-
-
-
-
-
-
-
-
 	
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  PRINT_START       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 void	PRINT_START(void)
 {
-		printf("|HAPSTIK 02.10.2016     Programm auf Poti umstellen xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|\r\n\n");
+	printf("|-----------------------------------------------------------------------------------------------------------------------------------|\r\n");
+	printf("|HAPSTIK 22.01.2017     Potiwerte an Max und Min-Positionen / Proportionalitätsfaktoren / xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|\r\n");
+	printf("|-----------------------------------------------------------------------------------------------------------------------------------|\r\n\n");
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  PRINT_START       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	
-	
-	
+
 //	ENDE ************************************************     FUNKTIONEN     *************************************************
-
-
-
-
-
-
-
 
 
 
@@ -2202,22 +1415,14 @@ void	PRINT_START(void)
 //	**************************************************************************************************************************
 int main(void)
 {
-
-
-
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init SAM system     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
 	sysclk_init();
 	board_init();
 	configure_console();
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Init SAM system     xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//	INIT_TC2();
 	INIT_PWM();
 	INIT_GPIO();
-//	INIT_ADC();
-	
-//	ppm_capture_initialize();
-//	ppm_out_initialize();
-//	record_playback_initialize();
+	INIT_ADC();
 
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     Interrupt      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 /*
@@ -2233,8 +1438,6 @@ int main(void)
 */
 	REG_ADC_IER = REG_ADC_IER | 0x00000080u;	
 
-
-
 //	Aus dem main-init-Code zur korrekten De-/Aktivierung von Interrupts.
 //	Hier aus dem Beispielprojekt "TC Capture Waveform" vom ASF Framework:
 
@@ -2247,393 +1450,538 @@ int main(void)
 
 
 
-
 //	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx   START                 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	PRINT_START();
 
+ /*	HS:
+				 -Y
+				 |
+			-X---|---+X
+				 |
+				 +Y
+*/
 
- 
-
+	TD1 = 2;													// 2ms/1° -> Zeitverzögerung1
+	TD2 = 500;													// 500ms am Endpunkt
+	
 //	--------------------------------------------------------------------------------------- Kalibrierung der Winkel zueinander
-//	Stick muss sich leicht drehen lassen
+//	Voraussetzung: 
+//		- Stick muss sich leicht drehen lassen
+//		- Stick muss sich etwa in Feldmitte befinden
 
-//	------------------------------------------------------------------------------------------------ Poti auf Winkel einlernen         
-//	Analogwerte an 3 Stickpositionen messen und speichern
+	
 
 //	--------------------------------------------------------------------------------------------------- Stick in Position NULL
 //	Leistungsfaktoren (0...1) MOTOR1, MOTOR2
-	LF1 = 0.4;
-	LF2 = 0.4;
-
-	TD1 = 10;											// Zeitverzögerung1
-	TD2 = 150;											// Zeitverzögerung2
+	LF_y = 0.25;
+	LF_x = 0.25;
 	
-	
-	
-//	Zunächst einmal den Winkeloffset für senkrechte Nullstellung des Sticks ermitteln
-//	z.B. 13° -> WKL_OFF_1 = -13
-//	DWE1 = -13 * 7;
-	DWE1 = WKL_OFF_1 * 7;
-	DWE2 = WKL_OFF_2 * 7;
-	
-	
+//	Zunächst einmal den Winkeloffset für Nullstellung ermitteln
+	DWEy = offset_winkel_y * 7;										// Winkeloffset in °
+	DWEx = offset_winkel_x * 7;
 		
 //	Winkelanteile für Winkeloffset mit Berücksichtigung des Leistungsfaktors berechnen
-	X1 = LF1 * cos(DWE1*WK1);
-	Y1 = LF1 * cos(DWE1*WK1-WK2);
-	Z1 = LF1 * cos(DWE1*WK1-WK3);
+	xvec_motorY = LF_y * cos(DWEy*WK1);
+	yvec_motorY = LF_y * cos(DWEy*WK1-WK2);
+	zvec_motorY = LF_y * cos(DWEy*WK1-WK3);
 	
-	X2 = LF2 * cos(DWE2*WK1);
-	Y2 = LF2 * cos(DWE2*WK1-WK2);
-	Z2 = LF2 * cos(DWE2*WK1-WK3);
-
-
-
-
+	xvec_motorX = LF_x * cos(DWEx*WK1);
+	yvec_motorX = LF_x * cos(DWEx*WK1-WK2);
+	zvec_motorX = LF_x * cos(DWEx*WK1-WK3);
 	
 //	Raumvektorausgabe -> Stick steht in Nullstellung	
-	SVPWM(X1, Y1, Z1, X2, Y2, Z2);
+	SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, xvec_motorX, yvec_motorX, zvec_motorX);
 
 //	Stick beruhigen lassen
-	delay_ms(1000);
+	delay_ms(500);
 
-//	Raumvektorausgabe -> Stick steht in Nullstellung	
-	SVPWM(0,0,0,0,0,0);
+
+//	MOTOR_Y
+//	---------------------------------------------------------------------------------------------------- Stick in Position +Y
+//	RUNTER
+
+	DWE_a1 = 7 * offset_winkel_y;						// Offset des Sticks (HS-spezifisch)
+	
+//	Schleifendurchläufe 33 (von 0° nach +33°)	
+	LF_y = 0.5;									// Leistungsfaktor (0...1)
+	for (a=1; a<=33; a++) 
+	{	if (a == 33)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+		{	LF_y = 1.0;
+		}
+		DWEy = DWE_a1 + 7 * a * 1;				// Winkel pro Step = 1°
+		xvec_motorY = LF_y * cos(DWEy*WK1);
+		yvec_motorY = LF_y * cos(DWEy*WK1-WK2);
+		zvec_motorY = LF_y * cos(DWEy*WK1-WK3);
+		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, 0, 0, 0);
+		delay_ms(TD1);
+	} // for (a=1; a<=33; a++) 
+	DWE_a1 = DWEy;								// DWE merken
+	delay_ms(TD2);								// Stick beruhigen lassen
+
+	plusY_33 = AF_A0_i;							// Poti_ADC_Wert für Position +Y lesen
+	
+
+//	----------------------------------------------------------------------------------------------------- Stick in Position -Y
+//	HOCH
+//	Schleifendurchläufe 66 (von +33° nach -33°)
+
+	LF_y = 0.5;									// Leistungsfaktor (0...1)
+	for (a=1; a<=66; a++) 
+	{	if (a == 66)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+		{	LF_y = 1.0;
+		}
+		DWEy = DWE_a1 + 7 * a * -1;				//Winkel pro Step = 1°
+		xvec_motorY = LF_y * cos(DWEy*WK1);
+		yvec_motorY = LF_y * cos(DWEy*WK1-WK2);
+		zvec_motorY = LF_y * cos(DWEy*WK1-WK3);
+		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, 0, 0, 0);
+		delay_ms(TD1);
+	} // for (a=1; a<=66; a++) 
+	DWE_a1 = DWEy;
+	delay_ms(TD2);								// Stick beruhigen lassen
+
+	minusY_33 = AF_A0_i;						// Poti_ADC_Wert für Position -Y lesen
+
+
+//	--------------------------------------------------------------------------------------------------- Stick in Position NULL
+//	MITTE
+//	Schleifendurchläufe 33 (von -33° nach 0°)
+
+	LF_y = 0.5;									// Leistungsfaktor (0...1)
+	for (a=1; a<=33; a++) 
+	{	if (a == 33)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+		{	LF_y = 1.0;
+		}
+		DWEy = DWE_a1 + 7 * a * 1;				//Winkel pro Step = 1°
+		xvec_motorY = LF_y * cos(DWEy*WK1);
+		yvec_motorY = LF_y * cos(DWEy*WK1-WK2);
+		zvec_motorY = LF_y * cos(DWEy*WK1-WK3);
+		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, 0, 0, 0);
+		delay_ms(TD1);
+	} // for (a=1; a<=33; a++) 
+	DWE_a1 = DWEy;
+	delay_ms(TD2);								// Stick beruhigen lassen
+
+	nullY = AF_A0_i;							// Poti_ADC_Wert für Position NULL Y lesen
+
+
+
+//	MOTOR_X
+//	----------------------------------------------------------------------------------------------------- Stick in Position +X
+//	RECHTS
+//	Schleifendurchläufe 33 (von 0° nach +33°)
+
+	DWE_a2 = 7 * offset_winkel_x;						// Offset des Sticks (installationsspezifisch)
+
+	LF_x = 0.5;									// Leistungsfaktor (0...1)
+	for (a=1; a<=33; a++)
+	{	if (a == 33)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+		{	LF_x = 1.0;
+		}
+		DWEx = DWE_a2 + 7 * a * 1;				// Winkel pro Step = 1°
+		xvec_motorX = LF_x * cos(DWEx*WK1);
+		yvec_motorX = LF_x * cos(DWEx*WK1-WK2);
+		zvec_motorX = LF_x * cos(DWEx*WK1-WK3);
+		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, xvec_motorX, yvec_motorX, zvec_motorX);
+		delay_ms(TD1);
+	}
+	DWE_a2 = DWEx;								// DWE merken
+	delay_ms(TD2);								// Stick beruhigen lassen
+
+	plusX_33 = AF_A1_i;							// Poti_ADC_Wert für Position +X lesen
+
+//	----------------------------------------------------------------------------------------------------- Stick in Position -X
+//	Schleifendurchläufe 66 (von +33° nach -33°)
+
+	LF_x = 0.5;									// Leistungsfaktor (0...1)
+	for (a=1; a<=66; a++)
+	{	if (a == 66)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+		{	LF_x = 1.0;
+		}
+		DWEx = DWE_a2 + 7 * a * -1;				// Winkel pro Step = 1°
+		xvec_motorX = LF_x * cos(DWEx*WK1);
+		yvec_motorX = LF_x * cos(DWEx*WK1-WK2);
+		zvec_motorX = LF_x * cos(DWEx*WK1-WK3);
+		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, xvec_motorX, yvec_motorX, zvec_motorX);
+		delay_ms(TD1);
+	}
+	DWE_a2 = DWEx;
+	delay_ms(TD2);								// Stick beruhigen lassen
+
+	minusX_33 = AF_A1_i;						// Poti_ADC_Wert für Position -X lesen
+
+//	--------------------------------------------------------------------------------------------------- Stick in Position NULL
+// Schleifendurchläufe 33 (von -33° nach 0°)
+
+	LF_x = 0.5;									// Leistungsfaktor (0...1)
+	for (a=1; a<=33; a++)
+	{	if (a == 33)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+		{	LF_x = 1.0;
+		}
+		DWEx = DWE_a2 + 7 * a * 1;				// Winkel pro Step = 1°
+		xvec_motorX = LF_x * cos(DWEx*WK1);
+		yvec_motorX = LF_x * cos(DWEx*WK1-WK2);
+		zvec_motorX = LF_x * cos(DWEx*WK1-WK3);
+		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, xvec_motorX, yvec_motorX, zvec_motorX);
+		delay_ms(TD1);
+	}
+	DWE_a2 = DWEx;
+	delay_ms(TD2);								// Stick beruhigen lassen
+
+	nullX = AF_A1_i;							// Poti_ADC_Wert für Position NULL Y lesen// Poti2 lesen
+
+
+	
+//	PRINT
+	printf("| minusX_33     : %15s| nullX         : %15s| plusX_33     : %15s|\r\n",
+	doubleToString(s1, minusX_33), doubleToString(s2, nullX), doubleToString(s3, plusX_33));
+	
+	printf("| minusY_33     : %15s| nullY         : %15s| plusY_33     : %15s|\r\n\n",
+	doubleToString(s1, minusY_33), doubleToString(s2, nullY), doubleToString(s3, plusY_33));
+
+
+
+		SVPWM(0,0,0,0,0,0);
+		delay_ms(TD1);
+
+
+
+
+
+
+
+
+
+
+
+//	--------------------------------------------------------------------------------------- Kennlinie in Nullpunkt verschieben
+//	-> Nullpunkt wird 0	
+	minusX_33	= minusX_33 - nullX;
+	plusX_33	= plusX_33  - nullX;	
+//	nullX		= 0;
+
+	minusY_33	= minusY_33 - nullY;
+	plusY_33	= plusY_33  - nullY;	
+//	nullY		= 0;	
+	
+//	PRINT
+	printf("| minusX_33     : %15s| plusX_33      : %15s|\r\n",
+	doubleToString(s1, minusX_33), doubleToString(s3, plusX_33));
+	
+	printf("| minusY_33     : %15s| plusY_33      : %15s|\r\n\n\n",
+	doubleToString(s1, minusY_33), doubleToString(s3, plusY_33));
+	
+
+
+//	--------------------------------------------------------------- Proportinalitätsfaktoren für "-" und "+"Kennlinienbereiche
+//	Proportionalitätsfaktor für +33° -> +1500 und -33° -> -1500
+
+	propfaktor_minusX_33	= 1500 / minusX_33;
+	propfaktor_plusX_33		= 1500 / plusX_33;	
+
+	propfaktor_minusY_33	= 1500 / minusY_33;
+	propfaktor_plusY_33		= 1500 / plusY_33;
+		
+//	PRINT
+	printf("| propfaktor_mX : %15s| propfaktor_pX : %15s|\r\n",
+	doubleToString(s1, propfaktor_minusX_33), doubleToString(s2, propfaktor_plusX_33));	
+
+	printf("| propfaktor_mY : %15s| propfaktor_pY : %15s|\r\n\n",
+	doubleToString(s1, propfaktor_minusY_33), doubleToString(s2, propfaktor_plusY_33));
+
 
 
 
 
 //	----------------------------------------------------------------------------------------------------------- Endlosschleife
 	while (1)
-	{
-		
+	{		
 //	Für synchrone Vorgänge passend zum ADC-Interrupt -> svpwm_int wird in der Funktion ADC_ISR -> 1 gesetzt (1ms Zyklus)
 		if (svpwm_int == 1)
 		{
 //	Flag zurück setzen
 			svpwm_int = 0;		
-
-
-	cnt_1ms_poll++;
-
-
-
-
-
-
-// Lineare Interpolation, um 1ms Werte vom Master zu bekommen, der nur alle 20ms einen aktuellen Wert versendet
-//	alle 20ms
-		if (cnt_1ms_poll % 20 == 0)																// 20ms
-		{
-//	CH1 (TIOA7)
-			CH1_WERT1_1_alt = CH1_WERT1_1;													// alten CH0-Wert retten
-			CH1_WERT1_1 = get_captured_channel_value(1) * 2;														// alle 20ms neuen CH0-Wert übernehmen
-			CH1_DELTA = (CH1_WERT1_1 - CH1_WERT1_1_alt)/20;
-
-			CH1_WERT1_1_li = CH1_WERT1_1_li - CH1_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
-
-//	CH2 (TIOA8)
-
-			CH2_WERT1_1_alt = CH2_WERT1_1;													// alten CH0-Wert retten
-			CH2_WERT1_1 = get_captured_channel_value(2) * 2;														// alle 20ms neuen CH0-Wert übernehmen
-			CH2_DELTA = (CH2_WERT1_1 - CH2_WERT1_1_alt)/20;
-
-			CH2_WERT1_1_li = CH2_WERT1_1_li - CH2_DELTA;									// weil gleich danach in "jede ms" wieder CH0_DELTA dazu addiert wird
-		}
-	
-	
-	
-					
-//	jede ms																							
-//	CH1 (TIOA7)
-			CH1_WERT1_1_li = CH1_WERT1_1_li + CH1_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-
-																							
-			CH1_WERT1_1_li_nor = CH1_WERT1_1_li;			// Normierung auf Laufwege HS
-			mySetpoint1_1 = CH1_WERT1_1_li_nor;												//int wert Übergabe
-
-//	CH2 (TIOA8)
-			CH2_WERT1_1_li = CH2_WERT1_1_li + CH2_DELTA;									// CH0-Wert ist alter CH0-Wert + Delta
-
-																							
-			CH2_WERT1_1_li_nor = CH2_WERT1_1_li;			// Normierung auf Laufwege HS
-			mySetpoint1_2 = CH2_WERT1_1_li_nor;												//int wert Übergabe
+			TAE_1ms++;
+			SEQUENZ_1ms++;			// 1ms zählen	
 
 
 
 
 
-
-
-
-
-/*
-//	Debug_Pin C.25= 1 -> C.25 = 0
-	REG_PIOC_SODR	= REG_PIOC_SODR		|	0x02000000u; 		// Ausgang C25 =1 (DUE_Pin 5)
-	delay_us(10);
-	REG_PIOC_CODR	= REG_PIOC_CODR		|	0x02000000u; 		// Ausgang C25 =0 (DUE_Pin 5)
-//	delay_ms(2);
-*/
-
-						
-/*			printf(" 1Kanal Empfänger: %20s\r\n",
-			doubleToString(s1, CH0_WERT1_1));
-
-			printf(" 1Kanal Empfänger: %20s\r\n",
-			doubleToString(s1, CH0_WERT2_1));
-*/		
-
-			
-
-	
-	
-	
-	
-	
-	
 	
 	
 //	1ms ----------------------------------------------------- REGLELUNG -------------------------------------------------------
 //	---------------------------------------------------------------------------------------------------------------------------
-
+/*
+	Parameter:	
 	
-//	Geschwindigkweit MOTOR1 (in Steps/ms -> 1Step/ms = ca. 0,02°/ms -> 20°/s)
-	POT_CNT2_1	= POT_CNT1_1;
-	POT_CNT1_1	= AF_A0_i;
-	POT_V_1		= POT_CNT1_1 - POT_CNT2_1;					// 1ms Intervall
+											mySetpoint_p_y:
 
-//	Geschwindigkweit MOTOR2 (in Steps/ms -> 1Step/ms = ca. 0,02°/ms -> 20°/s)
-	POT_CNT2_2	= POT_CNT1_2;
-	POT_CNT1_2	= AF_A1_i;
-	POT_V_2		= POT_CNT1_2 - POT_CNT2_2;					// 1ms Intervall
+												[-1500]
+												   -Y
+									   	
+												   |
+												   |
+												   |
+												   |
+		mySetpoint_p_x:	 [-1500]	-X  ----------------------- +X [+1500] 
+												   |
+												   |
+												   |
+												   |
+												   +y	
+												[+1500]
+*/
+
+
+
+
+
+//	--------------------------------------------------------------- Programmsequenz 1
+	if (PS == 1)
+	{
 		
+//	INPUTS
+//		Input Regler		Amplitude			Winkel omega		Winkeloffset		Winkel in Grad	
+		mySetpoint_p_y	=	500		*	sin((	TW_1			+	90)				*	WK1);
+		mySetpoint_p_x	=	500		*	sin((	TW_1			+	0)				*	WK1);
+		TW_1 = TW_1 + 0.5 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
+	
 	
 
-
-//	Reglerkaskade PID1 (Position) -> PID2 (Geschwindigkeit)
-
-//	MOTOR1 -------------------------------------------------------------------------------------------------------------------
-
-//	REGLER POSITION PID1_1
-//	mySetpoint1_1	= 800 + 0.6 * SS_ADC_A2_i;			// Führungsgröße MOTOR1 durch Poti "Masterstick" festlegen
-//	mySetpoint1_1	=  2418;							// Führungsgröße manuell festlegen: 2418 -> 0° (mech.)
-	outMax1_1		=	1.0;							// Max Geschwindigkeit =  1,0 -> ca. 20°/s  oder 0,2 -> ca. 4°/s
-	outMin1_1		=  -1.0;							// Min
-
-	kp1_1			=   0.0015;							// ?
-//	ki1_1			=   0.0;	
-	kd1_1			=   0.0035;
-
-//	kp1_1			=   0.0015;							// SUPER gedämpft
-//	ki1_1			=   0.0;	
-//	kd1_1			=   0.004;
-
+		if (SEQUENZ_1ms == 5* 1000)									// alle 1ms einen neuen Wert aus dem Array holen
+		{	PS = 2;
+		}
+	}
 	
-//  REGLER GESCHWINDIGKEIT PID2_1
-//	mySetpoint2_1	=  -0.2;							// Wenn nur der Geschwindigkeitsregler arbeitet
-														// 1.0 -> ca. 20°/s
-														// 0.2 -> ca. 4°/s													
-	outMax2_1		=  1.0;								// Max Drehmoment MOTOR1
-	outMin2_1		= -1.0;
+//	--------------------------------------------------------------- Programmsequenz 2
+	if (PS == 2)
+	{
+		
+//	INPUTS
+//		Input Regler		Amplitude			Winkel omega		Winkeloffset		Winkel in Grad	
+		mySetpoint_p_y	=	300		*	sin((	TW_1			+	90)				*	WK1);
+		mySetpoint_p_x	=	300		*	sin((	TW_1			+	0)				*	WK1);
+		TW_1 = TW_1 + 1 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
+	
+	
 
-//	kp2_1			= 0.0005;							// HAMMER
-//	ki2_1			= 0.00125;	
-//	kd2_1			= 0.0;
+		if (SEQUENZ_1ms == 10* 1000)						// alle 1ms einen neuen Wert aus dem Array holen
+		{	PS = 3;
+		}
+	}
+
+//	--------------------------------------------------------------- Programmsequenz 2
+	if (PS == 3)
+	{
+		
+//	INPUTS
+		mySetpoint_p_y	=	150		*	sin((	TW_1			+	90)				*	WK1);
+		mySetpoint_p_x	=	150		*	sin((	TW_1			+	0)				*	WK1);
+		TW_1 = TW_1 + 2 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
+	
+	
+		if (SEQUENZ_1ms ==  15* 1000)						// alle 1ms einen neuen Wert aus dem Array holen
+		{	PS = 4;
+		}
+	}
+
+
+//	--------------------------------------------------------------- Programmsequenz 2
+	if (PS == 4)
+	{
+		
+//	INPUTS
+		mySetpoint_p_y	=	150		*	sin((	-TW_1			+	90)				*	WK1);
+		mySetpoint_p_x	=	150		*	sin((	-TW_1			+	0)				*	WK1);
+		TW_1 = TW_1 + 1 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
+	
+	
+
+		if (SEQUENZ_1ms == 20* 1000)						// alle 1ms einen neuen Wert aus dem Array holen
+		{	PS = 5;
+		}
+	}
+
+//	--------------------------------------------------------------- Programmsequenz 2
+	if (PS == 5)
+	{
+		
+//	INPUTS
+		mySetpoint_p_y	=	300		*	sin((	-TW_1			+	90)				*	WK1);
+		mySetpoint_p_x	=	300		*	sin((	-TW_1			+	0)				*	WK1);
+		TW_1 = TW_1 + 5 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
+	
+	
+
+		if (SEQUENZ_1ms == 25* 1000)									// alle 1ms einen neuen Wert aus dem Array holen
+		{	PS = 6;
+		}
+	}
+
+//	--------------------------------------------------------------- Programmsequenz 2
+	if (PS == 6)
+	{
+		
+//	INPUTS
+		mySetpoint_p_y	=	0;
+		mySetpoint_p_x	=	0;
+		
+		
+		if (SEQUENZ_1ms == 30* 1000)									// alle 1ms einen neuen Wert aus dem Array holen
+		{			
+//			PS = 1;
+			SEQUENZ_1ms = 0;	
 
 
 
-//	REGLER rechnen
 
+
+		}
+	}
+
+
+
+
+
+
+
+
+//	Anfangs-Sollposition
+//		mySetpoint_p_x = 0;
+//		mySetpoint_p_y = 0;
+
+
+
+//	REGLER
+//	---------------------------------------------------------------------------------------------------------------------------
+//	MOTOR_Y -------------------------------------------------------------------------------------------------------------------
 //	REGLER POSITION
-	myInput1_1 = AF_A0_i;								// Input: Positionsdaten:
-	PID1_1();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
-//	mySetpoint2_1 = myOutput1_1;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
-	LF1 = myOutput1_1;									// Wenn nur POSITIONS-REGLER
-	
-//	REGLER GESCHWINDIGKEIT (REG_TC0_CV0)
-//	myInput2_1 = POT_V_1;
-//	PID2_1();
-//	LF1 = myOutput2_1;
+	outMax_p_y		=  1.0;							// Max Drehmoment
+	outMin_p_y		= -1.0;							// Min Drehmoment
 
+	kp_p_y			= 0.0015;						// Soft
+//	ki_p_y			= 0.0;
+	kd_p_y			= 0.0035;
 
 /*
+	kp_p_y			= 0.005;						// Harte Nummer
+	ki_p_y			= 0.00005;
+	kd_p_y			= 0.01;
+*/ 
+
+//	Input muss auch auf +/-1500 normiert werden
+	myInput_p_y = AF_A0_i - nullY;					// ADC Kanal A0 -> Poti y-Achse
+
+	if (myInput_p_y >= 0)
+	{	myInput_p_y =			myInput_p_y * propfaktor_plusY_33;
+	} 
+	else
+	{	myInput_p_y = (-1)	*	myInput_p_y * propfaktor_minusY_33;
+	}												// (-1), weil myInput negativ und auch propfaktor negativ!)
+		
+//	Regler rechnen
+	PID_p_y();
+	LF_y = myOutput_p_y;
+
+//	Wenn der Leistungsfaktor	-> positiv, dann -90° (elektrisch) Vektor raus geben
+//								-> negativ, dann +90° (elektrisch) Vektor raus geben
+	if (LF_y >= 0)
+	{
+
+//	Drehwinkel berechnen und dann 90° subtrahieren
+//	1500 -> 33°, 500 -> 11°, ...
+		DWEy = 7 * ((NOR1 * myInput_p_y) + offset_winkel_y) + 90;
+								
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+		xvec_motorY =			LF_y * cos(DWEy*WK1);
+		yvec_motorY =			LF_y * cos(DWEy*WK1-WK2);
+		zvec_motorY =			LF_y * cos(DWEy*WK1-WK3);
+	}
+	if (LF_y < 0)
+	{
+//	Drehwinkel berechnen und dann 90° addieren
+		DWEy = 7 * ((NOR1 * myInput_p_y) + offset_winkel_y) - 90;
+				
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+		xvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1);
+		yvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1-WK2);
+		zvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1-WK3);
+	}
+
 //	PRINT
-//	Poti lesen, erfolgt in der ADC-Interrupt Routine
-			if (TAE_1ms % 500 == 0)			// 500 x 1ms = 500ms
-			{
-				printf("|POT_V_1: %10s|LF1    : %10s|mSp2_1 : %10s|mI1_1  : %10s|mO1_1  : %10s|     \r\n",
-				doubleToString(s1, POT_V_1), doubleToString(s2, LF1), doubleToString(s3, mySetpoint2_1), doubleToString(s4, myInput1_1), doubleToString(s5, myOutput1_1)  );
-			}
-*/
-
-
-
-
-
-
-//	Ausgabe an MOTOR1
-//	Zum Verständnis:
-//	Wenn der Leistungsfaktor	-> positiv, dann +90° (elektrisch) Vektor raus geben
-//								-> negativ, dann -90° (elektrisch) Vektor raus geben
-			if (LF1 >= 0)
-			{	DWE1 = 7 * ((33 * (AF_A0_i - 2418) / 1677.0) + WKL_OFF_1) + 90;	// "-" bei [2]
-
-
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X1 = LF1 * cos(DWE1*WK1);
-				Y1 = LF1 * cos(DWE1*WK1-WK2);
-				Z1 = LF1 * cos(DWE1*WK1-WK3);
-			}
-			if (LF1 < 0)
-			{
-				DWE1 = 7 * ((33 * (AF_A0_i - 2418) / 1677.0) + WKL_OFF_1) - 90;	// "+" bei [2]						
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X1 = -LF1 * cos(DWE1*WK1);
-				Y1 = -LF1 * cos(DWE1*WK1-WK2);
-				Z1 = -LF1 * cos(DWE1*WK1-WK3);
-			}
-
-if (cnt_1ms_poll % 200 == 0)			// 500 x 1ms = 500ms
-			{
-	printf("| X1      : %15s| Y1      : %15s| Z1  : %15s\r\n",
-		doubleToString(s1, X1), doubleToString(s2, Y1), doubleToString(s3, Z1));
-	printf("| Sollwert      : %15s\r\n",
-		doubleToString(s1, mySetpoint1_1));
-		printf("\r\n");
-	printf("| X2      : %15s| Y2      : %15s| Z2  : %15s\r\n",
-	doubleToString(s1, X2), doubleToString(s2, Y2), doubleToString(s3, Z2));
-	printf("| Sollwert      : %15s\r\n",
-	doubleToString(s1, mySetpoint1_2));	
-	printf("------------\r\n");
-			}
+//		printf("| AF_A0_i       : %15d| myInput2_1    : %15s| DWEy          : %15s| LF_y          : %15s|\r\n\n",
+//		AF_A0_i, doubleToString(s1, myInput2_1), doubleToString(s2, DWEy), doubleToString(s3, LF_y));
 	
 
-
-
-
-
-
-
-
-//	MOTOR2 -------------------------------------------------------------------------------------------------------------------
-
-//	REGLER POSITION PID1_2
-//	mySetpoint1_2	= 800 + 0.6 * SS_ADC_A2_i;			// Führungsgröße MOTOR1 durch Poti "Masterstick" festlegen
-//	mySetpoint1_2	=  2304;							// Führungsgröße manuell festlegen: 2304 -> 0° (mech.)
-	outMax1_2		=	1.0;							// Max Geschwindigkeit =  1,0 -> ca. 20°/s  oder 0,2 -> ca. 4°/s
-	outMin1_2		=  -1.0;							// Min
-
-	kp1_2			=   0.0015;							// ?
-//	ki1_2			=   0.0;	
-	kd1_2			=   0.0035;
-
-
-
-	
-//  REGLER GESCHWINDIGKEIT PID2_2
-//	mySetpoint2_2	=  -0.2;							// Wenn nur der Geschwindigkeitsregler arbeitet
-														// 1.0 -> ca. 20°/s
-														// 0.2 -> ca. 4°/s													
-	outMax2_2		=  1.0;								// Max Drehmoment MOTOR1
-	outMin2_2		= -1.0;
-
-//	kp2_2			= 0.0005;							// HAMMER
-//	ki2_2			= 0.00125;	
-//	kd2_2			= 0.0;
-
-
-
-//	REGLER rechnen
-
+		
+//	MOTOR_X -------------------------------------------------------------------------------------------------------------------
 //	REGLER POSITION
-	myInput1_2 = AF_A1_i;								// Input: Positionsdaten:
-	PID1_2();											//		-> Kanal0 ADC (Average-Filter, 20-fach Oversampling) 
-//	mySetpoint2_2 = myOutput1_2;						// Ausgang ist Führungsgröße für REGLER GESCHWINDIGKEIT
-	LF2 = myOutput1_2;									// Wenn nur POSITIONS-REGLER
-	
-//	REGLER GESCHWINDIGKEIT
-//	myInput2_2 = POT_V_2;
-//	PID2_2();
-//	LF2 = myOutput2_2;
+	outMax_p_x		=  1.0;							// Max Drehmoment
+	outMin_p_x		= -1.0;							// Min Drehmoment
 
+	kp_p_x			= 0.0015;						// Soft
+//	ki_p_x			= 0.0;
+	kd_p_x			= 0.0035;
 
 /*
-//	PRINT
-//	Poti lesen, erfolgt in der ADC-Interrupt Routine
-			if (TAE_1ms % 500 == 0)			// 500 x 1ms = 500ms
-			{
-				printf("|POT_V_2: %10s|LF2    : %10s|mSp2_2 : %10s|mI1_2  : %10s|mO1_2  : %10s|     \r\n\n",
-				doubleToString(s1, POT_V_2), doubleToString(s2, LF2), doubleToString(s3, mySetpoint2_2), doubleToString(s4, myInput1_2), doubleToString(s5, myOutput1_2)  );						
-			}
-*/
+	kp_p_x			= 0.005;						// Harte Nummer
+	ki_p_x			= 0.00005;
+	kd_p_x			= 0.01;
+*/ 
 
+//	Input muss auch auf +/-1500 normiert werden
+	myInput_p_x = AF_A1_i - nullX;					// ADC Kanal A1 -> Poti x-Achse
 
+	if (myInput_p_x >= 0)
+	{	myInput_p_x =			myInput_p_x * propfaktor_plusX_33;
+	}
+	else
+	{	myInput_p_x = (-1)	*	myInput_p_x * propfaktor_minusX_33;
+	}												// (-1), weil myInput negativ und auch propfaktor negativ!)
 
+//	Regler rechnen
+	PID_p_x();
+	LF_x = myOutput_p_x;
 
-
-
-//	Ausgabe an MOTOR2
-//	Zum Verständnis:
-//	Wenn der Leistungsfaktor	-> positiv (Stick links),	dann -90° (elektrisch) Vektor raus geben
-//								-> negativ (Stick rechts),	dann +90° (elektrisch) Vektor raus geben
-			if (LF2 >= 0)
-			{
-				DWE2 = 7 * ((33 * (AF_A1_i - 2304) / 1641.0) + WKL_OFF_2) + 90;	
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X2 = LF2 * cos(DWE2*WK1);
-				Y2 = LF2 * cos(DWE2*WK1-WK2);
-				Z2 = LF2 * cos(DWE2*WK1-WK3);
-			}
-
-			if (LF2 < 0)
-			{
-				DWE2 = 7 * ((33 * (AF_A1_i - 2304) / 1641.0) + WKL_OFF_2) - 90;					
-
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-				X2 = -LF2 * cos(DWE2*WK1);
-				Y2 = -LF2 * cos(DWE2*WK1-WK2);
-				Z2 = -LF2 * cos(DWE2*WK1-WK3);
-			}
+//	Wenn der Leistungsfaktor	-> positiv, dann -90° (elektrisch) Vektor raus geben
+//								-> negativ, dann +90° (elektrisch) Vektor raus geben
+	if (LF_x >= 0)
+	{
+//	Drehwinkel berechnen und dann 90° subtrahieren
+//	1500 -> 33°, 500 -> 11°, ...
+		DWEx = 7 * ((NOR1 * myInput_p_x) + offset_winkel_x) + 90;
 	
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+		xvec_motorX =			LF_x * cos(DWEx*WK1);
+		yvec_motorX =			LF_x * cos(DWEx*WK1-WK2);
+		zvec_motorX =			LF_x * cos(DWEx*WK1-WK3);
+	}
+	if (LF_x < 0)
+	{
+//	Drehwinkel berechnen und dann 90° addieren
+		DWEx = 7 * ((NOR1 * myInput_p_x) + offset_winkel_x) - 90;
+	
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+		xvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1);
+		yvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1-WK2);
+		zvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1-WK3);
+	}
+
+//	PRINT
+//		printf("| AF_A0_i       : %15d| myInput2_1    : %15s| DWEy          : %15s| LF_y          : %15s|\r\n\n",
+//		AF_A0_i, doubleToString(s1, myInput2_1), doubleToString(s2, DWEy), doubleToString(s3, LF_y));
+
 
 		
 //	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
-		SVPWM(X1, Y1, Z1, X2, Y2, Z2);
-			
-			
-	
+	SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, xvec_motorX, yvec_motorX, zvec_motorX);
+//	SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, 0, 0, 0);
+//	SVPWM(0, 0, 0, xvec_motorX, yvec_motorX, zvec_motorX);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//	}	// if (TAE_1ms % 1 == 0)
-
-//	}	// if(iPT == 2)
-
-	}	// if (svpwm_int == 1)
-
-	}	// while (1)
-
-	}	// main(void)
+		} // if (svpwm_int == 1)
+	} // while (1)
+} // int main(void)
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx          MAIN           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
