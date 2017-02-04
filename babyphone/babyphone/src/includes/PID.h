@@ -20,7 +20,12 @@ typedef struct {
 	float center_angle;
 } space_vector;
 
+#define ZERO_POWER     0.0
+#define QUARTER_POWER 0.25
+#define HALF_POWER    0.5
+#define FULL_POWER    1.0
 
+void set_stick_raw_channel_value(int channel_id, int raw_channel_value);
 void pid_initialize(void);
 void calibration_sequence(void);
 void adjust_neutral_position(void);

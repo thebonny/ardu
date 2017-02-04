@@ -8,7 +8,7 @@
 
 #include "math.h"					//			z.B. cos(x)
 #include "string.h"
-#include "conf_debug.h"
+#include "conf_hapstik.h"
 #include "includes/registers.h"
 
 static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!

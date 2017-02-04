@@ -3,11 +3,12 @@
 #include <includes/ppm_capture.h>
 #include "includes/utils.h"
 #include "includes/registers.h"
+#include "conf_hapstik.h"
 
 #define PPM_OFFSET 400
 
 
-volatile rc_channel rc_channels[8];
+volatile rc_channel rc_channels[NUMBER_OF_RC_CHANNELS];
 static uint32_t gs_ul_captured_rb;
 
 static int channel_id = 0;
@@ -43,10 +44,10 @@ int get_interpolated_channel_ppm(int channel_id) {
 void ppm_capture_initialize(void)
 {
 	
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++)
 	{
-		rc_channels[i].current_captured_ppm_value = 0;
-		rc_channels[i].last_captured_ppm_value = 0;
+		rc_channels[i].current_captured_ppm_value = MID_PWM_MICROS;
+		rc_channels[i].last_captured_ppm_value = MID_PWM_MICROS;
 	}
 	
 	REG_PMC_PCER1 = REG_PMC_PCER1 | 0x00000002u;

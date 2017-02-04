@@ -13,7 +13,7 @@
 #include "includes/utils.h"
 #include "includes/registers.h"
 #include "math.h"		
-#include "conf_debug.h"			
+#include "conf_hapstik.h"			
 
 #define	PI		3.141592654f
 #define	WK1		(PI/180)
@@ -36,10 +36,6 @@
 #define CENTER_ROTATION_ANGLE_X (ELECTRICAL_MECHANICAL_GEAR_FACTOR * ANGLE_OFFSET_X)
 #define CENTER_ROTATION_ANGLE_Y (ELECTRICAL_MECHANICAL_GEAR_FACTOR * ANGLE_OFFSET_Y)
 
-const float ZERO_POWER    = 0.0;
-const float QUARTER_POWER = 0.25;
-const float HALF_POWER    = 0.5;
-const float FULL_POWER    = 1.0;
 
 const int MAX_THROW_DEGREES = 33;
 
@@ -73,8 +69,6 @@ typedef struct  {
 		
 pid_controller motor_X_position_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0015, 0.0, 0.0035 };
 pid_controller motor_Y_position_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0015, 0.0, 0.0035 };
-pid_controller motor_X_speed_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0005, 0.00125, 0.0 };
-pid_controller motor_Y_speed_controller = { 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0005, 0.00125, 0.0 };
 	
 space_vector motor_X_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'X', CENTER_ROTATION_ANGLE_X};
 space_vector motor_Y_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'Y', CENTER_ROTATION_ANGLE_Y };		
@@ -82,7 +76,7 @@ space_vector null_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'N', 0.0 };
 
 int volatile cnt_1ms_poll = 0;
 
-
+uint16_t current_raw_channel_values[NUMBER_OF_RC_CHANNELS];
 
 void compute_space_vector_components(space_vector *sv, float rotation_angle, float power_factor) {
 	sv->X = power_factor * cos(rotation_angle * WK1);
@@ -117,37 +111,37 @@ void adjust_neutral_position(void) {
 void calibration_sequence(void) {
 	adjust_neutral_position();
 	//	Stick beruhigen lassen
-	delay_ms(500);
+	delay_ms(200);
 	//	MOTOR_Y
 	//	---------------------------------------------------------------------------------------------------- Stick in Position +Y
 	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y, MAX_THROW_DEGREES, POSITIVE_DIRECTION);
-	delay_ms(500);								// Stick beruhigen lassen
+	delay_ms(200);								// Stick beruhigen lassen
 	y_max_throw_plus_adc = REG_ADC_CDR7;					
 	//	----------------------------------------------------------------------------------------------------- Stick in Position -Y
 	//	HOCH
 	//	Schleifendurchläufe 66 (von +33° nach -33°)
 	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y + MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , (2 * MAX_THROW_DEGREES), NEGATIVE_DIRECTION);
-	delay_ms(500);								// Stick beruhigen lassen
+	delay_ms(200);								// Stick beruhigen lassen
 	y_max_throw_minus_adc = REG_ADC_CDR7;
 
 	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y - MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , MAX_THROW_DEGREES, POSITIVE_DIRECTION);
-	delay_ms(500);								// Stick beruhigen lassen
+	delay_ms(200);								// Stick beruhigen lassen
 	y_null_adc = REG_ADC_CDR7;
 
 	//	MOTOR_X
 	//	---------------------------------------------------------------------------------------------------- Stick in Position +Y
 	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X, MAX_THROW_DEGREES, POSITIVE_DIRECTION);
-	delay_ms(500);								// Stick beruhigen lassen
+	delay_ms(200);								// Stick beruhigen lassen
 	x_max_throw_plus_adc = REG_ADC_CDR6;
 	//	----------------------------------------------------------------------------------------------------- Stick in Position -Y
 	//	HOCH
 	//	Schleifendurchläufe 66 (von +33° nach -33°)
 	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X + MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , (2 * MAX_THROW_DEGREES), NEGATIVE_DIRECTION);
-	delay_ms(500);								// Stick beruhigen lassen
+	delay_ms(200);								// Stick beruhigen lassen
 	x_max_throw_minus_adc = REG_ADC_CDR6;
 
 	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X - MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , MAX_THROW_DEGREES, POSITIVE_DIRECTION);
-	delay_ms(500);								// Stick beruhigen lassen
+	delay_ms(200);								// Stick beruhigen lassen
 	x_null_adc = REG_ADC_CDR6;
 	
 
@@ -282,9 +276,9 @@ int get_normalised_input_y(int raw) {
 void compute_all_controllers(void) {
 	ADC_inputs raw_inputs = get_oversampled_adc_inputs();
 	motor_X_position_controller.input = get_normalised_input_x(raw_inputs.X);
-	compute_space_vector_motor_X(&motor_X_space_vector, motor_X_position_controller.input, pid_compute(&motor_X_position_controller));
+	compute_space_vector_motor_X(&motor_X_space_vector, motor_X_position_controller.input,  pid_compute(&motor_X_position_controller));
 	motor_Y_position_controller.input = get_normalised_input_y(raw_inputs.Y);
-	compute_space_vector_motor_Y(&motor_Y_space_vector, motor_Y_position_controller.input, pid_compute(&motor_Y_position_controller));
+	compute_space_vector_motor_Y(&motor_Y_space_vector, motor_Y_position_controller.input,  pid_compute(&motor_Y_position_controller));
 	update_pwm_duty_cycles(&motor_X_space_vector);
 	update_pwm_duty_cycles(&motor_Y_space_vector);
 	
@@ -310,19 +304,29 @@ int get_hapstik_setpoint_normalised_channel(int raw_channel_value) {
 	return (raw_channel_value - 1100) * 3;
 }
 
+float map_prop_channel_to_zero_one_float(int raw_channel_value) {
+	return (raw_channel_value - 600) * 0.001f;
+}
+
+void set_stick_raw_channel_value(int channel_id, int raw_channel_value) {
+	current_raw_channel_values[channel_id] = raw_channel_value;
+}
+
 void TC1_Handler(void) {
 	if ((TC0_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
-		
 		//	debug_pulse(1);
 			cnt_1ms_poll++;
-			
-			uint16_t *channels;
-			
-			channels = get_current_channels_snapshot();
 		
-			motor_Y_position_controller.setpoint = get_hapstik_setpoint_normalised_channel(*(channels + 3));
-			motor_X_position_controller.setpoint = get_hapstik_setpoint_normalised_channel(*(channels + 4));
+			motor_Y_position_controller.setpoint = get_hapstik_setpoint_normalised_channel(current_raw_channel_values[3]);
+			motor_X_position_controller.setpoint = get_hapstik_setpoint_normalised_channel(current_raw_channel_values[4]);
 			
+			
+			motor_X_position_controller.outMax = map_prop_channel_to_zero_one_float(current_raw_channel_values[6]);
+			motor_Y_position_controller.outMax = map_prop_channel_to_zero_one_float(current_raw_channel_values[7]);
+			motor_X_position_controller.outMin = (-1) * map_prop_channel_to_zero_one_float(current_raw_channel_values[6]);
+			motor_Y_position_controller.outMin = (-1) * map_prop_channel_to_zero_one_float(current_raw_channel_values[7]);
+			
+					
 			performance_trace_start(0);
 			compute_all_controllers();
 			performance_trace_stop(0);
@@ -339,6 +343,12 @@ void TC1_Handler(void) {
 
 void pid_initialize(void)
 {
+	
+	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++)
+	{
+		current_raw_channel_values[i] = MID_PWM_MICROS;
+	}
+	
 	uint32_t rc;
 	// enable clock for timer
 	PMC_PCER0 = PMC_PCER0 | 0x10000000u;

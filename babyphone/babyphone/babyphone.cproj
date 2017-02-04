@@ -608,7 +608,7 @@
     <None Include="src\ASF\sam\drivers\tc\tc.h">
       <SubType>compile</SubType>
     </None>
-    <Compile Include="src\config\conf_debug.h">
+    <Compile Include="src\config\conf_hapstik.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\includes\ADC.h">

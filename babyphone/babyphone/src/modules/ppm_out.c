@@ -1,11 +1,12 @@
 #include <includes/ppm_out.h>
 #include "includes/utils.h"
 #include "includes/registers.h"
+#include "conf_hapstik.h"
 
 #define TICKS_PER_uS 42
 #define MIN_PWM_MICROS 600
 #define MAX_PWM_MICROS 1600
-#define MID_PWM_MICROS 1100
+
 #define THROW_PWM_MICROS 500
 #define PPM_PULSE_MICROS 400
 #define PPM_FRAME_LENGTH_TOTAL_MICROS 20000 // 20ms frame

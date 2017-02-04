@@ -5,6 +5,7 @@
 #include <includes/PID.h>
 #include "includes/utils.h"
 #include "includes/registers.h"
+#include "conf_hapstik.h"
 
 
 #define RC_PER_MILLISECOND 42000
@@ -19,19 +20,15 @@ uint8_t loop = 0;
 
 
 uint16_t recorded_flight_records[NUMBER_OF_RECORDS][NUMBER_OF_RC_CHANNELS]; // we record only 5 channels (Gas, Pitch, Roll, Nick, Rudder), we use uint16 to reduce memory usage
-uint16_t current_channels_snapshot[NUMBER_OF_RC_CHANNELS];
+
 int current_record = 0;
 int max_recorded_record = 0;
 
 
-uint16_t * get_current_channels_snapshot(void) {
-	return current_channels_snapshot;
-	
-}
 
 void copy_captured_channels_to_record() {
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-		recorded_flight_records[current_record][i] = current_channels_snapshot[i];
+	//	recorded_flight_records[current_record][i] = current_channels_snapshot[i];
 	}
 	
 }
@@ -41,8 +38,9 @@ void TC7_Handler(void) {
 	if ((TC2_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
 		if (mode == MODE_BYPASS || mode == MODE_RECORD) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-				current_channels_snapshot[i] = get_interpolated_channel_ppm(i);
-				set_ppm_out_channel_value(i, current_channels_snapshot[i]);
+				uint16_t channel_value = get_interpolated_channel_ppm(i);
+				set_ppm_out_channel_value(i, channel_value);
+				set_stick_raw_channel_value(i, channel_value);
 			}
 		}
 		if (mode == MODE_RECORD) {
@@ -57,7 +55,7 @@ void TC7_Handler(void) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				set_ppm_out_channel_value(i, recorded_flight_records[current_record][i]);
 				for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-					current_channels_snapshot[i] = recorded_flight_records[current_record][i];
+				//	current_channels_snapshot[i] = recorded_flight_records[current_record][i];
 				}
 			}
 			printf("Frame #: %d\r", current_record);
