@@ -15,9 +15,7 @@ typedef struct {
 	int last_captured_ppm_value;
 } rc_channel;
 
-extern volatile rc_channel rc_channels[];
-
 void ppm_capture_initialize(void);
-int get_interpolated_channel_ppm(int channel_id);
+rc_channel get_captured_raw_channel(int channel_id);
 
 #endif /* PPM_CAPTURE_H_ */ 

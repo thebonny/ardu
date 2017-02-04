@@ -9,6 +9,8 @@
 #ifndef PID_H_
 #define PID_H_
 
+#include "includes/ppm_capture.h"
+
 typedef struct {
 	float X;
 	float Y;
@@ -25,7 +27,7 @@ typedef struct {
 #define HALF_POWER    0.5
 #define FULL_POWER    1.0
 
-void set_stick_raw_channel_value(int channel_id, int raw_channel_value);
+void set_stick_raw_channel(int channel_id, rc_channel *captured_channel);
 void pid_initialize(void);
 void calibration_sequence(void);
 void adjust_neutral_position(void);

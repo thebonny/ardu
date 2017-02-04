@@ -38,9 +38,9 @@ void TC7_Handler(void) {
 	if ((TC2_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
 		if (mode == MODE_BYPASS || mode == MODE_RECORD) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-				uint16_t channel_value = get_interpolated_channel_ppm(i);
-				set_ppm_out_channel_value(i, channel_value);
-				set_stick_raw_channel_value(i, channel_value);
+				rc_channel channel = get_captured_raw_channel(i);
+				set_ppm_out_channel_value(i, channel.current_captured_ppm_value);
+				set_stick_raw_channel(i, &channel);
 			}
 		}
 		if (mode == MODE_RECORD) {

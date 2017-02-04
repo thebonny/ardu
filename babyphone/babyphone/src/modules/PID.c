@@ -10,6 +10,7 @@
 #include "includes/ADC.h"
 #include "includes/PWM.h"
 #include "includes/record_playback.h"
+#include "includes/ppm_capture.h"
 #include "includes/utils.h"
 #include "includes/registers.h"
 #include "math.h"		
@@ -76,7 +77,13 @@ space_vector null_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'N', 0.0 };
 
 int volatile cnt_1ms_poll = 0;
 
-uint16_t current_raw_channel_values[NUMBER_OF_RC_CHANNELS];
+typedef struct  {
+	int current_value;
+	int past_value;
+	int li_step;
+} interpolated_rc_channel;
+
+interpolated_rc_channel current_raw_channels[NUMBER_OF_RC_CHANNELS];
 
 void compute_space_vector_components(space_vector *sv, float rotation_angle, float power_factor) {
 	sv->X = power_factor * cos(rotation_angle * WK1);
@@ -300,7 +307,7 @@ static void display_debug_output() {
 	#endif
 }
 
-int get_hapstik_setpoint_normalised_channel(int raw_channel_value) {
+int normalise_channel(int raw_channel_value) {
 	return (raw_channel_value - 1100) * 3;
 }
 
@@ -308,8 +315,17 @@ float map_prop_channel_to_zero_one_float(int raw_channel_value) {
 	return (raw_channel_value - 600) * 0.001f;
 }
 
-void set_stick_raw_channel_value(int channel_id, int raw_channel_value) {
-	current_raw_channel_values[channel_id] = raw_channel_value;
+void set_stick_raw_channel(int channel_id, rc_channel *captured_channel) {
+	current_raw_channels[channel_id].current_value = captured_channel->current_captured_ppm_value;
+	current_raw_channels[channel_id].past_value = captured_channel->last_captured_ppm_value;
+	current_raw_channels[channel_id].li_step = 0;
+}
+
+int get_linear_interpolated_raw_channel_value(int channel_id) {
+	int delta = (current_raw_channels[channel_id].current_value - current_raw_channels[channel_id].past_value) / 20;
+	int li_value = current_raw_channels[channel_id].past_value + ( current_raw_channels[channel_id].li_step * delta);
+	current_raw_channels[channel_id].li_step++;
+	return li_value;
 }
 
 void TC1_Handler(void) {
@@ -317,15 +333,20 @@ void TC1_Handler(void) {
 		//	debug_pulse(1);
 			cnt_1ms_poll++;
 		
-			motor_Y_position_controller.setpoint = get_hapstik_setpoint_normalised_channel(current_raw_channel_values[3]);
-			motor_X_position_controller.setpoint = get_hapstik_setpoint_normalised_channel(current_raw_channel_values[4]);
+			motor_Y_position_controller.setpoint = normalise_channel(get_linear_interpolated_raw_channel_value(3));
+			motor_X_position_controller.setpoint = normalise_channel(get_linear_interpolated_raw_channel_value(4));
 			
 			
-			motor_X_position_controller.outMax = map_prop_channel_to_zero_one_float(current_raw_channel_values[6]);
-			motor_Y_position_controller.outMax = map_prop_channel_to_zero_one_float(current_raw_channel_values[7]);
-			motor_X_position_controller.outMin = (-1) * map_prop_channel_to_zero_one_float(current_raw_channel_values[6]);
-			motor_Y_position_controller.outMin = (-1) * map_prop_channel_to_zero_one_float(current_raw_channel_values[7]);
+			motor_X_position_controller.outMax = map_prop_channel_to_zero_one_float(get_linear_interpolated_raw_channel_value(6));
+			motor_Y_position_controller.outMax = map_prop_channel_to_zero_one_float(get_linear_interpolated_raw_channel_value(7));
+			motor_X_position_controller.outMin = (-1) * map_prop_channel_to_zero_one_float(get_linear_interpolated_raw_channel_value(6));
+			motor_Y_position_controller.outMin = (-1) * map_prop_channel_to_zero_one_float(get_linear_interpolated_raw_channel_value(7));
 			
+		/*		motor_X_position_controller.outMax = HALF_POWER;
+				motor_Y_position_controller.outMax = HALF_POWER;
+				motor_X_position_controller.outMin = (-1) * HALF_POWER;
+				motor_Y_position_controller.outMin = (-1) * HALF_POWER;
+			motor_Y_position_controller.kp = 0.006f * map_prop_channel_to_zero_one_float(current_raw_channel_values[6]);*/
 					
 			performance_trace_start(0);
 			compute_all_controllers();
@@ -346,7 +367,9 @@ void pid_initialize(void)
 	
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++)
 	{
-		current_raw_channel_values[i] = MID_PWM_MICROS;
+		current_raw_channels[i].current_value = MID_PWM_MICROS;
+		current_raw_channels[i].past_value = MID_PWM_MICROS;
+		current_raw_channels[i].li_step = 0;
 	}
 	
 	uint32_t rc;
