@@ -79,6 +79,7 @@ int main(void)
 	
 	while (1)
 	{
+		
 		scanf("%c", (char *)&key);
 
 		switch (key) {

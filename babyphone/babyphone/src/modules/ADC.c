@@ -13,30 +13,14 @@
 // Mittelwertfilter
 
 volatile int    af_count_i	= 0;						// Laufvariable im AF-Array
-volatile int	SUM_AF_i_1	= 0;						// Summe MOTOR1
-volatile int	SUM_AF_i_2	= 0;						// Summe MOTOR2
-
-volatile int	AF_A0_i		= 0;						// Average_Filterwert für ADC-Kanal A0
-volatile float	AF_A0_f		= 0;
-volatile int	AF_A1_i		= 0;						// Average_Filterwert für ADC-Kanal A0
-volatile float	AF_A1_f		= 0;
-
-
+volatile int	SUM_AF_i_x	= 0;						// Summe MOTOR1
+volatile int	SUM_AF_i_y	= 0;						// Summe MOTOR2
 
 ADC_inputs get_oversampled_adc_inputs(void) {
-	
-	AF_A0_f = SUM_AF_i_1 / af_count_i;							// Addition von 0,5 kann aber auch entfallen, da der Absolutwert nicht so wichtig ist,
-	AF_A1_f = SUM_AF_i_2 / af_count_i;							// da ja alle Positionen beim Start des Sticks eingemessen werden
-	AF_A0_i = AF_A0_f;										// Ganzzahliger Anteil wird übergeben
-	AF_A1_i = AF_A1_f;		
-	
-	af_count_i = 0;											// Counter auf Anfang stellen
-	
-	SUM_AF_i_1 = 0;											// Summe wieder rücksetzen
-	SUM_AF_i_2 = 0;
-	
-	ADC_inputs inputs = { AF_A1_i, AF_A0_i };  // A1 ist y Poti, A0 ist x Poti
-		
+	ADC_inputs inputs = { (int)SUM_AF_i_x / af_count_i, (int)SUM_AF_i_y / af_count_i };  // A1 ist y Poti, A0 ist x Poti
+	af_count_i = 0;											// Counter auf Anfang stellen	
+	SUM_AF_i_x = 0;											// Summe wieder rücksetzen
+	SUM_AF_i_y = 0;
 	return inputs;
 }
 
@@ -44,8 +28,8 @@ ADC_inputs get_oversampled_adc_inputs(void) {
 void ADC_Handler(void)
 {		
 	debug_pulse(0);
-	SUM_AF_i_1 += REG_ADC_CDR7;						// Summenbildung: aktueller ADC_A0-Wert wird dazu addiert
-	SUM_AF_i_2 += REG_ADC_CDR6;						// Summenbildung: aktueller ADC_A1-Wert wird dazu addiert
+	SUM_AF_i_x += REG_ADC_CDR6;						// Summenbildung: aktueller ADC_A1-Wert wird dazu addiert
+	SUM_AF_i_y += REG_ADC_CDR7;						// Summenbildung: aktueller ADC_A0-Wert wird dazu addiert
 	af_count_i ++;												// "af" -> Average-Filter
 }
 

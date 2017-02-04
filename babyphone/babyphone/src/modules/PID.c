@@ -9,7 +9,7 @@
 #include "includes/PID.h"
 #include "includes/ADC.h"
 #include "includes/PWM.h"
-#include "includes/ppm_capture.h"
+#include "includes/record_playback.h"
 #include "includes/utils.h"
 #include "includes/registers.h"
 #include "math.h"		
@@ -28,8 +28,11 @@
 #define	ANGLE_OFFSET_X 23.0		 // HAPStik spezifischer Offset für Mittenposition in Winkelgraden
 #define	ANGLE_OFFSET_Y 30.0
 
+#define MAX_NORM_STEPS_THROW 1500
+#define ANGLE_DEGREES_PER_NORM_STEPS ((float)(MAX_THROW_DEGREES)/(float)(MAX_NORM_STEPS_THROW))
+
 #define ELECTRICAL_MECHANICAL_GEAR_FACTOR 7  // dies ist vom Motortyp (#Magnete etc.) abhängig
-#define MAX_STEPS 1500
+
 #define CENTER_ROTATION_ANGLE_X (ELECTRICAL_MECHANICAL_GEAR_FACTOR * ANGLE_OFFSET_X)
 #define CENTER_ROTATION_ANGLE_Y (ELECTRICAL_MECHANICAL_GEAR_FACTOR * ANGLE_OFFSET_Y)
 
@@ -119,33 +122,33 @@ void calibration_sequence(void) {
 	//	---------------------------------------------------------------------------------------------------- Stick in Position +Y
 	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y, MAX_THROW_DEGREES, POSITIVE_DIRECTION);
 	delay_ms(500);								// Stick beruhigen lassen
-	y_max_throw_plus_adc = get_oversampled_adc_inputs().Y;					
+	y_max_throw_plus_adc = REG_ADC_CDR7;					
 	//	----------------------------------------------------------------------------------------------------- Stick in Position -Y
 	//	HOCH
 	//	Schleifendurchläufe 66 (von +33° nach -33°)
 	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y + MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , (2 * MAX_THROW_DEGREES), NEGATIVE_DIRECTION);
 	delay_ms(500);								// Stick beruhigen lassen
-	y_max_throw_minus_adc = get_oversampled_adc_inputs().Y;	
+	y_max_throw_minus_adc = REG_ADC_CDR7;
 
 	rotate_motor_degrees_from_start_angle(&motor_Y_space_vector, CENTER_ROTATION_ANGLE_Y - MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , MAX_THROW_DEGREES, POSITIVE_DIRECTION);
 	delay_ms(500);								// Stick beruhigen lassen
-	y_null_adc = get_oversampled_adc_inputs().Y;
+	y_null_adc = REG_ADC_CDR7;
 
 	//	MOTOR_X
 	//	---------------------------------------------------------------------------------------------------- Stick in Position +Y
 	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X, MAX_THROW_DEGREES, POSITIVE_DIRECTION);
 	delay_ms(500);								// Stick beruhigen lassen
-	x_max_throw_plus_adc = get_oversampled_adc_inputs().X;
+	x_max_throw_plus_adc = REG_ADC_CDR6;
 	//	----------------------------------------------------------------------------------------------------- Stick in Position -Y
 	//	HOCH
 	//	Schleifendurchläufe 66 (von +33° nach -33°)
 	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X + MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , (2 * MAX_THROW_DEGREES), NEGATIVE_DIRECTION);
 	delay_ms(500);								// Stick beruhigen lassen
-	x_max_throw_minus_adc = get_oversampled_adc_inputs().X;
+	x_max_throw_minus_adc = REG_ADC_CDR6;
 
 	rotate_motor_degrees_from_start_angle(&motor_X_space_vector, CENTER_ROTATION_ANGLE_X - MAX_THROW_DEGREES * ELECTRICAL_MECHANICAL_GEAR_FACTOR , MAX_THROW_DEGREES, POSITIVE_DIRECTION);
 	delay_ms(500);								// Stick beruhigen lassen
-	x_null_adc = get_oversampled_adc_inputs().X;
+	x_null_adc = REG_ADC_CDR6;
 	
 
 	char s1[32];
@@ -180,15 +183,18 @@ void calibration_sequence(void) {
 	/* Proportinalitätsfaktoren für "-" und "+"Kennlinienbereiche
 	//	Proportionalitätsfaktor für +33° -> +1500 und -33° -> -1500
 	*/
-	x_minus_prop_factor	= (double)MAX_STEPS / x_max_throw_minus_adc;
-	x_plus_prop_factor	= (double)MAX_STEPS / x_max_throw_plus_adc;
+	x_minus_prop_factor	= (double)MAX_NORM_STEPS_THROW / x_max_throw_minus_adc;
+	x_plus_prop_factor	= (double)MAX_NORM_STEPS_THROW / x_max_throw_plus_adc;
 
-	y_minus_prop_factor	= (double)MAX_STEPS / y_max_throw_minus_adc;
-	y_plus_prop_factor	= (double)MAX_STEPS / y_max_throw_plus_adc;
+	y_minus_prop_factor	= (double)MAX_NORM_STEPS_THROW / y_max_throw_minus_adc;
+	y_plus_prop_factor	= (double)MAX_NORM_STEPS_THROW / y_max_throw_plus_adc;
 	
-	//	PRINT
-	printf("| propfaktor_mX : %.2f| propfaktor_pX : %.2f|\r\n", x_minus_prop_factor, x_plus_prop_factor);
-	printf("| propfaktor_mY : %.2f| propfaktor_pY : %.2f|\r\n\n", y_minus_prop_factor, y_plus_prop_factor);
+	printf("| propfaktor_mX : %15s| propfaktor_pX : %15s|\r\n",
+	doubleToString(s1, x_minus_prop_factor), doubleToString(s2, x_plus_prop_factor));	
+
+	printf("| propfaktor_mY : %15s| propfaktor_pY : %15s|\r\n\n",
+	doubleToString(s1, y_minus_prop_factor), doubleToString(s2, y_plus_prop_factor));
+	
 }
 
 
@@ -221,7 +227,7 @@ double pid_compute(pid_controller *controller)
 }
 
 void compute_space_vector_motor_X(space_vector *sv, int input, float power_factor) {
-	float rotation_angle = ELECTRICAL_MECHANICAL_GEAR_FACTOR * ((33 * (input - 2418) / 1677.0) + ANGLE_OFFSET_X);
+	float rotation_angle = ELECTRICAL_MECHANICAL_GEAR_FACTOR * ((ANGLE_DEGREES_PER_NORM_STEPS * input) + ANGLE_OFFSET_X);
 	if (power_factor >= 0) {
 			rotation_angle += 90;
 			compute_space_vector_components(sv, rotation_angle, power_factor);
@@ -232,7 +238,7 @@ void compute_space_vector_motor_X(space_vector *sv, int input, float power_facto
 }
 
 void compute_space_vector_motor_Y(space_vector *sv, int input, float power_factor) {
-	float rotation_angle = ELECTRICAL_MECHANICAL_GEAR_FACTOR * ((33 * (input - 2304) / 1641.0) + ANGLE_OFFSET_Y);
+	float rotation_angle = ELECTRICAL_MECHANICAL_GEAR_FACTOR * ((ANGLE_DEGREES_PER_NORM_STEPS * input) + ANGLE_OFFSET_Y);
 	if (power_factor >= 0) {
 		rotation_angle += 90;
 		compute_space_vector_components(sv, rotation_angle, power_factor);
@@ -243,18 +249,42 @@ void compute_space_vector_motor_Y(space_vector *sv, int input, float power_facto
 }
 
 
+int get_normalised_input_x(int raw) {
+	int norm_input_x = raw - x_null_adc;
+	if (norm_input_x >= 0)
+	{	
+		norm_input_x = norm_input_x * x_plus_prop_factor;
+	} 
+	else
+	{	
+		norm_input_x = (-1)	*	norm_input_x * x_minus_prop_factor;
+	}	
+	return norm_input_x;
+}
 
+int get_normalised_input_y(int raw) {
+	int norm_input_y = raw - y_null_adc;
+	if (norm_input_y >= 0)
+	{	
+		norm_input_y = norm_input_y * y_plus_prop_factor;
+	} 
+	else
+	{	
+		norm_input_y = (-1)	*	norm_input_y * y_minus_prop_factor;
+	}	
+	return norm_input_y;
+}	
 
-
+	
 
 
 
 void compute_all_controllers(void) {
-	ADC_inputs inputs = get_oversampled_adc_inputs();
-	motor_X_position_controller.input = inputs.X;
-	compute_space_vector_motor_X(&motor_X_space_vector, inputs.X, pid_compute(&motor_X_position_controller));
-	motor_Y_position_controller.input = inputs.Y;
-	compute_space_vector_motor_Y(&motor_Y_space_vector, inputs.Y, pid_compute(&motor_Y_position_controller));
+	ADC_inputs raw_inputs = get_oversampled_adc_inputs();
+	motor_X_position_controller.input = get_normalised_input_x(raw_inputs.X);
+	compute_space_vector_motor_X(&motor_X_space_vector, motor_X_position_controller.input, pid_compute(&motor_X_position_controller));
+	motor_Y_position_controller.input = get_normalised_input_y(raw_inputs.Y);
+	compute_space_vector_motor_Y(&motor_Y_space_vector, motor_Y_position_controller.input, pid_compute(&motor_Y_position_controller));
 	update_pwm_duty_cycles(&motor_X_space_vector);
 	update_pwm_duty_cycles(&motor_Y_space_vector);
 	
@@ -276,19 +306,22 @@ static void display_debug_output() {
 	#endif
 }
 
-
+int get_hapstik_setpoint_normalised_channel(int raw_channel_value) {
+	return (raw_channel_value - 1100) * 3;
+}
 
 void TC1_Handler(void) {
 	if ((TC0_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
 		
 		//	debug_pulse(1);
 			cnt_1ms_poll++;
-
-			motor_Y_position_controller.setpoint = get_interpolated_channel_ppm(1, cnt_1ms_poll % 20);
-			motor_X_position_controller.setpoint = get_interpolated_channel_ppm(2, cnt_1ms_poll % 20);
 			
-	//		printf("IP: %d\r\n", get_interpolated_channel_ppm(1, cnt_1ms_poll % 20));
-
+			uint16_t *channels;
+			
+			channels = get_current_channels_snapshot();
+		
+			motor_Y_position_controller.setpoint = get_hapstik_setpoint_normalised_channel(*(channels + 3));
+			motor_X_position_controller.setpoint = get_hapstik_setpoint_normalised_channel(*(channels + 4));
 			
 			performance_trace_start(0);
 			compute_all_controllers();

@@ -8,8 +8,9 @@
 
 #ifndef RECORD_PLAYBACK_H_
 #define RECORD_PLAYBACK_H_
+#include "stdint.h"
 
-
+uint16_t * get_current_channels_snapshot(void);
 void record_playback_initialize(void);
 void set_master_framerate(int milliseconds);
 void double_speed(void);

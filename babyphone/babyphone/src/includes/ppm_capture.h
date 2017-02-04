@@ -18,6 +18,7 @@ typedef struct {
 extern volatile rc_channel rc_channels[];
 
 void ppm_capture_initialize(void);
-int get_interpolated_channel_ppm(int channel_id, int step);
+int get_interpolated_channel_ppm(int channel_id);
+int get_hapstik_setpoint_normalised_channel(int channel_id);
 
 #endif /* PPM_CAPTURE_H_ */ 

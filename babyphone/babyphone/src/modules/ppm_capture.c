@@ -33,10 +33,12 @@ void TC6_Handler(void)
 	}
 }
 
-int get_interpolated_channel_ppm(int channel_id, int step) {
-	int delta = (rc_channels[channel_id].current_captured_ppm_value - rc_channels[channel_id].last_captured_ppm_value) / 20;
-	return rc_channels[channel_id].last_captured_ppm_value + (delta * step);
+int get_interpolated_channel_ppm(int channel_id) {
+	
+	return rc_channels[channel_id].last_captured_ppm_value;
 }
+
+
 
 void ppm_capture_initialize(void)
 {
