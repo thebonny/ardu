@@ -28,7 +28,7 @@ int max_recorded_record = 0;
 
 void copy_captured_channels_to_record() {
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-		// recorded_flight_records[current_record][i] = get_captured_raw_channel(i);
+		 recorded_flight_records[current_record][i] = get_captured_raw_channel(i);
 	}
 	
 }

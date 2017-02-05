@@ -19,4 +19,6 @@ typedef struct {
 void ppm_capture_initialize(void);
 rc_channel get_captured_raw_channel(int channel_id);
 
+extern uint8_t mode;
+
 #endif /* PPM_CAPTURE_H_ */ 

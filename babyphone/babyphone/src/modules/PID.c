@@ -336,7 +336,7 @@ void TC1_Handler(void) {
 			motor_Y_position_controller.setpoint = normalise_channel(get_linear_interpolated_raw_channel_value(3));
 			motor_X_position_controller.setpoint = normalise_channel(get_linear_interpolated_raw_channel_value(4));
 			
-			
+		
 			motor_X_position_controller.outMax = map_prop_channel_to_zero_one_float(get_linear_interpolated_raw_channel_value(6));
 			motor_Y_position_controller.outMax = map_prop_channel_to_zero_one_float(get_linear_interpolated_raw_channel_value(7));
 			motor_X_position_controller.outMin = (-1) * map_prop_channel_to_zero_one_float(get_linear_interpolated_raw_channel_value(6));
