@@ -10,7 +10,7 @@
 
 #define RC_PER_MILLISECOND 42000
 #define DEFAULT_FRAMERATE_MILLIS 20
-#define NUMBER_OF_RECORDS 5000
+#define NUMBER_OF_RECORDS 2500
 #define MODE_RECORD 0
 #define MODE_PLAYBACK 1
 #define MODE_BYPASS 2
@@ -28,7 +28,7 @@ int max_recorded_record = 0;
 
 void copy_captured_channels_to_record() {
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-		recorded_flight_records[current_record][i] = get_captured_raw_channel(i);
+		// recorded_flight_records[current_record][i] = get_captured_raw_channel(i);
 	}
 	
 }

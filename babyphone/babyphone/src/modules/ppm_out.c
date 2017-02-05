@@ -11,7 +11,7 @@
 #define PPM_PULSE_MICROS 400
 #define PPM_FRAME_LENGTH_TOTAL_MICROS 20000 // 20ms frame
 
-volatile static uint32_t ppm_out_channels[NUMBER_OF_RC_CHANNELS];
+volatile static uint16_t ppm_out_channels[NUMBER_OF_RC_CHANNELS];
 volatile static unsigned int current_channel = 0;
 volatile static uint32_t accumulated_frame_length = 0;
 
@@ -39,7 +39,7 @@ void TC0_Handler(void) {
 	}
 }
 
-void set_ppm_out_channel_value(int idx, int value) {
+void set_ppm_out_channel_value(int idx, uint16_t value) {
 	ppm_out_channels[idx] = value;
 }
 

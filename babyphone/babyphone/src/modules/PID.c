@@ -78,9 +78,9 @@ space_vector null_space_vector = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'N', 0.0 };
 int volatile cnt_1ms_poll = 0;
 
 typedef struct  {
-	int current_value;
-	int past_value;
-	int li_step;
+	uint16_t current_value;
+	uint16_t past_value;
+	uint8_t li_step;
 } interpolated_rc_channel;
 
 interpolated_rc_channel current_raw_channels[NUMBER_OF_RC_CHANNELS];
@@ -307,11 +307,11 @@ static void display_debug_output() {
 	#endif
 }
 
-int normalise_channel(int raw_channel_value) {
+int normalise_channel(uint16_t raw_channel_value) {
 	return (raw_channel_value - 1100) * 3;
 }
 
-float map_prop_channel_to_zero_one_float(int raw_channel_value) {
+float map_prop_channel_to_zero_one_float(uint16_t raw_channel_value) {
 	return (raw_channel_value - 600) * 0.001f;
 }
 

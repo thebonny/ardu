@@ -10,9 +10,10 @@
 #define PPM_CAPTURE_H_
 #define PIN_TC_CAPTURE     PIO_PC25_IDX  // PIN TIOA6 which is digital PIN 5 on Due
 
+#include "stdint.h"
 typedef struct {
-	int current_captured_ppm_value;
-	int last_captured_ppm_value;
+	uint16_t current_captured_ppm_value;
+	uint16_t last_captured_ppm_value;
 } rc_channel;
 
 void ppm_capture_initialize(void);
