@@ -19,7 +19,7 @@ uint8_t mode = MODE_BYPASS;
 uint8_t loop = 0;
 
 
-uint16_t recorded_flight_records[NUMBER_OF_RECORDS][NUMBER_OF_RC_CHANNELS]; // we record only 5 channels (Gas, Pitch, Roll, Nick, Rudder), we use uint16 to reduce memory usage
+rc_channel recorded_flight_records[NUMBER_OF_RECORDS][NUMBER_OF_RC_CHANNELS]; // we record only 5 channels (Gas, Pitch, Roll, Nick, Rudder), we use uint16 to reduce memory usage
 
 int current_record = 0;
 int max_recorded_record = 0;
@@ -28,7 +28,7 @@ int max_recorded_record = 0;
 
 void copy_captured_channels_to_record() {
 	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-	//	recorded_flight_records[current_record][i] = current_channels_snapshot[i];
+		recorded_flight_records[current_record][i] = get_captured_raw_channel(i);
 	}
 	
 }
@@ -53,10 +53,8 @@ void TC7_Handler(void) {
 			}
 		} else if (mode == MODE_PLAYBACK) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-				set_ppm_out_channel_value(i, recorded_flight_records[current_record][i]);
-				for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
-				//	current_channels_snapshot[i] = recorded_flight_records[current_record][i];
-				}
+				set_ppm_out_channel_value(i, recorded_flight_records[current_record][i].current_captured_ppm_value);
+				set_stick_raw_channel(i, &recorded_flight_records[current_record][i]);
 			}
 			printf("Frame #: %d\r", current_record);
 			current_record++;
