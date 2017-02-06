@@ -9,6 +9,11 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 #include "stdint.h"
+#include "stdbool.h"
+
+void print_to_serial_asynchronously(char outString[]);
+char * get_serial_out_string(void);
+bool is_serial_out_ready(void);
 
 char * doubleToString(char *s, double n);
 void float_to_string(float n, char *Ergebnis, int afterpoint);

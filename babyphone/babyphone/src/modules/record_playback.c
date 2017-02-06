@@ -10,7 +10,7 @@
 
 #define RC_PER_MILLISECOND 42000
 #define DEFAULT_FRAMERATE_MILLIS 20
-#define NUMBER_OF_RECORDS 2500
+#define NUMBER_OF_RECORDS 2300
 #define MODE_RECORD 0
 #define MODE_PLAYBACK 1
 #define MODE_BYPASS 2
@@ -36,6 +36,7 @@ void copy_captured_channels_to_record() {
 void TC7_Handler(void) {
 	// debug_pulse(1);
 	if ((TC2_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
+		char *out;
 		if (mode == MODE_BYPASS || mode == MODE_RECORD) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				rc_channel channel = get_captured_raw_channel(i);
@@ -45,23 +46,23 @@ void TC7_Handler(void) {
 		}
 		if (mode == MODE_RECORD) {
 			copy_captured_channels_to_record();
-			printf("Frame #: %d\r", current_record);
+			print_to_serial_asynchronously(sprintf(out,"Frame #: %d\r\n", current_record));
 			current_record++;
 			if (current_record >= NUMBER_OF_RECORDS) {
 				stop_record();
-				printf("REcording stopped as record limit is reached!\n\r");
+				print_to_serial_asynchronously(sprintf(out,"REcording stopped as record limit is reached!\n\r"));
 			}
 		} else if (mode == MODE_PLAYBACK) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				set_ppm_out_channel_value(i, recorded_flight_records[current_record][i].current_captured_ppm_value);
 				set_stick_raw_channel(i, &recorded_flight_records[current_record][i]);
 			}
-			printf("Frame #: %d\r", current_record);
+			print_to_serial_asynchronously(sprintf(out,"Frame #: %d\r", current_record));
 			current_record++;
 			if (current_record >= max_recorded_record) {
 				if (loop == 0) { 
 					mode = MODE_BYPASS;
-					printf("Playback stopped as max recorded record %d is reached!\n\r", max_recorded_record);
+					print_to_serial_asynchronously(sprintf(out,"Playback stopped as max recorded record %d is reached!\n\r", max_recorded_record));
 				} else {
 					// looped mode
 					current_record = 0;
@@ -79,12 +80,12 @@ void set_master_framerate(int milliseconds) {
 }
 
 void double_speed() {
-	printf("Previous framerate was: %fms, framerate is now %ldms\r\n", TC2_CHANNEL1_RC / RC_PER_MILLISECOND, (TC2_CHANNEL1_RC/(RC_PER_MILLISECOND * 2)));
+	// print_to_serial_asynchronously("Previous framerate was: %fms, framerate is now %ldms\r\n", TC2_CHANNEL1_RC / RC_PER_MILLISECOND, (TC2_CHANNEL1_RC/(RC_PER_MILLISECOND * 2)));
 	TC2_CHANNEL1_RC = TC2_CHANNEL1_RC / 2;
 }
 
 void half_speed() {
-	printf("Previous framerate was: %fms, framerate is now %ldms\r\n", TC2_CHANNEL1_RC / RC_PER_MILLISECOND, (TC2_CHANNEL1_RC/(RC_PER_MILLISECOND /2)));
+	// print_to_serial_asynchronously("Previous framerate was: %fms, framerate is now %ldms\r\n", TC2_CHANNEL1_RC / RC_PER_MILLISECOND, (TC2_CHANNEL1_RC/(RC_PER_MILLISECOND /2)));
 	TC2_CHANNEL1_RC = TC2_CHANNEL1_RC * 2;
 }
 

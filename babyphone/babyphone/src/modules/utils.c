@@ -10,8 +10,28 @@
 #include "string.h"
 #include "conf_hapstik.h"
 #include "includes/registers.h"
+#include "stdbool.h"
+#include "stdio.h"
+
 
 static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!
+
+char serial_out_string[50];
+bool is_serial_out_dirty = false;
+
+void print_to_serial_asynchronously(char outString[]) {
+	sprintf(serial_out_string, outString);
+	is_serial_out_dirty = true;
+}
+
+char * get_serial_out_string(void) {
+	is_serial_out_dirty = false;
+	return serial_out_string;
+}
+
+bool is_serial_out_ready(void) {
+	return is_serial_out_dirty;
+}
 
 
 void SetPriorityIRQ(uint32_t irq_id, uint32_t priority)
