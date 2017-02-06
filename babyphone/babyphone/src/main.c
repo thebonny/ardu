@@ -58,7 +58,6 @@ int main(void)
 	configure_console();
 	// init core HAPStik Modules
 	gpio_initialize();
-
 	// the pwm drives the motors as well as the adc handler, so kick it off first	
 	pwm_initialize();
 	// adc data is required for calibration, so we start the adc handler next
@@ -101,51 +100,6 @@ int main(void)
 			}
 			
 		}
-		
-	/*	scanf("%c", (char *)&key);
-
-		switch (key) {
-		case 'm':
-		display_menu();
-		break;
-
-		case 'r':
-		puts("\n\rStart recording flight sequence!\r");
-		start_record();
-
-		break;
-
-		case 'p':
-		puts("\n\rStart playback of flight sequence!\r");
-		start_playback();
-		break;
-		
-		case 'l':
-		puts("\n\rLooped playback of flight sequence!\r");
-		loop_playback();
-		break;
-		
-		case 'b':
-		puts("\n\rBypass captured PPM Signal directly to PPM out!\r");
-		stop_record();
-		break;
-		
-		case 'd':
-		puts("\n\rDouble up record/playback speed!\r");
-		double_speed();
-		break;
-		
-		case 'h':
-		puts("\n\rHalf record/playback speed!\r");
-		half_speed();
-		break;
-
-		default:
-		puts("Not recognized key pressed \r");
-		break;
-		}
-		*/
-		
 
 	}	
 }
