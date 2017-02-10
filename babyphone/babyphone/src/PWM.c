@@ -18,8 +18,8 @@
 //		- PWMu1, PWMv1, PWMw1	"Center aligned PWM-Signale" die direkt auf die Halbbrücken ausgegeben werden
 //		- PWMu2, PWMv2, PWMw2
 
-#include "includes/PID.h"
-#include "includes/registers.h"
+#include "PID.h"
+#include "registers.h"
 #include "stdio.h"
 // #include "asf.h"
 

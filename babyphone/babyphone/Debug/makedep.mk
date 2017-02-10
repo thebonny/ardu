@@ -2,9 +2,23 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\ADC.c
+
 src\ASF\common\utils\stdio\read.c
 
 src\ASF\sam\drivers\usart\usart.c
+
+src\PID.c
+
+src\ppm_capture.c
+
+src\ppm_out.c
+
+src\PWM.c
+
+src\record_playback.c
+
+src\utils.c
 
 src\ASF\common\utils\stdio\write.c
 
@@ -15,20 +29,6 @@ src\ASF\common\services\delay\sam\cycle_counter.c
 src\ASF\sam\drivers\tc\tc.c
 
 src\ASF\sam\drivers\uart\uart.c
-
-src\modules\ADC.c
-
-src\modules\PID.c
-
-src\modules\ppm_capture.c
-
-src\modules\ppm_out.c
-
-src\modules\PWM.c
-
-src\modules\record_playback.c
-
-src\modules\utils.c
 
 src\ASF\common\services\clock\sam3x\sysclk.c
 
