@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "babyphone", "babyphone\babyphone.cproj", "{DCE6C7E3-EE26-4D79-826B-08594B9AD897}"
 EndProject
+Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "test", "..\..\Arduino\test\test.cppproj", "{4F24E859-B431-4785-8538-23006E3F6423}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -15,6 +17,10 @@ Global
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Debug|ARM.Build.0 = Debug|ARM
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|ARM.ActiveCfg = Release|ARM
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|ARM.Build.0 = Release|ARM
+		{4F24E859-B431-4785-8538-23006E3F6423}.Debug|ARM.ActiveCfg = Debug|ARM
+		{4F24E859-B431-4785-8538-23006E3F6423}.Debug|ARM.Build.0 = Debug|ARM
+		{4F24E859-B431-4785-8538-23006E3F6423}.Release|ARM.ActiveCfg = Release|ARM
+		{4F24E859-B431-4785-8538-23006E3F6423}.Release|ARM.Build.0 = Release|ARM
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
