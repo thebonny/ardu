@@ -571,6 +571,9 @@
     <Compile Include="src\ASF\sam\drivers\usart\usart.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\hapstik.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\PID.c">
       <SubType>compile</SubType>
     </Compile>
@@ -1082,6 +1085,9 @@
       <SubType>compile</SubType>
     </None>
     <None Include="src\ASF\thirdparty\CMSIS\README.txt">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\hasptik.cpp">
       <SubType>compile</SubType>
     </None>
   </ItemGroup>
