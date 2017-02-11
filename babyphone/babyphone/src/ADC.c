@@ -5,9 +5,9 @@
  *  Author: tmueller
  */ 
 #include "stdio.h"
-#include "includes/ADC.h"
-#include "includes/utils.h"
-#include "includes/registers.h"
+#include "ADC.h"
+#include "utils.h"
+#include "registers.h"
 
 
 // Mittelwertfilter

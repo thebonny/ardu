@@ -9,7 +9,7 @@
 #ifndef PID_H_
 #define PID_H_
 
-#include "includes/ppm_capture.h"
+#include "ppm_capture.h"
 
 typedef struct {
 	float X;

@@ -4,13 +4,13 @@
 #include "stdio_serial.h"
 #include "conf_clock.h"
 	
-#include "includes/utils.h"
-#include "includes/PID.h"
-#include "includes/PWM.h"
-#include "includes/ADC.h"
-#include "includes/ppm_capture.h"
-#include "includes/ppm_out.h"
-#include "includes/record_playback.h"
+#include "utils.h"
+#include "PID.h"
+#include "PWM.h"
+#include "ADC.h"
+#include "ppm_capture.h"
+#include "ppm_out.h"
+#include "record_playback.h"
 
 static void configure_console(void)
 {

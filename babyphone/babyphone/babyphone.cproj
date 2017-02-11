@@ -557,14 +557,57 @@
     <Folder Include="src\ASF\thirdparty\CMSIS\Lib\" />
     <Folder Include="src\ASF\thirdparty\CMSIS\Lib\GCC\" />
     <Folder Include="src\config\" />
-    <Folder Include="src\modules" />
-    <Folder Include="src\includes" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\ADC.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ADC.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\ASF\common\utils\stdio\read.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ASF\sam\drivers\usart\usart.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\PID.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\PID.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ppm_capture.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ppm_capture.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ppm_out.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ppm_out.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\PWM.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\PWM.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\record_playback.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\record_playback.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\registers.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\utils.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\utils.h">
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\ASF\sam\drivers\usart\usart.h">
@@ -610,51 +653,6 @@
       <SubType>compile</SubType>
     </None>
     <Compile Include="src\config\conf_hapstik.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\ADC.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\PID.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\ppm_capture.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\ppm_out.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\PWM.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\record_playback.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\registers.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\includes\utils.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\ADC.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\PID.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\ppm_capture.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\ppm_out.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\PWM.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\record_playback.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\modules\utils.c">
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\asf.h">

@@ -9,7 +9,7 @@
 #include "math.h"					//			z.B. cos(x)
 #include "string.h"
 #include "conf_hapstik.h"
-#include "includes/registers.h"
+#include "registers.h"
 #include "stdbool.h"
 #include "stdio.h"
 

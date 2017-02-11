@@ -1,6 +1,6 @@
-#include <includes/ppm_out.h>
-#include "includes/utils.h"
-#include "includes/registers.h"
+#include <ppm_out.h>
+#include "utils.h"
+#include "registers.h"
 #include "conf_hapstik.h"
 
 #define TICKS_PER_uS 42
