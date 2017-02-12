@@ -78,8 +78,7 @@ int main(void)
 	
 	while (1)
 	{
- printf("\n\r1!");
-/*		uint16_t mode_channel = get_captured_raw_channel(8).current_captured_ppm_value;
+   	uint16_t mode_channel = get_captured_raw_channel(8).current_captured_ppm_value;
 	   if (mode_channel < 900) {
 		   if (mode != BYPASS) {
 			   puts("\n\rBypass mode!");
@@ -96,7 +95,7 @@ int main(void)
 				start_playback();
 			}
 			
-		}*/
+		}
 
 	}	
 }
