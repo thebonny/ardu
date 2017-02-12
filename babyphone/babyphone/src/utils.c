@@ -16,11 +16,11 @@
 
 static double PRECISION = 0.001;					//Anzahl Nachkommastellen, -> hier ohne Rundung!
 
-char serial_out_string[50];
+char * serial_out_string;
 bool is_serial_out_dirty = false;
 
-void print_to_serial_asynchronously(char outString[]) {
-	sprintf(serial_out_string, outString);
+void print_to_serial_asynchronously(char * outString) {
+	serial_out_string = outString;
 	is_serial_out_dirty = true;
 }
 

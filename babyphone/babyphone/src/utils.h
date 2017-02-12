@@ -11,7 +11,7 @@
 #include "stdint.h"
 #include "stdbool.h"
 
-void print_to_serial_asynchronously(char outString[]);
+void print_to_serial_asynchronously(char *outString);
 char * get_serial_out_string(void);
 bool is_serial_out_ready(void);
 

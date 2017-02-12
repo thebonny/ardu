@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "registers.h"
 #include "conf_hapstik.h"
+#include <stdlib.h>
 
 
 #define RC_PER_MILLISECOND 42000
@@ -36,7 +37,7 @@ void copy_captured_channels_to_record() {
 void TC7_Handler(void) {
 	// debug_pulse(1);
 	if ((TC2_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
-		char *out;
+		char * out = malloc(130);
 		if (mode == MODE_BYPASS || mode == MODE_RECORD) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				rc_channel channel = get_captured_raw_channel(i);
@@ -46,23 +47,27 @@ void TC7_Handler(void) {
 		}
 		if (mode == MODE_RECORD) {
 			copy_captured_channels_to_record();
-			print_to_serial_asynchronously(sprintf(out,"Frame #: %d\r\n", current_record));
+			sprintf(out,"Frame #: %d\r\n", current_record);
+			print_to_serial_asynchronously(out);
 			current_record++;
 			if (current_record >= NUMBER_OF_RECORDS) {
 				stop_record();
-				print_to_serial_asynchronously(sprintf(out,"REcording stopped as record limit is reached!\n\r"));
+				sprintf(out,"REcording stopped as record limit is reached!\n\r");
+				print_to_serial_asynchronously(out);
 			}
 		} else if (mode == MODE_PLAYBACK) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				set_ppm_out_channel_value(i, recorded_flight_records[current_record][i].current_captured_ppm_value);
 				set_stick_raw_channel(i, &recorded_flight_records[current_record][i]);
 			}
-			print_to_serial_asynchronously(sprintf(out,"Frame #: %d\r", current_record));
+			sprintf(out,"Frame #: %d\r", current_record);
+			print_to_serial_asynchronously(out);
 			current_record++;
 			if (current_record >= max_recorded_record) {
 				if (loop == 0) { 
 					mode = MODE_BYPASS;
-					print_to_serial_asynchronously(sprintf(out,"Playback stopped as max recorded record %d is reached!\n\r", max_recorded_record));
+					sprintf(out,"Playback stopped as max recorded record %d is reached!\n\r", max_recorded_record);
+					print_to_serial_asynchronously(out);
 				} else {
 					// looped mode
 					current_record = 0;

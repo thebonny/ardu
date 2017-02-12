@@ -229,8 +229,7 @@
       <ToolNumber>J41800031347</ToolNumber>
       <ToolName>Atmel-ICE</ToolName>
     </com_atmel_avrdbg_tool_atmelice>
-    <avrtoolinterface>
-    </avrtoolinterface>
+    <avrtoolinterface>JTAG</avrtoolinterface>
     <avrtoolinterfaceclock>7500000</avrtoolinterfaceclock>
     <custom>
       <ToolOptions>
@@ -569,9 +568,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\ASF\sam\drivers\usart\usart.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\hapstik.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\PID.c">
@@ -1085,9 +1081,6 @@
       <SubType>compile</SubType>
     </None>
     <None Include="src\ASF\thirdparty\CMSIS\README.txt">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="src\hasptik.cpp">
       <SubType>compile</SubType>
     </None>
   </ItemGroup>
