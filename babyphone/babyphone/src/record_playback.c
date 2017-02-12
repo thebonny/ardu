@@ -12,11 +12,9 @@
 #define RC_PER_MILLISECOND 42000
 #define DEFAULT_FRAMERATE_MILLIS 20
 #define NUMBER_OF_RECORDS 2300
-#define MODE_RECORD 0
-#define MODE_PLAYBACK 1
-#define MODE_BYPASS 2
 
-uint8_t mode = MODE_BYPASS;
+
+RP_MODES mode = BYPASS;
 uint8_t loop = 0;
 
 
@@ -37,37 +35,30 @@ void copy_captured_channels_to_record() {
 void TC7_Handler(void) {
 	// debug_pulse(1);
 	if ((TC2_CHANNEL1_SR & TC_SR_CPCS) == TC_SR_CPCS) {
-		char * out = malloc(130);
-		if (mode == MODE_BYPASS || mode == MODE_RECORD) {
+		if (mode == BYPASS || mode == RECORD) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				rc_channel channel = get_captured_raw_channel(i);
 				set_ppm_out_channel_value(i, channel.current_captured_ppm_value);
 				set_stick_raw_channel(i, &channel);
 			}
 		}
-		if (mode == MODE_RECORD) {
+		if (mode == RECORD) {
 			copy_captured_channels_to_record();
-			sprintf(out,"Frame #: %d\r\n", current_record);
-			print_to_serial_asynchronously(out);
+			printf("#%i\r", current_record);
 			current_record++;
 			if (current_record >= NUMBER_OF_RECORDS) {
 				stop_record();
-				sprintf(out,"REcording stopped as record limit is reached!\n\r");
-				print_to_serial_asynchronously(out);
+				printf("REcording stopped as record limit is reached!\n\r");
 			}
-		} else if (mode == MODE_PLAYBACK) {
+		} else if (mode == PLAYBACK) {
 			for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
 				set_ppm_out_channel_value(i, recorded_flight_records[current_record][i].current_captured_ppm_value);
 				set_stick_raw_channel(i, &recorded_flight_records[current_record][i]);
 			}
-			sprintf(out,"Frame #: %d\r", current_record);
-			print_to_serial_asynchronously(out);
 			current_record++;
 			if (current_record >= max_recorded_record) {
 				if (loop == 0) { 
-					mode = MODE_BYPASS;
-					sprintf(out,"Playback stopped as max recorded record %d is reached!\n\r", max_recorded_record);
-					print_to_serial_asynchronously(out);
+					mode = BYPASS;
 				} else {
 					// looped mode
 					current_record = 0;
@@ -96,21 +87,21 @@ void half_speed() {
 
 void start_record() {
 	current_record = 0;
-	mode = MODE_RECORD;
+	mode = RECORD;
 }
 
 void stop_record() {
-	mode = MODE_BYPASS;
+	mode = BYPASS;
 	max_recorded_record = current_record;
 }
 
 void start_playback() {
-	if (mode == MODE_RECORD) {
+	if (mode == RECORD) {
 		stop_record();
 	}
 	loop = 0;
 	current_record = 0;
-	mode = MODE_PLAYBACK;
+	mode = PLAYBACK;
 }
 
 void loop_playback() {

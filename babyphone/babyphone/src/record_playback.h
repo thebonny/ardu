@@ -10,6 +10,15 @@
 #define RECORD_PLAYBACK_H_
 #include "stdint.h"
 
+typedef enum  {
+	BYPASS,
+	RECORD,
+	PLAYBACK
+} RP_MODES;
+
+extern RP_MODES mode;
+
+
 void record_playback_initialize(void);
 void set_master_framerate(int milliseconds);
 void double_speed(void);

@@ -78,28 +78,25 @@ int main(void)
 	
 	while (1)
 	{
-		if (is_serial_out_ready()) {
-			puts(get_serial_out_string());
-		}
-		uint16_t mode_channel = get_captured_raw_channel(8).current_captured_ppm_value;
+ printf("\n\r1!");
+/*		uint16_t mode_channel = get_captured_raw_channel(8).current_captured_ppm_value;
 	   if (mode_channel < 900) {
-		   if (mode != 2) {
-			   puts("\n\rBypass mode!\r");
+		   if (mode != BYPASS) {
+			   puts("\n\rBypass mode!");
 				stop_record();
 		   }
-		} else if (mode_channel >= 900 && mode_channel < 1300) {
-			
-			if (mode != 0) {
-				puts("\n\rStart recording flight sequence!\r");
+		} else if (mode_channel >= 900 && mode_channel < 1300) {	
+			if (mode != RECORD) {
+				puts("\n\rStart recording flight sequence!");
 				start_record();
 			}
 		} else {
-			if (mode != 1) {
-				puts("\n\rStart playback of flight sequence!\r");
+			if (mode != PLAYBACK) {
+				puts("\n\rStart playback of flight sequence!");
 				start_playback();
 			}
 			
-		}
+		}*/
 
 	}	
 }
