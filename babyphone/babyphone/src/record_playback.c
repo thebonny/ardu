@@ -44,7 +44,7 @@ void TC7_Handler(void) {
 		}
 		if (mode == RECORD) {
 			copy_captured_channels_to_record();
-			printf("#%i\r", current_record);
+		//	printf("#%i\r", current_record);
 			current_record++;
 			if (current_record >= NUMBER_OF_RECORDS) {
 				stop_record();
@@ -55,7 +55,7 @@ void TC7_Handler(void) {
 				set_ppm_out_channel_value(i, recorded_flight_records[current_record][i].current_captured_ppm_value);
 				set_stick_raw_channel(i, &recorded_flight_records[current_record][i]);
 			}
-			printf("#%i\r", current_record);
+		//	printf("#%i\r", current_record);
 			current_record++;
 			if (current_record >= max_recorded_record) {
 				if (loop == 0) { 
