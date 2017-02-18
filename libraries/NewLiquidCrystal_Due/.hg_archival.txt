@@ -1,4 +1,0 @@
-repo: 4745f01bb4722dc06b7b0a75823a95636b078ad4
-node: eac3d34ed9dd1bd80f57098ee563f57fa5df1586
-branch: default
-tag: V 1.2.1
