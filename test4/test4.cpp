@@ -4,24 +4,22 @@
 #include <record_playback.h>
 #include <Wire.h>  // Comes with Arduino IDE
 #include <LiquidCrystal_I2C.h>
+#include "conf_hapstik.h"
+#include "stdlib.h"
+#include "string.h"
 
 #include <SdFat.h>
 SdFat sd;
 SdFile myFile;
 
 
-
-/*-----( Declare Constants )-----*/
-/*-----( Declare objects )-----*/
-// set the LCD address to 0x27 for a 20 chars 4 line display
-// Set the pins on the I2C chip used for LCD connections:
-//                    addr, en,rw,rs,d4,d5,d6,d7,bl,blpol
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
 
 
-/*-----( Declare Variables )-----*/
 
 PPMReceiver r;
+int counter = 0;
+char result[100];
 void setup()   /*----( SETUP: RUNS ONCE )----*/
 {
    Serial.begin(9600);
@@ -51,25 +49,40 @@ void setup()   /*----( SETUP: RUNS ONCE )----*/
   delay(2500);
   lcd.clear();
   lcd.setCursor(1,1);
-	
+  
+  	  // open the file for write at end like the Native SD library
+	 if (!myFile.open("hapstik.txt", O_RDWR | O_CREAT | O_AT_END)) {
+		sd.errorHalt("opening test.txt for write failed");
+	 }
 
-}/*--(end setup )---*/
+}
 
 void loop()
 {
 	
-	char out[19];
-		  // open the file for write at end like the Native SD library
-	 if (!myFile.open("test.txt", O_RDWR | O_CREAT | O_AT_END)) {
-		sd.errorHalt("opening test.txt for write failed");
-	 }
-	for (int i = 0; i < 4; i++) {
-		sprintf(out, "Channel %i: %i       ", (i+1), r.get_channel(i+1).current_captured_ppm_value);
-		lcd.setCursor(0, i);
-		lcd.print(out);
-		myFile.println(out);
+	char out[10];
+	
+
+	for (int i = 0; i < NUMBER_OF_RC_CHANNELS; i++) {
+		sprintf(out, "%4i,%4i;", r.get_channel(i).current_captured_ppm_value, r.get_channel(i).last_captured_ppm_value);
+		strcat(result, out);
+		if (counter % 10 == 0) {
+			lcd.setCursor(0, i);
+			lcd.print(out);
+		}
+		
 	}
-	myFile.close();
+	if (counter < 1000) {
+		 myFile.println(result);
+		 strcpy(result, "");
+	} else {
+		myFile.close();
+		lcd.clear();
+		lcd.setCursor(0,0);
+		lcd.print("Ready!");
+		while (1);
+	}
+	counter++;
 	
 }
 
