@@ -1,5 +1,7 @@
 #include "arduino.h"
 #include <ppm_capture.h>
+#include <ppm_out.h>
+#include <record_playback.h>
 #include <Wire.h>  // Comes with Arduino IDE
 #include <LiquidCrystal_I2C.h>
 
@@ -23,7 +25,8 @@ PPMReceiver r;
 void setup()   /*----( SETUP: RUNS ONCE )----*/
 {
    Serial.begin(9600);
-
+	ppm_out_initialize();
+	record_playback_initialize();
   Serial.print("Initializing SD card...");
 
   if (!sd.begin(SS, SPI_EIGHTH_SPEED)) sd.initErrorHalt();
