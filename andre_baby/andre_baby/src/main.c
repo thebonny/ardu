@@ -1,11 +1,17 @@
 
 
 /*	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx                  HAPSTIK Modul                xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-DATUM:		23.01.2017
+DATUM:		09.03.2017
 AUTOR:		André Frank
-NAME:		Potiwerte lesen, PID Position für beide Achsen
-			HS-Modul abgespeckte Version
-				- minimale Kommentare / Erläuterungen
+NAME:		Sinus-Pendel
+
+
+WIRKUNGSWEISE:
+			1 Positionsregler für Y-Achse
+				- mit Sinus angesteuert
+
+
+
 ------------------------------------------------------------------------------------------------------------------------------
 */
 //	ANFANG **********************************************     Includes       *************************************************
@@ -69,30 +75,44 @@ static:		ist ein Schlüsselwort
 
 
 //	Für Tänzchen
-	static		float	IST1 = 0.0;			// MOTOR1
-	static		float	IST2 = 0.0;			// MOTOR2	
+
+	volatile	int		VZ		= 1;							// VorZeichen
+
+	volatile	float	SP_W	= 0.0;							// Winkel
+	volatile	float	SP_A	= 0.0;							// Amplitude
+	volatile	float	SP_DW	= 0.09;							// Delta_Winkel/ms iin Grad
+
 	
-	static		float	TW_1 = 0.0;			// MOTOR1 -> TänzchenWinkel		
-	static		float	TW_2 = 0.0;			// MOTOR2 -> TänzchenWinkel	
+	volatile	int		TAE_1ms = 0;							// 1ms zählen	
+	volatile	int		SEQUENZ_1ms = 0;						// 1ms zählen			
 
-	static		int		VZ_1 = 1;			// VorZeichen
-	static		int		VZ_2 = 1;
 
-	static		float	SP_1 = 0.36;		// MOTOR1 -> Speed
-	static		float	SP_2 = 0.0;	
 
-	static		float	AM_1 = 0.0;			// MOTOR1 -> Speed
-	static		float	AM_2 = 0.0;
-					
-	static		float	SA_1 = 0.0;			// MOTOR1 -> SoftAnlauf
-	static		float	SA_2 = 0.0;			// MOTOR2 -> SoftAnlauf
+//	für Ratsche
+//	RATSCHE
+//	Konstanten
+	volatile	int		R_oben				= -1500;			// oberer  maximaler Ratschenpunkt
+	volatile	int		R_unten				= +1500;			// unterer maximaler Ratschenpunkt -> bei normiertem HS-Eingang sind das 3001 Steps
+																// bzw. 3001 maximal mögliche R_Points
+	volatile	float	R_Anzahl			= 21;				// muss float sein! Anzahl von gewünschten Ratschen-Points
+	volatile	float	R_Laenge;								// Ratschen_Länge in Steps
 
-	static		float	DW_1 = 0.0;			// MOTOR1 -> DeltaWinkel
-	static		float	DW_2 = 0.0;			// MOTOR2 -> DeltaWinkel
+//	für Test
+	volatile	int		a1_int	= 0;
+	volatile	int		a2_int	= 0;
+	volatile	int		a3_int	= 0;
+	volatile	int		a4_int	= 0;
+	volatile	int		a5_int	= 0;				
+
+	volatile	float	a1_flt	= 0;
+	volatile	float	a2_flt	= 0;
+	volatile	float	a3_flt	= 0;
+	volatile	float	a4_flt	= 0;
+	volatile	float	a5_flt	= 0;	
 	
-	static		int		TAE_1ms = 0;							// 1ms zählen	
-	static		int		SEQUENZ_1ms = 0;							// 1ms zählen			
 		
+	
+	
 //	für Schleifen -> Zählvariablen
 	volatile	int		a, b, c, d;
 
@@ -167,12 +187,12 @@ static:		ist ein Schlüsselwort
 	volatile	float	ADC_A2_f = 0.0f;								// Float, Poti HapStik horizontal
 
 	volatile	float	nullY = 0.0f;									// ADC-Spannungswert in der vertikalen Sticknullposition 
-	volatile	float	plusY_33 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickobenposition 
-	volatile	float	minusY_33 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickuntenposition	
+	volatile	float	plusY_30 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickobenposition 
+	volatile	float	minusY_30 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickuntenposition	
 
 	volatile	float	nullX = 0.0f;									// ADC-Spannungswert in der vertikalen Sticknullposition
-	volatile	float	plusX_33 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickobenposition
-	volatile	float	minusX_33 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickuntenposition
+	volatile	float	plusX_30 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickobenposition
+	volatile	float	minusX_30 = 0.0f;								// ADC-Spannungswert in der vertikalen Stickuntenposition
 
 
 	volatile	float	POT_PF_ver = 0.0f;								// Proportionalitätsfaktor zur akzeullen Winkelberechnung
@@ -194,11 +214,11 @@ static:		ist ein Schlüsselwort
 	volatile	float	POT_U_hor_MIN2 = 0.0f;							// ADC-Spannungswert in der horizontalen Stickuntenposition
 
 
-	volatile	float	propfaktor_minusX_33 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
-	volatile	float	propfaktor_minusY_33 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
+	volatile	float	propfaktor_minusX_30 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
+	volatile	float	propfaktor_minusY_30 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
 
-	volatile	float	propfaktor_plusX_33 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
-	volatile	float	propfaktor_plusY_33 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000	
+	volatile	float	propfaktor_plusX_30 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000
+	volatile	float	propfaktor_plusY_30 = 1.0;						// Proprtionalitätsfaktor für Kennliniennormierung auf -10000	
 		
 
 
@@ -210,7 +230,7 @@ static:		ist ein Schlüsselwort
 
 //	Übernehmen		
 //	HS_Nr1
-//	volatile	float	offset_winkel_y =		5.5;
+//	volatile	float	offset_winkel_y =		  4.0;
 //	volatile	float	offset_winkel_x =		-16.0;
 	
 //	HS_Nr2
@@ -230,7 +250,11 @@ static:		ist ein Schlüsselwort
 //	Leistungsfaktor	0 ... 1 Leistung | 0.5 -> 50% Leistung | 1.0 -> 100% Leistung
 	volatile	float	LF_y	= 0.0;
 	volatile	float	LF_x	= 0.0;
+
+	volatile	float	LF_y_r	= 0.0;		// Ratsche
+	volatile	float	LF_y_p	= 0.0;		// Position
 	
+		
 //	für SVPWM()
 	float	xvec_motorY, yvec_motorY, zvec_motorY;
 	float	xvec_motorX, yvec_motorX, zvec_motorX;
@@ -275,7 +299,7 @@ static:		ist ein Schlüsselwort
 	
 
 //	MOTORY	
-//	PID_p_y Regler POSITION
+//	PID_p_y Regler Position Y-Achse
 	int myInput_p_y;
 		
 	float error2_1 = 0.0, input2_1 = 0.0, dInput2_1 = 0.0, lastInput2_1 = 0.0, mySetpoint_p_y = 0.0;
@@ -289,6 +313,21 @@ static:		ist ein Schlüsselwort
 	double outMin_p_y;
 		
 
+//	MOTORY	
+//	PID_p_y_r Regler Position Y-Achse Ratsche
+	int myInput_p_y_r;
+		
+	float error3_1 = 0.0, input3_1 = 0.0, dInput3_1 = 0.0, lastInput3_1 = 0.0, mySetpoint_p_y_r = 0.0;
+
+	double myOutput_p_y_r;
+	double ITerm3_1;
+	double kp_p_y_r = 0.0;
+	double ki_p_y_r = 0.0;
+	double kd_p_y_r = 0.0;
+	double outMax_p_y_r;
+	double outMin_p_y_r;
+	
+	
 //	MOTORX	
 //	PID_v_x Regler GESCHWINDIGKEIT
 	float myInput1_2;
@@ -383,6 +422,32 @@ void PID_v_x(void)
 	lastInput1_2 = input1_2;
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_v_x   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
+//	MOTORY Position_RATSCHE
+//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_p_y_r xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+void PID_p_y_r(void)
+{
+	input3_1 = myInput_p_y_r;
+    error3_1 = mySetpoint_p_y_r - input3_1;
+    ITerm3_1+= (ki_p_y_r * error3_1);
+    if(ITerm3_1 > outMax_p_y_r) ITerm3_1= outMax_p_y_r;
+    else if(ITerm3_1 < outMin_p_y_r) ITerm3_1= outMin_p_y_r;
+    dInput3_1 = (input3_1 - lastInput3_1);
+ 
+// Reglerausgang berechnen
+    double output3_1 = kp_p_y_r * error3_1 + ITerm3_1 - kd_p_y_r * dInput3_1;
+
+// Überläufe kappen      
+	if(output3_1 > outMax_p_y_r) output3_1 = outMax_p_y_r;
+    else if(output3_1 < outMin_p_y_r) output3_1 = outMin_p_y_r;
+	myOutput_p_y_r = output3_1;
+	  
+//	letzten Wert speichern
+	lastInput3_1 = input3_1;
+}
+//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    REGLER_p_y_r xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 
@@ -1496,16 +1561,39 @@ int main(void)
 	delay_ms(500);
 
 
+
+
+
+//	Test
+	a1_flt = 10.7; 
+	a2_flt = 10.3; 
+
+	a1_int = a1_flt;				// 10,7	-> 10	Zuweisung float an int -> Zuweisung des Ganzzahlanteils
+	a2_int = a2_flt;				// 10,3	-> 10
+//	---
+	a1_int = 23;					// Es wird nicht gerundet, auch hier Zuweisung des Ganzzahlanteils
+	a2_int = 10;
+	a3_int = a1_int / a2_int;		// 2,3	-> 2
+//	---
+	a1_int = 27;
+	a2_int = 10;
+	a3_int = a1_int / a2_int;		// 2,7	-> 2
+
+
+
+
+
+
 //	MOTOR_Y
 //	---------------------------------------------------------------------------------------------------- Stick in Position +Y
 //	RUNTER
 
 	DWE_a1 = 7 * offset_winkel_y;						// Offset des Sticks (HS-spezifisch)
 	
-//	Schleifendurchläufe 33 (von 0° nach +33°)	
+//	Schleifendurchläufe 30 (von 0° nach +30°)	
 	LF_y = 0.5;									// Leistungsfaktor (0...1)
-	for (a=1; a<=33; a++) 
-	{	if (a == 33)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+	for (a=1; a<=30; a++) 
+	{	if (a == 30)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
 		{	LF_y = 1.0;
 		}
 		DWEy = DWE_a1 + 7 * a * 1;				// Winkel pro Step = 1°
@@ -1514,20 +1602,20 @@ int main(void)
 		zvec_motorY = LF_y * cos(DWEy*WK1-WK3);
 		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, 0, 0, 0);
 		delay_ms(TD1);
-	} // for (a=1; a<=33; a++) 
+	} // for (a=1; a<=30; a++) 
 	DWE_a1 = DWEy;								// DWE merken
 	delay_ms(TD2);								// Stick beruhigen lassen
 
-	plusY_33 = AF_A0_i;							// Poti_ADC_Wert für Position +Y lesen
+	plusY_30 = AF_A0_i;							// Poti_ADC_Wert für Position +Y lesen
 	
 
 //	----------------------------------------------------------------------------------------------------- Stick in Position -Y
 //	HOCH
-//	Schleifendurchläufe 66 (von +33° nach -33°)
+//	Schleifendurchläufe 60 (von +30° nach -30°)
 
 	LF_y = 0.5;									// Leistungsfaktor (0...1)
-	for (a=1; a<=66; a++) 
-	{	if (a == 66)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+	for (a=1; a<=60; a++) 
+	{	if (a == 60)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
 		{	LF_y = 1.0;
 		}
 		DWEy = DWE_a1 + 7 * a * -1;				//Winkel pro Step = 1°
@@ -1536,20 +1624,20 @@ int main(void)
 		zvec_motorY = LF_y * cos(DWEy*WK1-WK3);
 		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, 0, 0, 0);
 		delay_ms(TD1);
-	} // for (a=1; a<=66; a++) 
+	} // for (a=1; a<=60; a++) 
 	DWE_a1 = DWEy;
 	delay_ms(TD2);								// Stick beruhigen lassen
 
-	minusY_33 = AF_A0_i;						// Poti_ADC_Wert für Position -Y lesen
+	minusY_30 = AF_A0_i;						// Poti_ADC_Wert für Position -Y lesen
 
 
 //	--------------------------------------------------------------------------------------------------- Stick in Position NULL
 //	MITTE
-//	Schleifendurchläufe 33 (von -33° nach 0°)
+//	Schleifendurchläufe 30 (von -30° nach 0°)
 
 	LF_y = 0.5;									// Leistungsfaktor (0...1)
-	for (a=1; a<=33; a++) 
-	{	if (a == 33)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+	for (a=1; a<=30; a++) 
+	{	if (a == 30)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
 		{	LF_y = 1.0;
 		}
 		DWEy = DWE_a1 + 7 * a * 1;				//Winkel pro Step = 1°
@@ -1558,7 +1646,7 @@ int main(void)
 		zvec_motorY = LF_y * cos(DWEy*WK1-WK3);
 		SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, 0, 0, 0);
 		delay_ms(TD1);
-	} // for (a=1; a<=33; a++) 
+	} // for (a=1; a<=30; a++) 
 	DWE_a1 = DWEy;
 	delay_ms(TD2);								// Stick beruhigen lassen
 
@@ -1569,13 +1657,13 @@ int main(void)
 //	MOTOR_X
 //	----------------------------------------------------------------------------------------------------- Stick in Position +X
 //	RECHTS
-//	Schleifendurchläufe 33 (von 0° nach +33°)
+//	Schleifendurchläufe 30 (von 0° nach +30°)
 
 	DWE_a2 = 7 * offset_winkel_x;						// Offset des Sticks (installationsspezifisch)
 
 	LF_x = 0.5;									// Leistungsfaktor (0...1)
-	for (a=1; a<=33; a++)
-	{	if (a == 33)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+	for (a=1; a<=30; a++)
+	{	if (a == 30)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
 		{	LF_x = 1.0;
 		}
 		DWEx = DWE_a2 + 7 * a * 1;				// Winkel pro Step = 1°
@@ -1588,14 +1676,14 @@ int main(void)
 	DWE_a2 = DWEx;								// DWE merken
 	delay_ms(TD2);								// Stick beruhigen lassen
 
-	plusX_33 = AF_A1_i;							// Poti_ADC_Wert für Position +X lesen
+	plusX_30 = AF_A1_i;							// Poti_ADC_Wert für Position +X lesen
 
 //	----------------------------------------------------------------------------------------------------- Stick in Position -X
-//	Schleifendurchläufe 66 (von +33° nach -33°)
+//	Schleifendurchläufe 60 (von +30° nach -30°)
 
 	LF_x = 0.5;									// Leistungsfaktor (0...1)
-	for (a=1; a<=66; a++)
-	{	if (a == 66)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+	for (a=1; a<=60; a++)
+	{	if (a == 60)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
 		{	LF_x = 1.0;
 		}
 		DWEx = DWE_a2 + 7 * a * -1;				// Winkel pro Step = 1°
@@ -1608,14 +1696,14 @@ int main(void)
 	DWE_a2 = DWEx;
 	delay_ms(TD2);								// Stick beruhigen lassen
 
-	minusX_33 = AF_A1_i;						// Poti_ADC_Wert für Position -X lesen
+	minusX_30 = AF_A1_i;						// Poti_ADC_Wert für Position -X lesen
 
 //	--------------------------------------------------------------------------------------------------- Stick in Position NULL
-// Schleifendurchläufe 33 (von -33° nach 0°)
+// Schleifendurchläufe 30 (von -30° nach 0°)
 
 	LF_x = 0.5;									// Leistungsfaktor (0...1)
-	for (a=1; a<=33; a++)
-	{	if (a == 33)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
+	for (a=1; a<=30; a++)
+	{	if (a == 30)							// wenn Stick in Zielposition dann max. Power zum "Festhalten"
 		{	LF_x = 1.0;
 		}
 		DWEx = DWE_a2 + 7 * a * 1;				// Winkel pro Step = 1°
@@ -1633,20 +1721,16 @@ int main(void)
 
 	
 //	PRINT
-	printf("| minusX_33     : %15s| nullX         : %15s| plusX_33     : %15s|\r\n",
-	doubleToString(s1, minusX_33), doubleToString(s2, nullX), doubleToString(s3, plusX_33));
+	printf("| minusX_30     : %15s| nullX         : %15s| plusX_30     : %15s|\r\n",
+	doubleToString(s1, minusX_30), doubleToString(s2, nullX), doubleToString(s3, plusX_30));
 	
-	printf("| minusY_33     : %15s| nullY         : %15s| plusY_33     : %15s|\r\n\n",
-	doubleToString(s1, minusY_33), doubleToString(s2, nullY), doubleToString(s3, plusY_33));
+	printf("| minusY_30     : %15s| nullY         : %15s| plusY_30     : %15s|\r\n\n",
+	doubleToString(s1, minusY_30), doubleToString(s2, nullY), doubleToString(s3, plusY_30));
 
 
 
-		SVPWM(0,0,0,0,0,0);
-		delay_ms(TD1);
-
-
-
-
+	SVPWM(0,0,0,0,0,0);
+	delay_ms(TD1);
 
 
 
@@ -1656,38 +1740,39 @@ int main(void)
 
 //	--------------------------------------------------------------------------------------- Kennlinie in Nullpunkt verschieben
 //	-> Nullpunkt wird 0	
-	minusX_33	= minusX_33 - nullX;
-	plusX_33	= plusX_33  - nullX;	
+	minusX_30	= minusX_30 - nullX;
+	plusX_30	= plusX_30  - nullX;	
 //	nullX		= 0;
 
-	minusY_33	= minusY_33 - nullY;
-	plusY_33	= plusY_33  - nullY;	
+	minusY_30	= minusY_30 - nullY;
+	plusY_30	= plusY_30  - nullY;	
 //	nullY		= 0;	
 	
 //	PRINT
-	printf("| minusX_33     : %15s| plusX_33      : %15s|\r\n",
-	doubleToString(s1, minusX_33), doubleToString(s3, plusX_33));
+	printf("| minusX_30     : %15s| plusX_30      : %15s|\r\n",
+	doubleToString(s1, minusX_30), doubleToString(s3, plusX_30));
 	
-	printf("| minusY_33     : %15s| plusY_33      : %15s|\r\n\n\n",
-	doubleToString(s1, minusY_33), doubleToString(s3, plusY_33));
+	printf("| minusY_30     : %15s| plusY_30      : %15s|\r\n\n\n",
+	doubleToString(s1, minusY_30), doubleToString(s3, plusY_30));
 	
 
 
 //	--------------------------------------------------------------- Proportinalitätsfaktoren für "-" und "+"Kennlinienbereiche
-//	Proportionalitätsfaktor für +33° -> +1500 und -33° -> -1500
+//	Proportionalitätsfaktor für +30° -> +1500 und -30° -> -1500
 
-	propfaktor_minusX_33	= 1500 / minusX_33;
-	propfaktor_plusX_33		= 1500 / plusX_33;	
+	propfaktor_minusX_30	= 1363.6363 / minusX_30;				// Referenzwerte wurden für 30° ermittelt 
+	propfaktor_plusX_30		= 1363.6363 / plusX_30;					// 1500 Normwert soll aber 30° Auslenkung entsprechen
+																	// -> 30 / 33 * 1500 = 1363,6363
 
-	propfaktor_minusY_33	= 1500 / minusY_33;
-	propfaktor_plusY_33		= 1500 / plusY_33;
+	propfaktor_minusY_30	= 1363.6363 / minusY_30;
+	propfaktor_plusY_30		= 1363.6363 / plusY_30;
 		
 //	PRINT
 	printf("| propfaktor_mX : %15s| propfaktor_pX : %15s|\r\n",
-	doubleToString(s1, propfaktor_minusX_33), doubleToString(s2, propfaktor_plusX_33));	
+	doubleToString(s1, propfaktor_minusX_30), doubleToString(s2, propfaktor_plusX_30));	
 
 	printf("| propfaktor_mY : %15s| propfaktor_pY : %15s|\r\n\n",
-	doubleToString(s1, propfaktor_minusY_33), doubleToString(s2, propfaktor_plusY_33));
+	doubleToString(s1, propfaktor_minusY_30), doubleToString(s2, propfaktor_plusY_30));
 
 
 
@@ -1714,7 +1799,6 @@ int main(void)
 //	---------------------------------------------------------------------------------------------------------------------------
 /*
 	Parameter:	
-	
 											mySetpoint_p_y:
 
 												[-1500]
@@ -1734,156 +1818,55 @@ int main(void)
 */
 
 
+//	SINUS_PENDEL
+//	***** ANFANG *****
+//	1x p-Regler:
+//		- Regler Y-Achse	Soll: mySetpoint_p_y	IST: myInput_p_y
 
-
-
-//	--------------------------------------------------------------- Programmsequenz 1
-	if (PS == 1)
-	{
-		
-//	INPUTS
-//		Input Regler		Amplitude			Winkel omega		Winkeloffset		Winkel in Grad	
-		mySetpoint_p_y	=	500		*	sin((	TW_1			+	90)				*	WK1);
-		mySetpoint_p_x	=	500		*	sin((	TW_1			+	0)				*	WK1);
-		TW_1 = TW_1 + 0.5 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
+//	Input Regler		Amplitude	sin(Winkel in Grad)	
+	mySetpoint_p_x	=	0;
+	mySetpoint_p_y	=	1000	*	sin(SP_W		*	WK1);
 	
+	SP_W	= SP_W	+	SP_DW;														// nach 4,0s -> 1 Pendelung (4000 x 0,09 = 360°)
+
 	
 
-		if (SEQUENZ_1ms == 5* 1000)									// alle 1ms einen neuen Wert aus dem Array holen
-		{	PS = 2;
-		}
-	}
-	
-//	--------------------------------------------------------------- Programmsequenz 2
-	if (PS == 2)
-	{
-		
-//	INPUTS
-//		Input Regler		Amplitude			Winkel omega		Winkeloffset		Winkel in Grad	
-		mySetpoint_p_y	=	300		*	sin((	TW_1			+	90)				*	WK1);
-		mySetpoint_p_x	=	300		*	sin((	TW_1			+	0)				*	WK1);
-		TW_1 = TW_1 + 1 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
-	
-	
-
-		if (SEQUENZ_1ms == 10* 1000)						// alle 1ms einen neuen Wert aus dem Array holen
-		{	PS = 3;
-		}
-	}
-
-//	--------------------------------------------------------------- Programmsequenz 2
-	if (PS == 3)
-	{
-		
-//	INPUTS
-		mySetpoint_p_y	=	150		*	sin((	TW_1			+	90)				*	WK1);
-		mySetpoint_p_x	=	150		*	sin((	TW_1			+	0)				*	WK1);
-		TW_1 = TW_1 + 2 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
-	
-	
-		if (SEQUENZ_1ms ==  15* 1000)						// alle 1ms einen neuen Wert aus dem Array holen
-		{	PS = 4;
-		}
-	}
-
-
-//	--------------------------------------------------------------- Programmsequenz 2
-	if (PS == 4)
-	{
-		
-//	INPUTS
-		mySetpoint_p_y	=	150		*	sin((	-TW_1			+	90)				*	WK1);
-		mySetpoint_p_x	=	150		*	sin((	-TW_1			+	0)				*	WK1);
-		TW_1 = TW_1 + 1 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
-	
-	
-
-		if (SEQUENZ_1ms == 20* 1000)						// alle 1ms einen neuen Wert aus dem Array holen
-		{	PS = 5;
-		}
-	}
-
-//	--------------------------------------------------------------- Programmsequenz 2
-	if (PS == 5)
-	{
-		
-//	INPUTS
-		mySetpoint_p_y	=	300		*	sin((	-TW_1			+	90)				*	WK1);
-		mySetpoint_p_x	=	300		*	sin((	-TW_1			+	0)				*	WK1);
-		TW_1 = TW_1 + 5 * 0.36;								// jede ms wird der Winkel um SP_1° größer -> 1000 x 0,36 = 360°/s		
-	
-	
-
-		if (SEQUENZ_1ms == 25* 1000)									// alle 1ms einen neuen Wert aus dem Array holen
-		{	PS = 6;
-		}
-	}
-
-//	--------------------------------------------------------------- Programmsequenz 2
-	if (PS == 6)
-	{
-		
-//	INPUTS
-		mySetpoint_p_y	=	0;
-		mySetpoint_p_x	=	0;
-		
-		
-		if (SEQUENZ_1ms == 30* 1000)									// alle 1ms einen neuen Wert aus dem Array holen
-		{			
-//			PS = 1;
-			SEQUENZ_1ms = 0;	
-
-
-
-
-
-		}
-	}
-
-
-
-
-
-
-
-
-//	Anfangs-Sollposition
-//		mySetpoint_p_x = 0;
-//		mySetpoint_p_y = 0;
-
-
-
-//	REGLER
 //	---------------------------------------------------------------------------------------------------------------------------
-//	MOTOR_Y -------------------------------------------------------------------------------------------------------------------
-//	REGLER POSITION
-	outMax_p_y		=  1.0;							// Max Drehmoment
-	outMin_p_y		= -1.0;							// Min Drehmoment
+//	REGLER Y-ACHSE
+//	***** ANFANG *****
+//	---------------------------------------------------------------------------------------------------------------------------
+//	Sollwert:
+//	mySetpoint_p_y kommt aus Funktion für SPIRALE
+		
+//	Istwert:
+//	myInput_p_y kommt vom Analogeingang A0 (aktuelle Stickposition Y) normieren
+	myInput_p_y = AF_A0_i - nullY;													// Nullpunktverschiebung
+	if (myInput_p_y >= 0)															// Proportionalitätsfaktor für Anstiegsnormierung
+	{	myInput_p_y =			myInput_p_y * propfaktor_plusY_30;					// getrennt für plus- und minus-Bereich
+	}
+		myInput_p_y = (-1)	*	myInput_p_y * propfaktor_minusY_30;
 
-	kp_p_y			= 0.0015;						// Soft
+//	Regleroutput-Maxwerte:
+	outMax_p_y		=  0.8;							// Max Drehmoment
+	outMin_p_y		= -0.8;							// Min Drehmoment
+
+//	Reglerparameter:
+	kp_p_y			= 0.0015;						// harte Charakteristik
 //	ki_p_y			= 0.0;
 	kd_p_y			= 0.0035;
-
-/*
-	kp_p_y			= 0.005;						// Harte Nummer
-	ki_p_y			= 0.00005;
-	kd_p_y			= 0.01;
-*/ 
-
-//	Input muss auch auf +/-1500 normiert werden
-	myInput_p_y = AF_A0_i - nullY;					// ADC Kanal A0 -> Poti y-Achse
-
-	if (myInput_p_y >= 0)
-	{	myInput_p_y =			myInput_p_y * propfaktor_plusY_33;
-	} 
-	else
-	{	myInput_p_y = (-1)	*	myInput_p_y * propfaktor_minusY_33;
-	}												// (-1), weil myInput negativ und auch propfaktor negativ!)
-		
-//	Regler rechnen
+	
+//	Regler rechnen:
 	PID_p_y();
-	LF_y = myOutput_p_y;
 
+//	Stellgröße:	
+	LF_y = myOutput_p_y;							// Zuweisung des Regler-Outputs zum Leistungsfaktor-Position 
+//	***** ENDE *****
+
+
+
+
+//	MOTORANSTEUERUNGS-WERTE Y-ACHSE BERECHNEN
+//	***** ANFANG *****
 //	Wenn der Leistungsfaktor	-> positiv, dann -90° (elektrisch) Vektor raus geben
 //								-> negativ, dann +90° (elektrisch) Vektor raus geben
 	if (LF_y >= 0)
@@ -1897,7 +1880,7 @@ int main(void)
 		xvec_motorY =			LF_y * cos(DWEy*WK1);
 		yvec_motorY =			LF_y * cos(DWEy*WK1-WK2);
 		zvec_motorY =			LF_y * cos(DWEy*WK1-WK3);
-	}
+	} // if (LF_y >= 0)
 	if (LF_y < 0)
 	{
 //	Drehwinkel berechnen und dann 90° addieren
@@ -1907,43 +1890,56 @@ int main(void)
 		xvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1);
 		yvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1-WK2);
 		zvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1-WK3);
-	}
+	} // if (LF_y < 0)
+//	***** ENDE *****
+
+
 
 //	PRINT
 //		printf("| AF_A0_i       : %15d| myInput2_1    : %15s| DWEy          : %15s| LF_y          : %15s|\r\n\n",
 //		AF_A0_i, doubleToString(s1, myInput2_1), doubleToString(s2, DWEy), doubleToString(s3, LF_y));
 	
 
+
+//	---------------------------------------------------------------------------------------------------------------------------
+//	REGLER X-ACHSE
+//	***** ANFANG *****
+//	---------------------------------------------------------------------------------------------------------------------------
+//	REGLER POSITION X-ACHSE
+//	Sollwert:
+//	mySetpoint_p_x kommt aus Funktion für SPIRALE
+
+
+//	Istwert:
+//	myInput_p_x kommt vom Analogeingang A1 (aktuelle Stickposition X) normieren
+	myInput_p_x = AF_A1_i - nullX;													// Nullpunktverschiebung
+	if (myInput_p_x >= 0)															// Proportionalitätsfaktor für Anstiegsnormierung
+	{	myInput_p_x =			myInput_p_x * propfaktor_plusX_30;					// getrennt für plus- und minus-Bereich
+	}
+		myInput_p_x = (-1)	*	myInput_p_x * propfaktor_minusX_30;	
 		
-//	MOTOR_X -------------------------------------------------------------------------------------------------------------------
-//	REGLER POSITION
+
+	
+//	Regleroutput-Maxwerte:
 	outMax_p_x		=  1.0;							// Max Drehmoment
 	outMin_p_x		= -1.0;							// Min Drehmoment
 
-	kp_p_x			= 0.0015;						// Soft
+//	Reglerparameter:
+	kp_p_x			= 0.002;						// harte Charakteristik
 //	ki_p_x			= 0.0;
 	kd_p_x			= 0.0035;
 
-/*
-	kp_p_x			= 0.005;						// Harte Nummer
-	ki_p_x			= 0.00005;
-	kd_p_x			= 0.01;
-*/ 
 
-//	Input muss auch auf +/-1500 normiert werden
-	myInput_p_x = AF_A1_i - nullX;					// ADC Kanal A1 -> Poti x-Achse
-
-	if (myInput_p_x >= 0)
-	{	myInput_p_x =			myInput_p_x * propfaktor_plusX_33;
-	}
-	else
-	{	myInput_p_x = (-1)	*	myInput_p_x * propfaktor_minusX_33;
-	}												// (-1), weil myInput negativ und auch propfaktor negativ!)
-
+	
 //	Regler rechnen
 	PID_p_x();
-	LF_x = myOutput_p_x;
 
+//	Stellgröße:	
+	LF_x = myOutput_p_x;							// Zuweisung des Regler-Outputs zum Leistungsfaktor-Position 
+
+
+//	MOTORANSTEUERUNGS-WERTE X-ACHSE BERECHNEN
+//	***** ANFANG *****
 //	Wenn der Leistungsfaktor	-> positiv, dann -90° (elektrisch) Vektor raus geben
 //								-> negativ, dann +90° (elektrisch) Vektor raus geben
 	if (LF_x >= 0)
@@ -1967,18 +1963,20 @@ int main(void)
 		yvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1-WK2);
 		zvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1-WK3);
 	}
+//	***** ENDE *****
+
+
 
 //	PRINT
 //		printf("| AF_A0_i       : %15d| myInput2_1    : %15s| DWEy          : %15s| LF_y          : %15s|\r\n\n",
 //		AF_A0_i, doubleToString(s1, myInput2_1), doubleToString(s2, DWEy), doubleToString(s3, LF_y));
 
 
+
+
 		
 //	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
 	SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, xvec_motorX, yvec_motorX, zvec_motorX);
-//	SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, 0, 0, 0);
-//	SVPWM(0, 0, 0, xvec_motorX, yvec_motorX, zvec_motorX);
-
 
 
 		} // if (svpwm_int == 1)
