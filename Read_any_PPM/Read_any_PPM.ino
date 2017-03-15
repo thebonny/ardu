@@ -2,7 +2,7 @@
 
 #define DEBUG_PIN1 8
 #define DEBUG_PIN2 10
-int ppm[6];  //array for storing up to 16 servo signals
+int ppm[9];  //array for storing up to 16 servo signals
 int pos = 0; 
 
 int servo1 = 6;
@@ -13,7 +13,7 @@ int lastPPM = 0;
 
 void setup()
 {
-//  Serial1.begin(9600);
+  Serial1.begin(9600);
 
 
   pinMode(servo1, OUTPUT);
@@ -57,12 +57,7 @@ void read_ppm(){
 
 void loop ()
 {
-  if (ppm[1] != lastPPM) {
-      digitalWrite(DEBUG_PIN1, LOW); 
-  } else {
-        digitalWrite(DEBUG_PIN1, HIGH); 
-  }
-  lastPPM = ppm[1];
+   Serial.println(ppm[3]);
 }
 
 

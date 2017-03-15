@@ -1,26 +1,15 @@
 
 
 /*	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx                  HAPSTIK Modul                xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-DATUM:		04.03.2017
+DATUM:		14.03.2017
 AUTOR:		André Frank
-NAME:		Ratsche
-			- ohne Positionsvorgabe durch remote (Interface)
-			- mit  Positionsvorgabe durch remote (Interface)			
-			- Ratschenparameter einstellbar
+NAME:		Recorder
 
 
 WIRKUNGSWEISE:
-			Parallelschaltung von 2 Reglern
-				- 1. Regler macht die Ratsche mit den gewünschten Ratschen_Points, die durch ein Ratschen_Positionsfilter
-				  eingestellt werden, so dass
-				  eine Ratsche entsteht
-				- 2. Regler ist ein ganz normaler Positionsregler
-				- beide zusammen ergeben den typischen Ratschenverlauf, auch bei Vorgabe oder Änderung der momentanen
-				  Position
-		
-
-
-
+			Zeichnet erst 10s den Move auf, spielt ihn dann 10s ab und danach noch einmal mit drittel Geschwindigkeit
+			Dauer insgesamt: 10s + 10s + 30s = 50s
+			
 
 
 ------------------------------------------------------------------------------------------------------------------------------
@@ -86,29 +75,26 @@ static:		ist ein Schlüsselwort
 
 
 //	Für Tänzchen
-	static		float	IST1 = 0.0;			// MOTOR1
-	static		float	IST2 = 0.0;			// MOTOR2	
+
+	volatile	int		VZ		= 1;							// VorZeichen
+
+	volatile	float	SP_W	= 0.0;							// Winkel
+	volatile	float	SP_A	= 0.0;							// Amplitude
+	volatile	float	SP_DW	= 0.36;							// Delta_Winkel/ms iin Grad
+
 	
-	static		float	TW_1 = 0.0;			// MOTOR1 -> TänzchenWinkel		
-	static		float	TW_2 = 0.0;			// MOTOR2 -> TänzchenWinkel	
+	volatile	int		TAE_1ms = 0;							// 1ms zählen	
+	volatile	int		SEQUENZ_1ms = 0;						// 1ms zählen			
 
-	static		int		VZ_1 = 1;			// VorZeichen
-	static		int		VZ_2 = 1;
 
-	static		float	SP_1 = 0.36;		// MOTOR1 -> Speed
-	static		float	SP_2 = 0.0;	
 
-	static		float	AM_1 = 0.0;			// MOTOR1 -> Speed
-	static		float	AM_2 = 0.0;
-					
-	static		float	SA_1 = 0.0;			// MOTOR1 -> SoftAnlauf
-	static		float	SA_2 = 0.0;			// MOTOR2 -> SoftAnlauf
+//	für RECORDER
+	static		uint16_t		iREC1[7000];							// moveDaten MOTOR1
+	static		uint16_t		iREC2[7000];							// moveDaten MOTOR2
 
-	static		float	DW_1 = 0.0;			// MOTOR1 -> DeltaWinkel
-	static		float	DW_2 = 0.0;			// MOTOR2 -> DeltaWinkel
-	
-	static		int		TAE_1ms = 0;							// 1ms zählen	
-	static		int		SEQUENZ_1ms = 0;							// 1ms zählen			
+	static		int		cnt_scan = 0;
+
+	static		int		iPT = 1;								// ProgrammTeil, für Programm-Sequenzen
 
 
 
@@ -1495,7 +1481,182 @@ void	PRINT_START(void)
 }
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  PRINT_START       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+//	ANFANG xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  REGLER_MOTOR   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+void	REGLER_MOTOR(void)
+{
+//	---------------------------------------------------------------------------------------------------------------------------
+//	REGLER Y-ACHSE
+//	***** ANFANG *****
+//	---------------------------------------------------------------------------------------------------------------------------
+//	Sollwert:
+//	mySetpoint_p_y kommt aus iREC1[cnt_scan]
+
+//	Istwert Y (normiert) wird weiter oben berechnet
+
+
+
+//	Regleroutput-Maxwerte:
+	outMax_p_y		=  1.0;							// Max Drehmoment
+	outMin_p_y		= -1.0;							// Min Drehmoment
+
+//	Reglerparameter:
+	kp_p_y			= 0.002;						// harte Charakteristik
+//	ki_p_y			= 0.0;
+	kd_p_y			= 0.0035;
+
+//	Regler rechnen:
+	PID_p_y();
+
+//	Stellgröße:
+	LF_y = myOutput_p_y;							// Zuweisung des Regler-Outputs zum Leistungsfaktor-Position
+//	***** ENDE *****
+
+
+
+
+//	MOTORANSTEUERUNGS-WERTE Y-ACHSE BERECHNEN
+//	***** ANFANG *****
+//	Wenn der Leistungsfaktor	-> positiv, dann -90° (elektrisch) Vektor raus geben
+//								-> negativ, dann +90° (elektrisch) Vektor raus geben
+	if (LF_y >= 0)
+	{
+
+//	Drehwinkel berechnen und dann 90° subtrahieren
+//	1500 -> 33°, 500 -> 11°, ...
+		DWEy = 7 * ((NOR1 * myInput_p_y) + offset_winkel_y) + 90;
+	
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+		xvec_motorY =			LF_y * cos(DWEy*WK1);
+		yvec_motorY =			LF_y * cos(DWEy*WK1-WK2);
+		zvec_motorY =			LF_y * cos(DWEy*WK1-WK3);
+	} // if (LF_y >= 0)
+	if (LF_y < 0)
+	{
+//	Drehwinkel berechnen und dann 90° addieren
+		DWEy = 7 * ((NOR1 * myInput_p_y) + offset_winkel_y) - 90;
+	
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+		xvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1);
+		yvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1-WK2);
+		zvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1-WK3);
+	} // if (LF_y < 0)
+//	***** ENDE *****
+
+
+
+//	PRINT
+//		printf("| AF_A0_i       : %15d| myInput2_1    : %15s| DWEy          : %15s| LF_y          : %15s|\r\n\n",
+//		AF_A0_i, doubleToString(s1, myInput2_1), doubleToString(s2, DWEy), doubleToString(s3, LF_y));
+
+
+
+//	---------------------------------------------------------------------------------------------------------------------------
+//	REGLER X-ACHSE
+//	***** ANFANG *****
+//	---------------------------------------------------------------------------------------------------------------------------
+//	REGLER POSITION X-ACHSE
+//	Sollwert:
+//	mySetpoint_p_x kommt aus iREC2[cnt_scan]
+
+//	Istwert X (normiert) wird weiter oben berechnet
+
+
+
+//	Regleroutput-Maxwerte:
+	outMax_p_x		=  1.0;							// Max Drehmoment
+	outMin_p_x		= -1.0;							// Min Drehmoment
+
+//	Reglerparameter:
+	kp_p_x			= 0.002;						// harte Charakteristik
+//	ki_p_x			= 0.0;
+	kd_p_x			= 0.0035;
+
+
+
+//	Regler rechnen
+	PID_p_x();
+
+//	Stellgröße:
+	LF_x = myOutput_p_x;							// Zuweisung des Regler-Outputs zum Leistungsfaktor-Position
+
+
+//	MOTORANSTEUERUNGS-WERTE X-ACHSE BERECHNEN
+//	***** ANFANG *****
+//	Wenn der Leistungsfaktor	-> positiv, dann -90° (elektrisch) Vektor raus geben
+//								-> negativ, dann +90° (elektrisch) Vektor raus geben
+	if (LF_x >= 0)
+	{
+//	Drehwinkel berechnen und dann 90° subtrahieren
+//	1500 -> 33°, 500 -> 11°, ...
+		DWEx = 7 * ((NOR1 * myInput_p_x) + offset_winkel_x) + 90;
+	
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+		xvec_motorX =			LF_x * cos(DWEx*WK1);
+		yvec_motorX =			LF_x * cos(DWEx*WK1-WK2);
+		zvec_motorX =			LF_x * cos(DWEx*WK1-WK3);
+	}
+	if (LF_x < 0)
+	{
+//	Drehwinkel berechnen und dann 90° addieren
+		DWEx = 7 * ((NOR1 * myInput_p_x) + offset_winkel_x) - 90;
+	
+//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
+		xvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1);
+		yvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1-WK2);
+		zvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1-WK3);
+	}
+//	***** ENDE *****
+
+
+
+//	PRINT
+//		printf("| AF_A0_i       : %15d| myInput2_1    : %15s| DWEy          : %15s| LF_y          : %15s|\r\n\n",
+//		AF_A0_i, doubleToString(s1, myInput2_1), doubleToString(s2, DWEy), doubleToString(s3, LF_y));
+
+
+
+//	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------
+	SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, xvec_motorX, yvec_motorX, zvec_motorX);
+}
+//	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  REGLER_MOTOR   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //	ENDE ************************************************     FUNKTIONEN     *************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1583,27 +1744,6 @@ int main(void)
 
 //	Stick beruhigen lassen
 	delay_ms(500);
-
-
-
-
-
-//	Test
-	a1_flt = 10.7; 
-	a2_flt = 10.3; 
-
-	a1_int = a1_flt;				// 10,7	-> 10	Zuweisung float an int -> Zuweisung des Ganzzahlanteils
-	a2_int = a2_flt;				// 10,3	-> 10
-//	---
-	a1_int = 23;					// Es wird nicht gerundet, auch hier Zuweisung des Ganzzahlanteils
-	a2_int = 10;
-	a3_int = a1_int / a2_int;		// 2,3	-> 2
-//	---
-	a1_int = 27;
-	a2_int = 10;
-	a3_int = a1_int / a2_int;		// 2,7	-> 2
-
-
 
 
 
@@ -1778,7 +1918,7 @@ int main(void)
 	
 	printf("| minusY_30     : %15s| plusY_30      : %15s|\r\n\n\n",
 	doubleToString(s1, minusY_30), doubleToString(s3, plusY_30));
-	
+
 
 
 //	--------------------------------------------------------------- Proportinalitätsfaktoren für "-" und "+"Kennlinienbereiche
@@ -1802,6 +1942,14 @@ int main(void)
 
 
 
+
+
+
+
+
+
+
+
 //	----------------------------------------------------------------------------------------------------------- Endlosschleife
 	while (1)
 	{		
@@ -1817,8 +1965,6 @@ int main(void)
 
 
 
-	
-	
 //	1ms ----------------------------------------------------- REGLELUNG -------------------------------------------------------
 //	---------------------------------------------------------------------------------------------------------------------------
 /*
@@ -1842,235 +1988,148 @@ int main(void)
 */
 
 
-//	RATSCHE
+//	RECORDER
 //	***** ANFANG *****
-//	Parameter:
-//	Die Parameter sollten in einer RATSCHEN_INIT() Init-Routine eingestellt werden, ... nicht hier, alle 1ms!
-	R_oben				= -0;													// oberer  maximaler Ratschenpunkt
-	R_unten				= +1100;												// unterer maximaler Ratschenpunkt
-	R_Anzahl			= 11;													// Anzahl von Ratschen-Punkte
 
-	R_Laenge			= (R_unten - R_oben) / (R_Anzahl -1);																					
-
-//	Ratschen_Positionsfilter: "Zu welchem Ratschen-Segment gehört die aktuelle HS-Position (myInput_p_y_r)?"
-//	Setpoint für Regler Position Y-Achse Ratsche
-	mySetpoint_p_y_r	= (int)(((int)((abs(myInput_p_y_r) / R_Laenge) + 0.5)) * R_Laenge + 0.5);	
-
-	if(myInput_p_y_r < 0)
-	{	mySetpoint_p_y_r = mySetpoint_p_y_r * (-1);	
-	} 
-
-//	Grenzwertkappung [R_oben]
-	if(mySetpoint_p_y_r < R_oben)
-	{	mySetpoint_p_y_r = R_oben;	
+//	Istwert Y (normiert):
+//	myInput_p_y kommt vom Analogeingang A0 (aktuelle Stickposition Y) normieren
+	myInput_p_y = AF_A0_i - nullY;										// Nullpunktverschiebung
+	if (myInput_p_y >= 0)												// Proportionalitätsfaktor für Anstiegsnormierung
+	{	myInput_p_y =			myInput_p_y * propfaktor_plusY_30;		// getrennt für plus- und minus-Bereich
 	}
-	
-//	Grenzwertkappung [R_unten]
-	if(mySetpoint_p_y_r > R_unten)
-	{	mySetpoint_p_y_r = R_unten;	
-	}
+		myInput_p_y = (-1)	*	myInput_p_y * propfaktor_minusY_30;
 
 
 
-
-
-
-
-//	---------------------------------------------------------------------------------------------------------------------------
-//	REGLER Y-ACHSE
-//	***** ANFANG *****
-//	---------------------------------------------------------------------------------------------------------------------------
-//	REGLER POSITION Y-ACHSE RATSCHE
-//	Sollwert:
-//	mySetpoint_p_y_r kommt aus Ratschen_Positionsfilter
-//	mySetpoint_p_y_r = R_Position;
-
-//	Istwert:
-//	myInput_p_y_r kommt vom Analogeingang A0 (aktuelle Stickposition Y) normieren
-	myInput_p_y_r = AF_A0_i - nullY;										// Nullpunktverschiebung
-	if (myInput_p_y_r >= 0)													// Proportionalitätsfaktor für Anstiegsnormierung
-	{	myInput_p_y_r =				myInput_p_y_r * propfaktor_plusY_30;	// getrennt für plus- und minus-Bereich
-	}
-		myInput_p_y_r = (-1)	*	myInput_p_y_r * propfaktor_minusY_30;
-	
-	
-//	Regleroutput-Maxwerte:
-	outMax_p_y_r	=  1.0;							// Max Drehmoment
-	outMin_p_y_r	= -1.0;							// Min Drehmoment
-
-//	Reglerparameter:
-	kp_p_y_r		= 0.003;						// harte Charakteristik
-//	ki_p_y_r		= 0.0;
-	kd_p_y_r		= 0.0035;
-	
-//	Regler rechnen:
-	PID_p_y_r();
-
-//	Stellgröße:	
-	LF_y_r = myOutput_p_y_r;						// Zuweisung des Regler-Outputs zum Leistungsfaktor-Position-Ratsche 
-//	***** ENDE *****
-
-
-
-//	---------------------------------------------------------------------------------------------------------------------------
-//	REGLER POSITION HS
-//	***** ANFANG *****
-//	Sollwert:
-//	mySetpoint_p_y kommt remote
-//	Das hier ist das Snüffelstück für Wertvorgabe von remote (Vorgabe von "draussen"): [-1500 ... +1500]
-	mySetpoint_p_y	= 0;
-		
-//	Istwert:
-//	myInput_p_y kommt vom Analogeingang A0 (aktuelle Stickposition Y) normiert
-	myInput_p_y		= myInput_p_y_r;
-
-//	Regleroutput-Maxwerte:
-	outMax_p_y		=  1.0;							// Max Drehmoment
-	outMin_p_y		= -1.0;							// Min Drehmoment
-
-//	Reglerparameter:
-	kp_p_y			= 0.002;						// harte Charakteristik
-//	ki_p_y			= 0.0;
-	kd_p_y			= 0.0035;
-	
-//	Regler rechnen:
-	PID_p_y();
-
-//	Stellgröße:	
-	LF_y_p = myOutput_p_y;							// Zuweisung des Regler-Outputs zum Leistungsfaktor-Position 
-//	***** ENDE *****
-
-
-
-//	Zusammenführung beider parallel geschalteter Regler zu einer Stellgröße 
-//	LF_y = LF_y_r + LF_y_p;							// HS "Ratsche mit Position"
-	LF_y = LF_y_r;									// HS "Ratsche ohne Position"
-//	LF_y = LF_y_p;									// HS "Position"	
-
-
-
-
-
-//	MOTORANSTEUERUNGS-WERTE Y-ACHSE BERECHNEN
-//	***** ANFANG *****
-//	Wenn der Leistungsfaktor	-> positiv, dann -90° (elektrisch) Vektor raus geben
-//								-> negativ, dann +90° (elektrisch) Vektor raus geben
-	if (LF_y >= 0)
-	{
-
-//	Drehwinkel berechnen und dann 90° subtrahieren
-//	1500 -> 33°, 500 -> 11°, ...
-		DWEy = 7 * ((NOR1 * myInput_p_y_r) + offset_winkel_y) + 90;
-								
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-		xvec_motorY =			LF_y * cos(DWEy*WK1);
-		yvec_motorY =			LF_y * cos(DWEy*WK1-WK2);
-		zvec_motorY =			LF_y * cos(DWEy*WK1-WK3);
-	} // if (LF_y >= 0)
-	if (LF_y < 0)
-	{
-//	Drehwinkel berechnen und dann 90° addieren
-		DWEy = 7 * ((NOR1 * myInput_p_y_r) + offset_winkel_y) - 90;
-				
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-		xvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1);
-		yvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1-WK2);
-		zvec_motorY = (-1)	*	LF_y * cos(DWEy*WK1-WK3);
-	} // if (LF_y < 0)
-//	***** ENDE *****
-
-
-
-//	PRINT
-//		printf("| AF_A0_i       : %15d| myInput2_1    : %15s| DWEy          : %15s| LF_y          : %15s|\r\n\n",
-//		AF_A0_i, doubleToString(s1, myInput2_1), doubleToString(s2, DWEy), doubleToString(s3, LF_y));
-	
-
-
-//	---------------------------------------------------------------------------------------------------------------------------
-//	REGLER X-ACHSE
-//	***** ANFANG *****
-//	---------------------------------------------------------------------------------------------------------------------------
-//	REGLER POSITION X-ACHSE
-//	Sollwert:
-//	mySetpoint_p_x kommt remote
-//	Das hier ist das Snüffelstück für Wertvorgabe von remote (Vorgabe von "draussen"): [-1500 ... +1500]
-	mySetpoint_p_x	= 0;
-
-
-//	Istwert:
+//	Istwert X (normiert):
 //	myInput_p_x kommt vom Analogeingang A1 (aktuelle Stickposition X) normieren
-	myInput_p_x = AF_A1_i - nullX;											// Nullpunktverschiebung
-	if (myInput_p_x >= 0)													// Proportionalitätsfaktor für Anstiegsnormierung
-	{	myInput_p_x =			myInput_p_x * propfaktor_plusX_30;			// getrennt für plus- und minus-Bereich
+	myInput_p_x = AF_A1_i - nullX;										// Nullpunktverschiebung
+	if (myInput_p_x >= 0)												// Proportionalitätsfaktor für Anstiegsnormierung
+	{	myInput_p_x =			myInput_p_x * propfaktor_plusX_30;		// getrennt für plus- und minus-Bereich
 	}
 		myInput_p_x = (-1)	*	myInput_p_x * propfaktor_minusX_30;
+
+
+
+//	--------------------------------------------------------------------   1. ProgrammTeil
+//	10 sekündige Aufnahme des StickMoves
+	if(iPT == 1)														
+	{
+
+//	Stick abtasten (Abtastperiode ist einstellbar), Position X und Position Y
+		if (TAE_1ms % 1 == 0)											// Abtastperiode: 1ms -> 1000 Werte/s werden aufgezeichnet
+		{	iREC1[cnt_scan] = myInput_p_y;		
+			iREC2[cnt_scan] = myInput_p_x;
+			cnt_scan++;
+		} // (TAE_1ms % 1 == 0)
 	
-//	Regleroutput-Maxwerte:
-	outMax_p_x		=  1.0;							// Max Drehmoment
-	outMin_p_x		= -1.0;							// Min Drehmoment
 
-//	Reglerparameter:
-	kp_p_x			= 0.002;						// harte Charakteristik
-//	ki_p_x			= 0.0;
-	kd_p_x			= 0.0035;
 
+
+		if (TAE_1ms == 10000)											// nach 10s wird gedruckt und zum ProgrammTeil2 übergegangen 
+		{	
 /*
-	kp_p_x			= 0.005;						// Harte Nummer
-	ki_p_x			= 0.00005;
-	kd_p_x			= 0.01;
-*/ 
-	
-//	Regler rechnen
-	PID_p_x();
+PRINT
+		printf(" 1: %10d\r\n",		iREC1[0]); 
+		printf(" 2: %10d\r\n",		iREC1[1]); 		
+		...
 
-//	Stellgröße:	
-	LF_x = myOutput_p_x;							// Zuweisung des Regler-Outputs zum Leistungsfaktor-Position 
-
-
-//	MOTORANSTEUERUNGS-WERTE X-ACHSE BERECHNEN
-//	***** ANFANG *****
-//	Wenn der Leistungsfaktor	-> positiv, dann -90° (elektrisch) Vektor raus geben
-//								-> negativ, dann +90° (elektrisch) Vektor raus geben
-	if (LF_x >= 0)
-	{
-//	Drehwinkel berechnen und dann 90° subtrahieren
-//	1500 -> 33°, 500 -> 11°, ...
-		DWEx = 7 * ((NOR1 * myInput_p_x) + offset_winkel_x) + 90;
-	
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-		xvec_motorX =			LF_x * cos(DWEx*WK1);
-		yvec_motorX =			LF_x * cos(DWEx*WK1-WK2);
-		zvec_motorX =			LF_x * cos(DWEx*WK1-WK3);
-	}
-	if (LF_x < 0)
-	{
-//	Drehwinkel berechnen und dann 90° addieren
-		DWEx = 7 * ((NOR1 * myInput_p_x) + offset_winkel_x) - 90;
-	
-//	Winkelanteile mit Berücksichtigung des Leistungsfaktors berechnen
-		xvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1);
-		yvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1-WK2);
-		zvec_motorX = (-1)	*	LF_x * cos(DWEx*WK1-WK3);
-	}
-//	***** ENDE *****
-
-
-
-//	PRINT
-//		printf("| AF_A0_i       : %15d| myInput2_1    : %15s| DWEy          : %15s| LF_y          : %15s|\r\n\n",
-//		AF_A0_i, doubleToString(s1, myInput2_1), doubleToString(s2, DWEy), doubleToString(s3, LF_y));
-
-
-
-
+		printf(" 1: %10d\r\n",		iREC2[0]); 
+		printf(" 2: %10d\r\n",		iREC2[1]); 		
+		...
+*/				
+			iPT = 2;													// danach 2. ProgrammTeil
+			TAE_1ms = 0;									
+			cnt_scan = 0;
+			mySetpoint_p_x	=	0;										// Abspielen beginnt im NULLPunkt
+			mySetpoint_p_y	=	0;
+		}	
 		
-//	Gemeinsame Raumvektorausgabe ---------------------------------------------------------------------------------------------	
-	SVPWM(xvec_motorY, yvec_motorY, zvec_motorY, xvec_motorX, yvec_motorX, zvec_motorX);
+	} // if(iPT == 1)
+
+
+
+
+//	--------------------------------------------------------------------   2. ProgrammTeil (ab hier mit Reglerberechnung und Motorausgabe)
+//	10 sekündiges Abspielen des StickMoves
+	if(iPT == 2)
+	{
+		if (TAE_1ms % 1 == 0)											// alle 1ms einen neuen Wert aus dem Array holen
+		{	mySetpoint_p_y	= iREC1[cnt_scan];
+			mySetpoint_p_x	= iREC2[cnt_scan];		
+			cnt_scan++;	
+
+		} // (TAE_1ms % 1 == 0)
+	
+	
+		if (TAE_1ms == 10000)											// nach 10s wird zum ProgrammTeil3 übergegangen 
+		{	
+			iPT = 3;													// danach 3. ProgrammTeil
+			TAE_1ms = 0;									
+			cnt_scan = 0;
+			mySetpoint_p_x	=	0;										// Abspielen mit halber Geschwindigkeit beginnt im NULLPunkt
+			mySetpoint_p_y	=	0;
+		}	
+		
+		REGLER_MOTOR();													// Regler rechnen und Motore ansteuern
+
+	} // if(iPT == 2)
+
+
+
+
+
+	
+//	--------------------------------------------------------------------   3. ProgrammTeil
+//	30 sekündiges Abspielen (drittel Geschwindigkeit) des StickMoves
+	if(iPT == 3)
+	{
+		if (TAE_1ms % 3 == 0)											// alle 2ms einen neuen Wert aus dem Array holen
+		{	mySetpoint_p_y	= iREC1[cnt_scan];
+			mySetpoint_p_x	= iREC2[cnt_scan];
+			cnt_scan++;
+
+		} // (TAE_1ms % 3 == 0)
+	
+	
+		if (TAE_1ms == 30000)											// nach 30s wird zum ProgrammTeil4 übergegangen
+		{
+			iPT = 4;													// danach 4. ProgrammTeil
+			TAE_1ms = 0;
+			cnt_scan = 0;
+			mySetpoint_p_x	=	0;										// ProgrammTeil4 beginnt im NULLPunkt
+			mySetpoint_p_y	=	0;
+		}
+
+		REGLER_MOTOR();													// Regler rechnen und Motore ansteuern
+
+	} // if(iPT == 3)
+
+
+//	--------------------------------------------------------------------   4. ProgrammTeil
+//	Stop in NULLPosition
+	if(iPT == 4)
+	{
+			iPT = 4;													// bleibt erst einmal fortwährend 4. ProgrammTeil
+			TAE_1ms = 0;
+			cnt_scan = 0;
+	
+	
+	
+	
+		REGLER_MOTOR();													// Regler rechnen und Motore ansteuern	
+	
+	} // if(iPT ==4)
+
+
+
+
+
+
+
 
 
 		} // if (svpwm_int == 1)
 	} // while (1)
 } // int main(void)
 //	ENDE xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx          MAIN           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
